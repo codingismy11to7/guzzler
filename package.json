@@ -34,7 +34,7 @@
     "@eslint/compat": "1.2.2",
     "@eslint/eslintrc": "3.1.0",
     "@eslint/js": "9.13.0",
-    "@types/node": "^20.17.11",
+    "@types/node": "^22.10.4",
     "@typescript-eslint/eslint-plugin": "^8.12.2",
     "@typescript-eslint/parser": "^8.12.2",
     "@vitest/coverage-v8": "^2.1.8",
