@@ -1,6 +1,6 @@
-import { HttpApiBuilder, HttpMiddleware } from "@effect/platform";
+import { HttpApiBuilder, HttpMiddleware, HttpServer } from "@effect/platform";
 import { NodeHttpServer, NodeRuntime } from "@effect/platform-node";
-import { Layer } from "effect";
+import { flow, Layer } from "effect";
 import { createServer } from "node:http";
 import { ApiLive } from "./Api.js";
 import { TodosRepository } from "./TodosRepository.js";
@@ -9,10 +9,11 @@ import { TodosRepository } from "./TodosRepository.js";
  * Server entrypoint
  */
 
-const HttpLive = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
+const HttpLive = HttpApiBuilder.serve(flow(HttpMiddleware.logger, HttpMiddleware.cors())).pipe(
+  HttpServer.withLogAddress,
   Layer.provide(ApiLive),
   Layer.provide(TodosRepository.Default),
-  Layer.provide(NodeHttpServer.layer(createServer, { port: 3000 })),
+  Layer.provide(NodeHttpServer.layer(createServer, { port: 8080 })),
 );
 
 Layer.launch(HttpLive).pipe(NodeRuntime.runMain);

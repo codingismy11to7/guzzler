@@ -15,8 +15,11 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: write
+      packages: write
+      attestations: write
       id-token: write
       pull-requests: write
+
     steps:
       - uses: actions/checkout@v4
 
@@ -30,6 +33,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Build
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        uses: ./.github/actions/buildAction
+
       - name: Publish
         if: steps.changesets.outputs.hasChangesets == 'false'
-        run: echo "now we should publish"
+        uses: ./.github/actions/dockerPublish
