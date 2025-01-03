@@ -1,24 +1,13 @@
-import {FlatCompat} from "@eslint/eslintrc"
-import js from "@eslint/js"
-import codegen from "eslint-plugin-codegen"
-import importPlugin from "eslint-plugin-import"
-import path from "node:path"
-import {fileURLToPath} from "node:url"
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
-import tseslint from 'typescript-eslint'
+import js from "@eslint/js";
+import codegen from "eslint-plugin-codegen";
+import importPlugin from "eslint-plugin-import";
+import reactHooks from "eslint-plugin-react-hooks";
+import reactRefresh from "eslint-plugin-react-refresh";
+import tseslint from "typescript-eslint";
 import react from "eslint-plugin-react";
 import preferArrow from "eslint-plugin-prefer-arrow";
 import prettier from "eslint-plugin-prettier";
 import stylistic from "@stylistic/eslint-plugin";
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended,
-  allConfig: js.configs.all
-})
 
 export default tseslint.config([
   {
@@ -34,7 +23,7 @@ export default tseslint.config([
       sourceType: "module",
       parserOptions: {
         projectService: true,
-        tsconfigRootDir: __dirname,
+        tsconfigRootDir: import.meta.dirname,
         allowDefaultProject: ["scripts/*.mts"],
       }
     },
