@@ -19,13 +19,17 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
+
       - name: Install dependencies
         uses: ./.github/actions/setup
+
       - name: Create Release Pull Request or Publish
         uses: changesets/action@v1
-#        with:
-#          version: npm run changeset-version
-#          publish: npm run changeset-publish
+        with:
+          version: npm run changeset-version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        run: echo "now we should publish"

@@ -3,7 +3,7 @@
   "changelog": [
     "@changesets/changelog-github",
     {
-      "repo": "git@github.com:codingismy11to7/guzzler.git"
+      "repo": "codingismy11to7/guzzler"
     }
   ],
   "commit": false,
