@@ -25,7 +25,8 @@
     "@effect/platform": "^0.72.0",
     "@effect/platform-node": "^0.68.0",
     "@guzzler/domain": "^0.0.0",
-    "effect": "^3.12.0"
+    "effect": "^3.12.0",
+    "nanoid": "^5.0.9"
   },
   "effect": {
     "generateExports": {

@@ -19,7 +19,9 @@ FROM base
 COPY --from=build /app/node_modules /app/node_modules
 COPY --from=build /app/packages/server/dist /app/dist
 COPY --from=build /app/packages/domain/dist /app/packages/domain
+COPY --from=build /app/packages/webui/dist /app/webui
 
 ENV NODE_ENV=production
+ENV WEBUI_DIR=/app/webui
 
 CMD [ "node", "dist" ]

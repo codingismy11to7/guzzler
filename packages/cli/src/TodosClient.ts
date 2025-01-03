@@ -1,5 +1,5 @@
 import { HttpApiClient } from "@effect/platform";
-import { OptionalTodoWithoutId, TodosApi } from "@guzzler/domain/TodosApi";
+import { OptionalTodoWithoutId, AppApi } from "@guzzler/domain/AppApi";
 import { Effect } from "effect";
 
 /**
@@ -9,7 +9,7 @@ import { Effect } from "effect";
 export class TodosClient extends Effect.Service<TodosClient>()("cli/TodosClient", {
   accessors: true,
   effect: Effect.gen(function* () {
-    const client = yield* HttpApiClient.make(TodosApi, {
+    const client = yield* HttpApiClient.make(AppApi, {
       baseUrl: "http://localhost:8080",
     });
 

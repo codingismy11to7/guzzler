@@ -1,8 +1,8 @@
-import { HttpApi, HttpApiEndpoint, HttpApiGroup } from "@effect/platform";
+import { HttpApi, HttpApiEndpoint, HttpApiGroup, HttpApiSchema } from "@effect/platform";
 import { Schema } from "effect";
 
 /**
- * Todo schema & api
+ * App schema & api
  */
 
 export const TodoId = Schema.Number.pipe(Schema.brand("TodoId"));
@@ -28,30 +28,47 @@ export class TodoNotFound extends Schema.TaggedError<TodoNotFound>()("TodoNotFou
 }) {}
 
 export class TodosApiGroup extends HttpApiGroup.make("todos")
-  .add(HttpApiEndpoint.get("getAllTodos", "/todos").addSuccess(Schema.Array(Todo)))
+  .add(HttpApiEndpoint.get("getAllTodos", "/").addSuccess(Schema.Array(Todo)))
   .add(
-    HttpApiEndpoint.get("getTodoById", "/todos/:id")
+    HttpApiEndpoint.get("getTodoById", "/:id")
       .addSuccess(Todo)
       .addError(TodoNotFound, { status: 404 })
       .setPath(Schema.Struct({ id: Schema.NumberFromString })),
   )
   .add(
-    HttpApiEndpoint.post("createTodo", "/todos")
+    HttpApiEndpoint.post("createTodo", "/")
       .addSuccess(Todo)
       .setPayload(Schema.Struct({ text: Schema.NonEmptyTrimmedString })),
   )
   .add(
-    HttpApiEndpoint.patch("editTodo", "/todos/:id")
+    HttpApiEndpoint.patch("editTodo", "/:id")
       .addSuccess(Todo)
       .addError(TodoNotFound, { status: 404 })
       .setPath(Schema.Struct({ id: Schema.NumberFromString }))
       .setPayload(OptionalTodoWithoutId),
   )
   .add(
-    HttpApiEndpoint.del("removeTodo", "/todos/:id")
+    HttpApiEndpoint.del("removeTodo", "/:id")
       .addSuccess(Schema.Void)
       .addError(TodoNotFound, { status: 404 })
       .setPath(Schema.Struct({ id: Schema.NumberFromString })),
-  ) {}
+  )
+  .prefix("/api/todos") {}
 
-export class TodosApi extends HttpApi.make("Guzzler").add(TodosApiGroup) {}
+export class ServerError extends Schema.TaggedError<ServerError>()("ServerError", {
+  message: Schema.String,
+}) {}
+export class NotFound extends Schema.TaggedError<NotFound>()("NotFound", {}) {}
+
+class UI extends HttpApiGroup.make("ui").add(
+  HttpApiEndpoint.get("ui", "/*")
+    .addSuccess(
+      Schema.Uint8ArrayFromSelf.pipe(
+        HttpApiSchema.withEncoding({ kind: "Uint8Array", contentType: "application/octet-string" }),
+      ),
+    )
+    .addError(NotFound, { status: 404 })
+    .addError(ServerError, { status: 500 }),
+) {}
+
+export class AppApi extends HttpApi.make("Guzzler").add(TodosApiGroup).add(UI) {}

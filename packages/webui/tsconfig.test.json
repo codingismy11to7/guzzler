@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.build.json",
+  "include": ["test"],
+  "references": [
+    { "path": "../domain" }
+  ],
+  "compilerOptions": {
+    "types": ["node"],
+    "tsBuildInfoFile": ".tsbuildinfo/test.tsbuildinfo",
+    "rootDir": "test",
+    "noEmit": true
+  }
+}

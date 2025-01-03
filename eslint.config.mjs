@@ -185,12 +185,7 @@ export default tseslint.config([
         "error",
         {
           "patterns": [
-            "**/shared/dist/**",
-            "**/schemas/dist/**",
-            "terminus-*/src/**",
-            "**/gulpfile.ts/**",
             "../**/src/**",
-            "**/../dataengine-client",
             "@mui/*/*/*",
             "!@mui/material/test-utils/*"
           ]

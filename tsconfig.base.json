@@ -45,7 +45,10 @@
       "@guzzler/domain/test/*": ["./packages/domain/test/*.js"],
       "@guzzler/server": ["./packages/server/src/index.js"],
       "@guzzler/server/*": ["./packages/server/src/*.js"],
-      "@guzzler/server/test/*": ["./packages/server/test/*.js"]
+      "@guzzler/server/test/*": ["./packages/server/test/*.js"],
+      "@guzzler/webui": ["./packages/webui/src/index.js"],
+      "@guzzler/webui/*": ["./packages/webui/src/*.js"],
+      "@guzzler/webui/test/*": ["./packages/webui/test/*.js"],
     }
   }
 }

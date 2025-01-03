@@ -29,7 +29,8 @@ const config: UserConfig = {
     alias: {
       ...alias("cli"),
       ...alias("domain"),
-      ...alias("server")
+      ...alias("server"),
+      ...alias("webui"),
     }
   }
 }

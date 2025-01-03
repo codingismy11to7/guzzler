@@ -26,7 +26,6 @@
   },
   "dependencies": {
     "@effect/platform": "^0.72.0",
-    "@effect/sql": "^0.25.0",
     "effect": "^3.12.0"
   },
   "effect": {

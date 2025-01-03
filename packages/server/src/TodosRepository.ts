@@ -1,4 +1,4 @@
-import { OptionalTodoWithoutId, Todo, TodoId, TodoNotFound } from "@guzzler/domain/TodosApi";
+import { OptionalTodoWithoutId, Todo, TodoId, TodoNotFound } from "@guzzler/domain/AppApi";
 import { Effect, HashMap, Ref } from "effect";
 
 /**

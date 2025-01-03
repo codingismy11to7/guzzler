@@ -1,4 +1,4 @@
 /**
- * Todo schema & api
+ * App schema & api
  */
-export * as TodosApi from "./TodosApi.js";
+export * as AppApi from "./AppApi.js";
