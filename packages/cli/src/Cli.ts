@@ -16,7 +16,12 @@ const add = Command.make("add", { todo: todoArg }).pipe(
 
 const done = Command.make("done", { id: todoId }).pipe(
   Command.withDescription("Mark a todo as done"),
-  Command.withHandler(({ id }) => TodosClient.complete(id)),
+  Command.withHandler(({ id }) => TodosClient.edit(id, { done: true })),
+);
+
+const undo = Command.make("undo", { id: todoId }).pipe(
+  Command.withDescription("Mark a todo as incomplete"),
+  Command.withHandler(({ id }) => TodosClient.edit(id, { done: false })),
 );
 
 const list = Command.make("list").pipe(
@@ -29,7 +34,7 @@ const remove = Command.make("remove", { id: todoId }).pipe(
   Command.withHandler(({ id }) => TodosClient.remove(id)),
 );
 
-const command = Command.make("todo").pipe(Command.withSubcommands([add, done, list, remove]));
+const command = Command.make("todo").pipe(Command.withSubcommands([add, done, undo, list, remove]));
 
 export const cli = Command.run(command, {
   name: "Todo CLI",
