@@ -1,0 +1,12 @@
+name: Build
+description: Build release artifacts
+
+runs:
+  using: composite
+  steps:
+    - name: Do build
+      shell: bash
+      run: npm run build
+    - name: Check source state
+      shell: bash
+      run: npm run codegen && git add packages/*/src && git diff-index --cached HEAD --exit-code packages/*/src

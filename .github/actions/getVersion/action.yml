@@ -1,0 +1,12 @@
+name: Get Version
+description: Get server version for Docker
+outputs:
+  version:
+    description: The server version
+    value: version
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: echo "::set-output name=version::$(npx tsx scripts/printVersion.mts)"
