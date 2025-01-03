@@ -15,8 +15,11 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: write
+      packages: write
+      attestations: write
       id-token: write
       pull-requests: write
+
     steps:
       - uses: actions/checkout@v4
 
@@ -24,6 +27,7 @@ jobs:
         uses: ./.github/actions/setup
 
       - name: Create Release Pull Request or Publish
+        id: changesets
         uses: changesets/action@v1
         with:
           version: npm run changeset-version
@@ -32,4 +36,18 @@ jobs:
 
       - name: Publish
         if: steps.changesets.outputs.hasChangesets == 'false'
-        run: echo "now we should publish"
+        uses: ./.github/actions/dockerPublish
+        with:
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get version for tag
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        id: version
+        run: echo "VERSION=$(npx tsx scripts/printVersion.mts)" >> "$GITHUB_OUTPUT"
+
+      - name: Tag
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        uses: tvdias/github-tagger@v0.0.2
+        with:
+          repo-token: ${{ secrets.TAG_PAT }}
+          tag: v${{ steps.version.outputs.VERSION }}
