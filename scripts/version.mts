@@ -1,4 +1,3 @@
-import * as child_process from "node:child_process"
+import * as child_process from "node:child_process";
 
-child_process.spawnSync("npm", ["install"], { encoding: "utf8", stdio: "inherit" })
-
+child_process.spawnSync("npm", ["install"], { encoding: "utf8", stdio: "inherit" });
