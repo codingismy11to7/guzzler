@@ -1,0 +1,20 @@
+name: Setup
+description: Perform standard setup and install dependencies using pnpm.
+inputs:
+  node-version:
+    description: The version of Node.js to install
+    required: true
+    default: 20.18.1
+
+runs:
+  using: composite
+  steps:
+    - name: Install node
+      uses: actions/setup-node@v4
+      with:
+        cache: npm
+        node-version: ${{ inputs.node-version }}
+        cache-dependency-path: "package-lock.json"
+    - name: Install dependencies
+      shell: bash
+      run: npm ci

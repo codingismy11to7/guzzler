@@ -1,0 +1,13 @@
+diff --git a/node_modules/@changesets/assemble-release-plan/dist/changesets-assemble-release-plan.cjs.js b/node_modules/@changesets/assemble-release-plan/dist/changesets-assemble-release-plan.cjs.js
+index e32a5e5..009b24b 100644
+--- a/node_modules/@changesets/assemble-release-plan/dist/changesets-assemble-release-plan.cjs.js
++++ b/node_modules/@changesets/assemble-release-plan/dist/changesets-assemble-release-plan.cjs.js
+@@ -237,7 +237,7 @@ function determineDependents({
+             preInfo,
+             onlyUpdatePeerDependentsWhenOutOfRange: config.___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH.onlyUpdatePeerDependentsWhenOutOfRange
+           })) {
+-            type = "major";
++            type = "minor";
+           } else if ((!releases.has(dependent) || releases.get(dependent).type === "none") && (config.___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH.updateInternalDependents === "always" || !semverSatisfies__default["default"](incrementVersion(nextRelease, preInfo), versionRange))) {
+             switch (depType) {
+               case "dependencies":

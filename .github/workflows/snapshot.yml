@@ -1,0 +1,22 @@
+name: Snapshot
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  snapshot:
+    name: Snapshot
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        uses: ./.github/actions/setup
+      - name: Build package
+        run: npm run build
+      - name: Create snapshot
+        id: snapshot
+        run: npx pkg-pr-new@0.0.24 publish --comment=off ./packages/*
