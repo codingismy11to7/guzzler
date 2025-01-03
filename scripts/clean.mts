@@ -6,6 +6,6 @@ dirs.forEach((pkg) => {
   const files = [".tsbuildinfo", "build", "dist", "coverage"]
 
   files.forEach((file) => {
-    Fs.rmSync(`${pkg}/${file}`, { recursive: true, force: true }, () => {})
+    Fs.rmSync(`${pkg}/${file}`, { recursive: true, force: true }, )
   })
 })
