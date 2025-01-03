@@ -1,4 +1,4 @@
-import { Todo, TodoId, TodoNotFound } from "@guzzler/domain/TodosApi";
+import { OptionalTodoWithoutId, Todo, TodoId, TodoNotFound } from "@guzzler/domain/TodosApi";
 import { Effect, HashMap, Ref } from "effect";
 
 /**
@@ -24,9 +24,9 @@ export class TodosRepository extends Effect.Service<TodosRepository>()("api/Todo
         return [todo, HashMap.set(map, id, todo)];
       });
 
-    const complete = (id: number): Effect.Effect<Todo, TodoNotFound> =>
+    const edit = (id: number, updates: OptionalTodoWithoutId): Effect.Effect<Todo, TodoNotFound> =>
       getById(id).pipe(
-        Effect.map(todo => new Todo({ ...todo, done: true })),
+        Effect.map(todo => new Todo({ ...todo, ...updates })),
         Effect.tap(todo => Ref.update(todos, HashMap.set(todo.id, todo))),
       );
 
@@ -37,7 +37,7 @@ export class TodosRepository extends Effect.Service<TodosRepository>()("api/Todo
       getAll,
       getById,
       create,
-      complete,
+      edit,
       remove,
     } as const;
   }),

@@ -14,7 +14,7 @@ const TodosApiLive = HttpApiBuilder.group(TodosApi, "todos", handlers =>
       .handle("getAllTodos", () => todos.getAll)
       .handle("getTodoById", ({ path: { id } }) => todos.getById(id))
       .handle("createTodo", ({ payload: { text } }) => todos.create(text))
-      .handle("completeTodo", ({ path: { id } }) => todos.complete(id))
+      .handle("editTodo", ({ path: { id }, payload }) => todos.edit(id, payload))
       .handle("removeTodo", ({ path: { id } }) => todos.remove(id));
   }),
 );
