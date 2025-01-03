@@ -1,4 +1,4 @@
-import { HttpApi, HttpApiEndpoint, HttpApiGroup, HttpApiSchema } from "@effect/platform";
+import { HttpApi, HttpApiEndpoint, HttpApiGroup, OpenApi } from "@effect/platform";
 import { Schema } from "effect";
 
 /**
@@ -60,15 +60,11 @@ export class ServerError extends Schema.TaggedError<ServerError>()("ServerError"
 }) {}
 export class NotFound extends Schema.TaggedError<NotFound>()("NotFound", {}) {}
 
-class UI extends HttpApiGroup.make("ui").add(
-  HttpApiEndpoint.get("ui", "/*")
-    .addSuccess(
-      Schema.Uint8ArrayFromSelf.pipe(
-        HttpApiSchema.withEncoding({ kind: "Uint8Array", contentType: "application/octet-string" }),
-      ),
-    )
-    .addError(NotFound, { status: 404 })
-    .addError(ServerError, { status: 500 }),
-) {}
+class UI extends HttpApiGroup.make("ui")
+  .add(HttpApiEndpoint.get("ui", "/*").addError(NotFound, { status: 404 }).addError(ServerError, { status: 500 }))
+  .annotateContext(OpenApi.annotations({ exclude: true })) {}
 
-export class AppApi extends HttpApi.make("Guzzler").add(TodosApiGroup).add(UI) {}
+export class AppApi extends HttpApi.make("Guzzler")
+  .add(TodosApiGroup)
+  .add(UI)
+  .annotateContext(OpenApi.annotations({ title: "Guzzler" })) {}

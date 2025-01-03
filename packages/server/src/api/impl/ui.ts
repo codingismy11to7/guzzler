@@ -1,28 +1,18 @@
-import { HttpApiBuilder, HttpServerRequest, HttpServerResponse, Path } from "@effect/platform";
+import {
+  Headers,
+  HttpApiBuilder,
+  HttpBody,
+  HttpClient,
+  HttpClientRequest,
+  HttpServerRequest,
+  HttpServerResponse,
+  Path,
+} from "@effect/platform";
 import { AppApi, NotFound, ServerError } from "@guzzler/domain/AppApi";
-import { Effect, Layer, pipe } from "effect";
+import { Effect, pipe } from "effect";
 import { nanoid } from "nanoid";
-import { TodosRepository } from "./TodosRepository.js";
 
-/**
- * Todos API implementation
- */
-
-const TodosApiLive = HttpApiBuilder.group(AppApi, "todos", handlers =>
-  pipe(
-    TodosRepository,
-    Effect.andThen(todos =>
-      handlers
-        .handle("getAllTodos", () => todos.getAll)
-        .handle("getTodoById", ({ path: { id } }) => todos.getById(id))
-        .handle("createTodo", ({ payload: { text } }) => todos.create(text))
-        .handle("editTodo", ({ path: { id }, payload }) => todos.edit(id, payload))
-        .handle("removeTodo", ({ path: { id } }) => todos.remove(id)),
-    ),
-  ),
-);
-
-const UILive = HttpApiBuilder.group(AppApi, "ui", handlers =>
+export const UILive = HttpApiBuilder.group(AppApi, "ui", handlers =>
   handlers.handleRaw("ui", () =>
     Effect.Do.pipe(
       Effect.bind("req", () => HttpServerRequest.HttpServerRequest),
@@ -58,4 +48,22 @@ const UILive = HttpApiBuilder.group(AppApi, "ui", handlers =>
   ),
 );
 
-export const ApiLive = HttpApiBuilder.api(AppApi).pipe(Layer.provide(TodosApiLive), Layer.provide(UILive));
+export const UIDev = HttpApiBuilder.group(AppApi, "ui", handlers =>
+  handlers.handleRaw("ui", () =>
+    Effect.Do.pipe(
+      Effect.bind("req", () => HttpServerRequest.HttpServerRequest),
+      Effect.bind("httpClient", () => HttpClient.HttpClient),
+      Effect.tap(({ req }) => Effect.logDebug("Proxying request to", `http://localhost:3000${req.url}`)),
+      Effect.andThen(({ req, httpClient }) =>
+        httpClient.execute(
+          HttpClientRequest.make(req.method)(`http://localhost:3000${req.url}`, {
+            headers: Headers.remove(req.headers, "host"),
+            ...(req.method === "GET" || req.method === "HEAD" ? {} : { body: HttpBody.stream(req.stream) }),
+          }),
+        ),
+      ),
+      Effect.andThen(resp => HttpServerResponse.stream(resp.stream, resp)),
+      Effect.orDie,
+    ),
+  ),
+);
