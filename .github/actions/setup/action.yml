@@ -1,5 +1,5 @@
 name: Setup
-description: Perform standard setup and install dependencies using pnpm.
+description: Perform standard setup and install dependencies using npm.
 inputs:
   node-version:
     description: The version of Node.js to install
