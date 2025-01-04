@@ -10,7 +10,6 @@
     "directory": "packages/server"
   },
   "scripts": {
-    "codegen": "build-utils prepare-v2",
     "build": "npm run build-esm && npm run build-annotate && npm run build-cjs && build-utils pack-v2",
     "build-esm": "tsc -b tsconfig.build.json",
     "build-cjs": "babel build/esm --plugins @babel/transform-export-namespace-from --plugins @babel/transform-modules-commonjs --out-dir build/cjs --source-maps",
@@ -18,14 +17,17 @@
     "check": "tsc -b tsconfig.json",
     "test": "vitest --run",
     "test:watch": "vitest",
-    "coverage": "vitest --coverage",
-    "dev": "tsx src"
+    "coverage": "vitest run --coverage",
+    "coverage:watch": "vitest --coverage",
+    "dev": "cross-env NODE_ENV=development nodemon src/index.ts"
   },
   "dependencies": {
     "@effect/platform": "^0.72.0",
     "@effect/platform-node": "^0.68.0",
     "@guzzler/domain": "^0.0.0",
-    "effect": "^3.12.0"
+    "@npmcli/package-json": "^6.1.0",
+    "effect": "^3.12.0",
+    "nanoid": "^5.0.9"
   },
   "effect": {
     "generateExports": {
@@ -37,6 +39,21 @@
       "include": [
         "**/*.ts"
       ]
+    }
+  },
+  "devDependencies": {
+    "@types/npmcli__package-json": "^4.0.4",
+    "nodemon": "^3.1.9"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "**/test**",
+      "**/dist/**"
+    ],
+    "delay": 5000,
+
+    "execMap": {
+      "ts": "tsx"
     }
   }
 }

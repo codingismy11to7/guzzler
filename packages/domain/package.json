@@ -22,11 +22,11 @@
     "check": "tsc -b tsconfig.json",
     "test": "vitest --run",
     "test:watch": "vitest",
-    "coverage": "vitest --coverage"
+    "coverage": "vitest run --coverage",
+    "coverage:watch": "vitest --coverage"
   },
   "dependencies": {
     "@effect/platform": "^0.72.0",
-    "@effect/sql": "^0.25.0",
     "effect": "^3.12.0"
   },
   "effect": {

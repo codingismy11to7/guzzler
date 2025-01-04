@@ -181,21 +181,6 @@ export default tseslint.config([
       "no-unsafe-finally": "error",
       "no-unused-labels": "error",
       "no-var": "error",
-      "no-restricted-imports": [
-        "error",
-        {
-          "patterns": [
-            "**/shared/dist/**",
-            "**/schemas/dist/**",
-            "terminus-*/src/**",
-            "**/gulpfile.ts/**",
-            "../**/src/**",
-            "**/../dataengine-client",
-            "@mui/*/*/*",
-            "!@mui/material/test-utils/*"
-          ]
-        }
-      ],
       "object-shorthand": "warn",
       "one-var": [
         "error",

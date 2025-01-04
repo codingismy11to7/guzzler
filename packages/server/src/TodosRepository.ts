@@ -1,4 +1,4 @@
-import { OptionalTodoWithoutId, Todo, TodoId, TodoNotFound } from "@guzzler/domain/TodosApi";
+import { OptionalTodoWithoutId, Todo, TodoId, TodoNotFound } from "@guzzler/domain/AppApi";
 import { Effect, HashMap, Ref } from "effect";
 
 /**
@@ -19,7 +19,7 @@ export class TodosRepository extends Effect.Service<TodosRepository>()("api/Todo
 
     const create = (text: string): Effect.Effect<Todo> =>
       Ref.modify(todos, map => {
-        const id = TodoId.make(HashMap.reduce(map, 0, (max, todo) => (todo.id > max ? todo.id : max)));
+        const id = TodoId.make(1 + HashMap.reduce(map, -1, (max, todo) => (todo.id > max ? todo.id : max)));
         const todo = new Todo({ id, text, done: false });
         return [todo, HashMap.set(map, id, todo)];
       });
