@@ -1,6 +1,6 @@
 {
   "name": "@guzzler/webui",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@effect/platform-browser": "^0.51.0",
-    "@guzzler/domain": "^0.0.0",
+    "@guzzler/domain": "^0.0.1",
     "date-fns": "^4.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
