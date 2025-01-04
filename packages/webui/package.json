@@ -11,16 +11,19 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "check": "tsc -b",
+    "build": "tsc -b tsconfig.build.json && vite build",
+    "check": "tsc -b tsconfig.json",
     "lint": "eslint ",
     "preview": "vite preview",
     "test": "vitest --run",
     "test:watch": "vitest",
-    "coverage": "vitest --coverage"
+    "coverage": "vitest run --coverage",
+    "coverage:watch": "vitest --coverage"
   },
   "dependencies": {
+    "@effect/platform-browser": "^0.51.0",
     "@guzzler/domain": "^0.0.0",
+    "date-fns": "^4.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

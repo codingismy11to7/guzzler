@@ -10,7 +10,7 @@ import {
   Path,
 } from "@effect/platform";
 import { AppApi, NotFound, ServerError } from "@guzzler/domain/AppApi";
-import { Effect, pipe } from "effect";
+import { Cause, Effect, pipe } from "effect";
 import { nanoid } from "nanoid";
 import { AppConfig } from "../../../AppConfig.js";
 
@@ -66,7 +66,7 @@ export const UIDev = HttpApiBuilder.group(AppApi, "ui", handlers =>
         ),
       ),
       Effect.andThen(resp => HttpServerResponse.stream(resp.stream, resp)),
-      Effect.orDie,
+      Effect.catchAllCause(e => new ServerError({ message: `Error proxying: ${Cause.pretty(e)}` })),
       HttpMiddleware.withLoggerDisabled,
     ),
   ),

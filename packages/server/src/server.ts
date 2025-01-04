@@ -25,6 +25,10 @@ const HttpLive = HttpApiBuilder.serve(flow(HttpMiddleware.logger, HttpMiddleware
 pipe(
   logServiceStarting,
   Effect.andThen(logVersion),
+  Effect.andThen(() => {
+    process.on("uncaughtException", e => Effect.runSync(Effect.logError("uncaught exception", e)));
+    process.on("unhandledRejection", e => Effect.runSync(Effect.logError("unhandled rejection", e)));
+  }),
   Effect.andThen(
     pipe(
       AppConfig.logLevel,

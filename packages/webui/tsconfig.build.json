@@ -1,4 +1,8 @@
 {
+  "extends": "./tsconfig.src.json",
+  "references": [
+    { "path": "../domain/tsconfig.build.json" }
+  ],
   "compilerOptions": {
     "tsBuildInfoFile": ".tsbuildinfo/build.tsbuildinfo",
     "target": "ES2020",
@@ -21,11 +25,5 @@
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
-  },
-  "include": [
-    "src"
-  ],
-  "references": [
-    { "path": "../domain" }
-  ]
+  }
 }
