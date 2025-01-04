@@ -17,8 +17,9 @@
     "check": "tsc -b tsconfig.json",
     "test": "vitest --run",
     "test:watch": "vitest",
-    "coverage": "vitest --coverage",
-    "dev": "nodemon src/index.ts"
+    "coverage": "vitest run --coverage",
+    "coverage:watch": "vitest --coverage",
+    "dev": "cross-env NODE_ENV=development nodemon src/index.ts"
   },
   "dependencies": {
     "@effect/platform": "^0.72.0",
@@ -50,6 +51,7 @@
       "**/dist/**"
     ],
     "delay": 5000,
+
     "execMap": {
       "ts": "tsx"
     }

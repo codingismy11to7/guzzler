@@ -16,7 +16,8 @@
     "lint:fix": "eslint \"**/{src,test,examples,scripts,dtslint}/**/*.{ts,tsx,mts}\" --max-warnings=0 --fix",
     "test": "vitest --run",
     "test:watch": "vitest",
-    "coverage": "vitest --coverage",
+    "coverage": "vitest run --coverage",
+    "coverage:watch": "vitest --coverage",
     "changeset-version": "changeset version && tsx scripts/version.mts",
     "changeset-publish": "npm run build && TEST_DIST= npm run test && changeset publish",
     "postinstall": "patch-package"
@@ -41,6 +42,7 @@
     "@typescript-eslint/parser": "^8.12.2",
     "@vitest/coverage-v8": "^2.1.8",
     "babel-plugin-annotate-pure-calls": "^0.4.0",
+    "cross-env": "^7.0.3",
     "effect": "^3.12.0",
     "eslint": "^9.17.0",
     "eslint-import-resolver-typescript": "^3.6.3",

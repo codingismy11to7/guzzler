@@ -1,7 +1,7 @@
 import { HttpApiBuilder } from "@effect/platform";
 import { AppApi } from "@guzzler/domain/AppApi";
 import { Effect, pipe } from "effect";
-import { TodosRepository } from "../../TodosRepository.js";
+import { TodosRepository } from "../../../TodosRepository.js";
 
 /**
  * Todos API implementation

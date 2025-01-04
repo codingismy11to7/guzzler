@@ -4,6 +4,7 @@ import {
   HttpBody,
   HttpClient,
   HttpClientRequest,
+  HttpMiddleware,
   HttpServerRequest,
   HttpServerResponse,
   Path,
@@ -11,6 +12,7 @@ import {
 import { AppApi, NotFound, ServerError } from "@guzzler/domain/AppApi";
 import { Effect, pipe } from "effect";
 import { nanoid } from "nanoid";
+import { AppConfig } from "../../../AppConfig.js";
 
 export const UILive = HttpApiBuilder.group(AppApi, "ui", handlers =>
   handlers.handleRaw("ui", () =>
@@ -18,7 +20,7 @@ export const UILive = HttpApiBuilder.group(AppApi, "ui", handlers =>
       Effect.bind("req", () => HttpServerRequest.HttpServerRequest),
       Effect.let("requestedPath", ({ req }) => new URL(req.url, "http://localhost").pathname),
       Effect.bind("Path", () => Path.Path),
-      Effect.let("webuiDir", ({ Path }) => Path.resolve(import.meta.dirname, "..", "..", "webui", "dist")),
+      Effect.bind("webuiDir", () => AppConfig.webuiRoot),
       Effect.andThen(({ req, requestedPath, Path, webuiDir }) => {
         const withoutSlash = requestedPath.startsWith("/") ? requestedPath.slice(1) : requestedPath;
         const relPath = ["", "index.html"].includes(withoutSlash) ? "index.html" : withoutSlash;
@@ -44,6 +46,7 @@ export const UILive = HttpApiBuilder.group(AppApi, "ui", handlers =>
             ),
           );
       }),
+      HttpMiddleware.withLoggerDisabled,
     ),
   ),
 );
@@ -53,7 +56,7 @@ export const UIDev = HttpApiBuilder.group(AppApi, "ui", handlers =>
     Effect.Do.pipe(
       Effect.bind("req", () => HttpServerRequest.HttpServerRequest),
       Effect.bind("httpClient", () => HttpClient.HttpClient),
-      Effect.tap(({ req }) => Effect.logDebug("Proxying request to", `http://localhost:3000${req.url}`)),
+      Effect.tap(({ req }) => Effect.logTrace("Proxying request to", `http://localhost:3000${req.url}`)),
       Effect.andThen(({ req, httpClient }) =>
         httpClient.execute(
           HttpClientRequest.make(req.method)(`http://localhost:3000${req.url}`, {
@@ -64,6 +67,7 @@ export const UIDev = HttpApiBuilder.group(AppApi, "ui", handlers =>
       ),
       Effect.andThen(resp => HttpServerResponse.stream(resp.stream, resp)),
       Effect.orDie,
+      HttpMiddleware.withLoggerDisabled,
     ),
   ),
 );

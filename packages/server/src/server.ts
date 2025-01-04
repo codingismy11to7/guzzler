@@ -1,10 +1,11 @@
 import { HttpApiBuilder, HttpApiSwagger, HttpMiddleware, HttpServer } from "@effect/platform";
-import { NodeHttpClient, NodeHttpServer, NodeRuntime } from "@effect/platform-node";
-import { Effect, flow, Layer, Logger, LogLevel, pipe } from "effect";
+import { NodeHttpServer, NodeRuntime } from "@effect/platform-node";
+import { Effect, flow, Layer, Logger, pipe } from "effect";
 import { createServer } from "node:http";
 import { ApiLive } from "./api/index.js";
+import { AppConfig, AppConfigLive } from "./AppConfig.js";
+import { logServiceStarting, logVersion } from "./internal/util/logInfos.js";
 import { TodosRepository } from "./TodosRepository.js";
-import { logVersion } from "./util/version.js";
 
 /**
  * Server entrypoint
@@ -16,14 +17,20 @@ const HttpLive = HttpApiBuilder.serve(flow(HttpMiddleware.logger, HttpMiddleware
   Layer.provide(HttpApiBuilder.middlewareOpenApi({ path: "/swagger.json" })),
   Layer.provide(ApiLive),
   Layer.provide(TodosRepository.Default),
-  Layer.provide(NodeHttpClient.layer),
-  Layer.provide(NodeHttpServer.layer(createServer, { port: 8080 })),
+  Layer.provide(
+    Layer.unwrapEffect(AppConfig.port.pipe(Effect.andThen(port => NodeHttpServer.layer(createServer, { port })))),
+  ),
 );
 
 pipe(
-  Effect.logInfo("Service starting"),
+  logServiceStarting,
   Effect.andThen(logVersion),
-  Effect.andThen(Layer.launch(HttpLive)),
-  Logger.withMinimumLogLevel(LogLevel.Debug),
+  Effect.andThen(
+    pipe(
+      AppConfig.logLevel,
+      Effect.andThen(logLevel => Logger.withMinimumLogLevel(Layer.launch(HttpLive), logLevel)),
+    ),
+  ),
+  Effect.provide(AppConfigLive),
   NodeRuntime.runMain,
 );

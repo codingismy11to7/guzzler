@@ -26,7 +26,8 @@ COPY --from=build /app/packages/webui/dist /app/webui
 ENV NODE_ENV=production
 ENV PORT=8080
 ENV WEBUI_DIR=/app/webui
+ENV LOG_LEVEL=Info
 
 EXPOSE 8080
 
-CMD [ "node", "--experimental-default-type=module", "dist/dist/esm/index.js" ]
+CMD [ "node", "--experimental-default-type=module", "dist/dist/esm/server.js" ]
