@@ -2,7 +2,7 @@ import { HttpApiBuilder, HttpApiSwagger, HttpMiddleware, HttpServer } from "@eff
 import { NodeHttpServer, NodeRuntime } from "@effect/platform-node";
 import { Effect, flow, Layer, Logger, pipe } from "effect";
 import { createServer } from "node:http";
-import { ApiLive } from "./api/index.js";
+import { ApiLive } from "./ApiLive.js";
 import { AppConfig, AppConfigLive } from "./AppConfig.js";
 import { logServiceStarting, logVersion } from "./internal/util/logInfos.js";
 import { TodosRepository } from "./TodosRepository.js";
