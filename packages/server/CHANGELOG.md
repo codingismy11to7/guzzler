@@ -1,5 +1,11 @@
 # @guzzler/server
 
+## 0.0.3
+
+### Patch Changes
+
+- [#40](https://github.com/codingismy11to7/guzzler/pull/40) [`268f8c0`](https://github.com/codingismy11to7/guzzler/commit/268f8c071ae6381bc93293a195edf04ebe5ac7ea) Thanks [@codingismy11to7](https://github.com/codingismy11to7)! - unbreak the docker image
+
 ## 0.0.2
 
 ### Patch Changes
