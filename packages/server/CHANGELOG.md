@@ -1,5 +1,14 @@
 # @guzzler/server
 
+## 0.0.2
+
+### Patch Changes
+
+- [#38](https://github.com/codingismy11to7/guzzler/pull/38) [`b017ca2`](https://github.com/codingismy11to7/guzzler/commit/b017ca23bf8feb4cb933cca7836f4e82e7635d01) Thanks [@codingismy11to7](https://github.com/codingismy11to7)! - add google oauth2
+
+- Updated dependencies [[`b017ca2`](https://github.com/codingismy11to7/guzzler/commit/b017ca23bf8feb4cb933cca7836f4e82e7635d01)]:
+  - @guzzler/domain@0.0.2
+
 ## 0.0.1
 
 ### Patch Changes
