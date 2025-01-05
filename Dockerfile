@@ -21,6 +21,7 @@ COPY --from=build /app/packages/server/dist /app/dist
 COPY --from=build /app/packages/server/package.json /app
 COPY --from=build /app/packages/server/node_modules /app/dist/node_modules
 COPY --from=build /app/packages/domain/dist /app/packages/domain
+COPY --from=build /app/packages/domain/node_modules /app/packages/domain/node_modules
 COPY --from=build /app/packages/webui/dist /app/webui
 
 ENV NODE_ENV=production
