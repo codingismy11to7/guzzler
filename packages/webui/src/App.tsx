@@ -1,13 +1,16 @@
-import { AppApi } from "@guzzler/domain";
-import { Option } from "effect";
+import { AppApi, OAuthUserInfo } from "@guzzler/domain";
+import { Effect, Option } from "effect";
 import React, { useCallback, useEffect, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import "./App.css";
 import { runP } from "./bootstrap.js";
+import { SessionClient } from "./SessionClient.js";
 import { TodosClient } from "./TodosClient.js";
 
-const App = () => {
+type Props = Readonly<{ userInfo: OAuthUserInfo.OAuthUserInfo }>;
+
+const LoggedInApp = ({ userInfo }: Props) => {
   const [todos, setTodos] = useState<readonly AppApi.Todo[]>([]);
   const [count, setCount] = useState(0);
   const [text, setText] = useState("");
@@ -20,7 +23,7 @@ const App = () => {
 
   useEffect(() => {
     void fetchTodos();
-    const handle = setInterval(fetchTodos, 2000);
+    const handle = setInterval(fetchTodos, 20000);
     return () => clearInterval(handle);
   }, [fetchTodos]);
 
@@ -71,6 +74,9 @@ const App = () => {
         </a>
       </div>
       <h1>Vite + React</h1>
+      <div>
+        Hello, {userInfo.given_name} {userInfo.picture && <img src={userInfo.picture} alt="profile image" />}
+      </div>
       <div className="card">
         <button onClick={() => setCount(count => count + 1)}>count is {count}</button>
         <p>
@@ -91,6 +97,39 @@ const App = () => {
       </div>
       <p className="read-the-docs">Click on the Vite and React logos to learn more</p>
     </>
+  );
+};
+
+const LoginScreen = () => (
+  <div>
+    <a href="/auth/google">Google Login</a>
+  </div>
+);
+
+const App = () => {
+  const [userInfo, setUserInfo] = useState<OAuthUserInfo.OAuthUserInfo>();
+  const [error, setError] = useState<string>();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    runP(
+      SessionClient.getUserInfo.pipe(
+        Effect.catchTag("Unauthenticated", () => Effect.succeed(undefined)),
+        Effect.catchAll(e => Effect.sync(() => setError(e.message)).pipe(Effect.as(undefined))),
+      ),
+    )
+      .then(setUserInfo)
+      .finally(() => setLoading(false));
+  }, []);
+
+  return loading ? (
+    <div>Loading...</div>
+  ) : error ? (
+    <div>Error: {error}</div>
+  ) : userInfo ? (
+    <LoggedInApp userInfo={userInfo} />
+  ) : (
+    <LoginScreen />
   );
 };
 
