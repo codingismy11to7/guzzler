@@ -1,13 +1,8 @@
 {
   "extends": "../../tsconfig.base.json",
   "include": ["src"],
-  "references": [
-    { "path": "../domain" },
-    { "path": "../mongodb" },
-    { "path": "../utils" }
-  ],
   "compilerOptions": {
-    "types": ["node"],
+    "types": ["node", "vitest/importMeta"],
     "outDir": "build/src",
     "tsBuildInfoFile": ".tsbuildinfo/src.tsbuildinfo",
     "rootDir": "src"

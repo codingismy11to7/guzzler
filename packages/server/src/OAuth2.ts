@@ -9,6 +9,7 @@ import {
 } from "@effect/platform";
 import { Cookie, CookiesError } from "@effect/platform/Cookies";
 import { OAuthUserInfo, Token as TokenNS } from "@guzzler/domain";
+import { ObjectUtils } from "@guzzler/utils";
 import { createHash, randomBytes } from "crypto";
 import { Context, Data, Duration, Effect, Layer, Option, pipe, Redacted, Schema } from "effect";
 import { isFunction } from "effect/Function";
@@ -18,7 +19,7 @@ import { Draft, produce } from "immer";
 import * as url from "node:url";
 import { AuthorizationCode, ModuleOptions, TokenType } from "simple-oauth2";
 import { AppConfig } from "./AppConfig.js";
-import { removeField, stringQueryParam } from "./internal/util/misc.js";
+import { stringQueryParam } from "./internal/util/misc.js";
 import Token = TokenNS.Token;
 
 // port of https://github.com/fastify/fastify-oauth2
@@ -258,7 +259,7 @@ export const make = (inputOptions: Omit<OAuth2Options, "credentials">) =>
   Layer.effect(
     OAuth2,
     Effect.gen(function* () {
-      const { clientId, clientSecret } = yield* AppConfig.oauth;
+      const { clientId, clientSecret } = yield* AppConfig.googleOAuth;
       const options: OAuth2Options = {
         ...inputOptions,
         credentials: {
@@ -293,7 +294,7 @@ export const make = (inputOptions: Omit<OAuth2Options, "credentials">) =>
               !omitUserAgent
                 ? httpOpts
                 : produce(httpOpts, draft => {
-                    draft.headers = removeField(draft.headers, "User-Agent");
+                    draft.headers = ObjectUtils.removeField(draft.headers, "User-Agent");
                   }),
           );
 
@@ -351,7 +352,7 @@ export const make = (inputOptions: Omit<OAuth2Options, "credentials">) =>
               !omitUserAgent
                 ? httpOpts
                 : produce(httpOpts, draft => {
-                    draft.headers = removeField(draft.headers, "User-Agent");
+                    draft.headers = ObjectUtils.removeField(draft.headers, "User-Agent");
                   }),
           ),
           httpOpts => httpClient.execute(HttpClientRequest.make("GET")(getDiscoveryUri(issuer), httpOpts)),

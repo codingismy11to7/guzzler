@@ -3,7 +3,7 @@ import { NodeHttpClient } from "@effect/platform-node";
 import { AppApi } from "@guzzler/domain/AppApi";
 import { Effect, Layer, Option, pipe } from "effect";
 import { ParseError } from "effect/ParseResult";
-import { AppConfig } from "./AppConfig.js";
+import { AppConfig, ProdMode } from "./AppConfig.js";
 import { AuthApiLive } from "./internal/api/impl/auth.js";
 import { SessionApiLive } from "./internal/api/impl/session.js";
 import { TodosApiLive } from "./internal/api/impl/todos.js";
@@ -17,7 +17,7 @@ import { TodosRepository } from "./TodosRepository.js";
 export const ApiLive: Layer.Layer<
   HttpApi.Api,
   ExternalError | InvalidOptions | HttpClientError.HttpClientError | ParseError,
-  TodosRepository | AppConfig
+  TodosRepository | AppConfig | ProdMode
 > = HttpApiBuilder.api(AppApi).pipe(
   Layer.provide(TodosApiLive),
   Layer.provide(AuthApiLive),
@@ -42,7 +42,7 @@ export const ApiLive: Layer.Layer<
   Layer.provide(
     Layer.unwrapEffect(
       pipe(
-        AppConfig.prodMode,
+        ProdMode.isProdMode,
         Effect.andThen(prodMode => (prodMode ? UILive : UIDev.pipe(Layer.provide(NodeHttpClient.layerUndici)))),
       ),
     ),
