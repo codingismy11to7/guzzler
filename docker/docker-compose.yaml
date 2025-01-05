@@ -1,0 +1,33 @@
+networks:
+  default:
+
+secrets:
+  mongoKeyFile:
+    file: ./misc/keyFile.txt
+
+services:
+  mongo:
+    container_name: mongo
+    image: mongo:8
+    command: --auth --replSet rs0 --bind_ip mongo,localhost --keyFile /data/configdb/mongoKeyFile
+    user: mongodb:mongodb
+    ports:
+      - 27017:27017
+    secrets:
+      - mongoKeyFile
+    environment:
+      - GLIBC_TUNABLES=glibc.pthread.rseq=0
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME:-root}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD:-secret}
+      - MONGO_DATABASE=${MONGO_DATABASE:-guzzler}
+      - MONGO_USERNAME=${MONGO_USERNAME:-guzzler}
+      - MONGO_PASSWORD=${MONGO_PASSWORD:-Abc12345}
+
+    healthcheck:
+      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'mongo:27017'}]}) }" | mongosh --quiet mongodb://root:secret@localhost/admin
+      interval: 10s
+      timeout: 30s
+      start_period: 5s
+      retries: 30
+    volumes:
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro

@@ -1,13 +1,17 @@
 {
-  "name": "@guzzler/server",
-  "version": "0.0.3",
+  "name": "@guzzler/mongodb",
+  "version": "0.0.0",
   "type": "module",
   "license": "MIT",
-  "description": "The server template",
+  "description": "The mongodb template",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/codingismy11to7/guzzler.git",
-    "directory": "packages/server"
+    "directory": "packages/mongodb"
+  },
+  "publishConfig": {
+    "access": "public",
+    "directory": "dist"
   },
   "scripts": {
     "codegen": "build-utils prepare-v2",
@@ -19,21 +23,14 @@
     "test": "vitest --run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
-    "coverage:watch": "vitest --coverage",
-    "dev": "cross-env NODE_ENV=development nodemon src/index.ts"
+    "coverage:watch": "vitest --coverage"
   },
   "dependencies": {
-    "@effect/platform": "^0.72.0",
+    "@effect/platform": "^0.72.1",
     "@effect/platform-node": "^0.68.1",
-    "@guzzler/domain": "^0.0.2",
-    "@guzzler/mongodb": "^0.0.0",
     "@guzzler/utils": "^0.0.0",
-    "@npmcli/package-json": "^6.1.0",
-    "dotenv": "^16.4.7",
-    "effect": "^3.12.1",
-    "immer": "^10.1.1",
-    "nanoid": "^5.0.9",
-    "simple-oauth2": "^5.1.0"
+    "effect": "^3.12.0",
+    "mongodb": "^6.12.0"
   },
   "effect": {
     "generateExports": {
@@ -45,21 +42,6 @@
       "include": [
         "**/*.ts"
       ]
-    }
-  },
-  "devDependencies": {
-    "@types/npmcli__package-json": "^4.0.4",
-    "@types/simple-oauth2": "^5.0.7",
-    "nodemon": "^3.1.9"
-  },
-  "nodemonConfig": {
-    "ignore": [
-      "**/test**",
-      "**/dist/**"
-    ],
-    "delay": 5000,
-    "execMap": {
-      "ts": "tsx"
     }
   }
 }

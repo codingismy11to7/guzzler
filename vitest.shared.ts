@@ -34,6 +34,7 @@ const config: ViteUserConfig = {
     alias: {
       ...alias("cli"),
       ...alias("domain"),
+      ...alias("mongodb"),
       ...alias("server"),
       ...alias("webui")
     }

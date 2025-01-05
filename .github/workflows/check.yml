@@ -24,7 +24,7 @@ jobs:
       - run: npm run check
       - name: Check source state
         shell: bash
-        run: npm run codegen && git add packages/*/src && git diff-index --cached HEAD --exit-code packages/*/src
+        run: npm run lint:fix && git add packages/*/src && git diff-index --cached HEAD --exit-code packages/*/src
 
   lint:
     name: Lint
@@ -37,14 +37,14 @@ jobs:
       - run: npm run lint
 
   test:
-    name: Test
+    name: Build Docker image
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
         uses: ./.github/actions/setup
-      - run: npm run test
-        env:
-          NODE_OPTIONS: --max_old_space_size=8192
-
+      - uses: ./.github/actions/dockerPublish
+        with:
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          push: false

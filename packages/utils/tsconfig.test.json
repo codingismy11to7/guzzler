@@ -2,10 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "include": ["test"],
   "references": [
-    { "path": "tsconfig.src.json" },
-    { "path": "../domain" },
-    { "path": "../mongodb" },
-    { "path": "../utils" }
+    { "path": "tsconfig.src.json" }
   ],
   "compilerOptions": {
     "types": ["node"],

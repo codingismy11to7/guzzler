@@ -3,7 +3,7 @@ import { AppApi, ServerError } from "@guzzler/domain/AppApi";
 import { Session } from "@guzzler/domain/Session";
 import { Effect, pipe, Redacted } from "effect";
 import { nanoid } from "nanoid";
-import { AppConfig } from "../../../AppConfig.js";
+import { AppConfig, ProdMode } from "../../../AppConfig.js";
 import { OAuth2 } from "../../../OAuth2.js";
 import { SessionStorage } from "../../../SessionStorage.js";
 
@@ -12,8 +12,8 @@ export const SessionCookieName = "guzzler-session-id";
 export const AuthApiLive = HttpApiBuilder.group(AppApi, "auth", handlers =>
   Effect.gen(function* () {
     const { addSession } = yield* SessionStorage;
-    const { userinfoUrl } = yield* AppConfig.oauth;
-    const prodMode = yield* AppConfig.prodMode;
+    const { userinfoUrl } = yield* AppConfig.googleOAuth;
+    const { isProdMode } = yield* ProdMode;
     const { startRedirectHandler, getAccessTokenFromAuthorizationCodeFlow, fetchUserInfo } = yield* OAuth2;
 
     return handlers
@@ -34,7 +34,7 @@ export const AuthApiLive = HttpApiBuilder.group(AppApi, "auth", handlers =>
                     ...modifyReply,
                     HttpServerResponse.setCookie(SessionCookieName, session.id, {
                       httpOnly: true,
-                      secure: prodMode,
+                      secure: isProdMode,
                       maxAge: "30 days",
                       sameSite: "lax",
                       path: "/",

@@ -4,10 +4,10 @@ WORKDIR /app
 
 FROM base as build
 
-COPY .prettierrc.json eslint.* package.json package-lock.json setupTests.ts tsconfig.* vitest.* ./
-COPY packages/ ./packages/
-COPY patches/ ./patches/
-COPY scripts/ ./scripts/
+COPY ../.prettierrc.json eslint.* package.json package-lock.json setupTests.ts tsconfig.* vitest.* ./
+COPY ../packages ./packages/
+COPY ../patches ./patches/
+COPY ../scripts ./scripts/
 RUN npm i
 RUN npm run build
 RUN NODE_OPTIONS=--max_old_space_size=8192 npm run test
@@ -22,14 +22,16 @@ COPY --from=build /app/packages/server/package.json /app
 COPY --from=build /app/packages/server/node_modules /app/dist/node_modules
 COPY --from=build /app/packages/domain/dist /app/packages/domain
 COPY --from=build /app/packages/domain/node_modules /app/packages/domain/node_modules
+COPY --from=build /app/packages/mongodb/dist /app/packages/mongodb
 COPY --from=build /app/packages/webui/dist /app/webui
 
 ENV NODE_ENV=production
 ENV PORT=8080
 ENV WEBUI_DIR=/app/webui
 ENV LOG_LEVEL=Info
-ENV OAUTH_CLIENT_ID=<CLIENT_ID>
-ENV OAUTH_CLIENT_SECRET=<CLIENT_SECRET>
+
+ENV MONGO_URL=mongodb://localhost:27017
+ENV MONGO_DATABASE=guzzler
 
 EXPOSE 8080
 
