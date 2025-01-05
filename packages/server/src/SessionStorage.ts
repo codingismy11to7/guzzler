@@ -25,7 +25,7 @@ export class SessionStorage extends Effect.Service<SessionStorage>()("SessionSto
         Effect.andThen(Effect.fromNullable(s.token.refresh_token)),
         Effect.andThen(
           getNewAccessTokenUsingRefreshToken(s.token, {
-            onlyIfExpiringWithin: appConfig.oauth.tokenExpirationWindow,
+            onlyIfExpiringWithin: appConfig.googleOAuth.tokenExpirationWindow,
           }),
         ),
         Effect.andThen(accessToken => ({ ...s, accessToken })),

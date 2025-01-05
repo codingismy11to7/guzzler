@@ -1,9 +1,8 @@
-import PkgJson from "@npmcli/package-json";
 import { Effect, pipe } from "effect";
-import { AppConfig } from "../../AppConfig.js";
+import { ProdMode, ServerInfo } from "../../AppConfig.js";
 
 export const logServiceStarting = pipe(
-  AppConfig.prodMode,
+  ProdMode.isProdMode,
   Effect.andThen(prodMode =>
     pipe(
       Effect.logInfo(`Service starting in ${prodMode ? "production" : "development"} mode`),
@@ -18,6 +17,6 @@ export const logServiceStarting = pipe(
 );
 
 export const logVersion = pipe(
-  Effect.promise(() => PkgJson.load(".", { create: false })),
-  Effect.andThen(pkgJson => Effect.logInfo(`Version ${pkgJson.content.version}`)),
+  ServerInfo.version,
+  Effect.andThen(version => Effect.logInfo(`Version ${version}`)),
 );
