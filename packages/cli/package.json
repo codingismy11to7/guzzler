@@ -28,7 +28,7 @@
   "dependencies": {
     "@effect/cli": "^0.51.0",
     "@effect/platform": "^0.72.0",
-    "@effect/platform-node": "^0.68.0",
+    "@effect/platform-node": "^0.68.1",
     "@guzzler/domain": "^0.0.2",
     "effect": "^3.12.1"
   },

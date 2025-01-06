@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@effect/platform": "^0.72.0",
-    "@effect/platform-node": "^0.68.0",
+    "@effect/platform-node": "^0.68.1",
     "@guzzler/domain": "^0.0.2",
     "@npmcli/package-json": "^6.1.0",
     "effect": "^3.12.1",
