@@ -23,7 +23,7 @@
     "dev": "cross-env NODE_ENV=development nodemon src/index.ts"
   },
   "dependencies": {
-    "@effect/platform": "^0.72.0",
+    "@effect/platform": "^0.72.1",
     "@effect/platform-node": "^0.68.0",
     "@guzzler/domain": "^0.0.2",
     "@npmcli/package-json": "^6.1.0",
