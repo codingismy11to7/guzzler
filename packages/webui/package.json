@@ -21,7 +21,7 @@
     "coverage:watch": "vitest --coverage"
   },
   "dependencies": {
-    "@effect/platform-browser": "^0.51.0",
+    "@effect/platform-browser": "^0.51.1",
     "@guzzler/domain": "^0.0.2",
     "date-fns": "^4.1.0",
     "react": "^19.0.0",
