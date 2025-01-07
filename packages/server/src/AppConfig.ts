@@ -1,5 +1,6 @@
 import PkgJson from "@npmcli/package-json";
-import { Config, Effect, Layer, Logger, LogLevel, pipe, Redacted, Schema } from "effect";
+import { Config, Effect, Layer, Logger, Option, pipe, Schema } from "effect";
+import { readFileSync } from "fs";
 
 const prodModeConf = pipe(
   Schema.Config("NODE_ENV", Schema.NonEmptyTrimmedString),
@@ -23,9 +24,23 @@ export class ServerInfo extends Effect.Service<ServerInfo>()("ServerInfo", {
   ),
 }) {}
 
+const redacted = (name: string) =>
+  pipe(
+    Config.string(`${name}_FILE`).pipe(
+      Config.option,
+      Config.mapAttempt(Option.getOrThrow),
+      Config.map(fName =>
+        // configs are synchronous, so have to go to native node
+        readFileSync(fName, { encoding: "utf8" }).trim(),
+      ),
+    ),
+    Config.orElse(() => Config.string(name)),
+    c => Config.redacted(c),
+  );
+
 const OAuthConfig = Config.all({
-  clientId: Config.redacted("OAUTH_CLIENT_ID"),
-  clientSecret: Config.redacted("OAUTH_CLIENT_SECRET"),
+  clientId: redacted("OAUTH_CLIENT_ID"),
+  clientSecret: redacted("OAUTH_CLIENT_SECRET"),
   tokenExpirationWindow: Config.duration("OAUTH_TOKEN_EXPIRATION_WINDOW").pipe(
     Config.withDescription("Try to refresh the token this much time before we think it's actually going to expire."),
     Config.withDefault("30 seconds"),
@@ -38,20 +53,18 @@ const OAuthConfig = Config.all({
 const MongoConfig = Config.all({
   url: Config.string("MONGO_URL"),
   dbName: Config.string("MONGO_DATABASE"),
-  username: Config.redacted("MONGO_USERNAME"),
-  password: Config.redacted("MONGO_PASSWORD"),
+  username: redacted("MONGO_USERNAME"),
+  password: redacted("MONGO_PASSWORD"),
 });
 
-const DevAndProdConfig = {
-  googleOAuth: OAuthConfig,
-} as const;
-
-const ProdConfig = {
+const ConfigSchema = {
   port: Schema.Config("PORT", Schema.NumberFromString.pipe(Schema.filter(i => i >= 0 || "port cannot be negative"))),
   logLevel: Config.logLevel("LOG_LEVEL"),
-  webuiRoot: Schema.Config("WEBUI_DIR", Schema.NonEmptyTrimmedString),
+  webuiRoot: Schema.Config("WEBUI_DIR", Schema.NonEmptyTrimmedString).pipe(c =>
+    Effect.runSync(prodModeConf) ? c : Config.withDefault(c, ""),
+  ),
+  googleOAuth: OAuthConfig,
   mongo: MongoConfig,
-  ...DevAndProdConfig,
 } as const;
 
 /**
@@ -59,7 +72,7 @@ const ProdConfig = {
  */
 export class AppConfig extends Effect.Service<AppConfig>()("AppConfig", {
   accessors: true,
-  effect: Effect.all(ProdConfig, { concurrency: "unbounded" }),
+  effect: Effect.all(ConfigSchema, { concurrency: "unbounded" }),
 }) {
   static readonly withMinimumLogLevel = <A, E, R>(e: Effect.Effect<A, E, R>) =>
     pipe(
@@ -68,28 +81,10 @@ export class AppConfig extends Effect.Service<AppConfig>()("AppConfig", {
     );
 }
 
-export const AppConfigLive = Layer.unwrapEffect(
-  Effect.if(ProdMode.isProdMode, {
-    onTrue: () => Effect.succeed(AppConfig.Default),
-    onFalse: () =>
-      pipe(
-        Effect.all(DevAndProdConfig),
-        Effect.andThen(devAndProd =>
-          Layer.sync(AppConfig, () =>
-            AppConfig.make({
-              port: 8080,
-              logLevel: LogLevel.Debug,
-              webuiRoot: "",
-              mongo: {
-                url: "mongodb://localhost",
-                dbName: "guzzler",
-                username: Redacted.make("guzzler"),
-                password: Redacted.make("Abc12345"),
-              },
-              ...devAndProd,
-            }),
-          ),
-        ),
-      ),
-  }),
+export const AppConfigLive = Layer.effect(
+  AppConfig,
+  pipe(
+    Effect.all(ConfigSchema),
+    Effect.andThen(conf => AppConfig.make(conf)),
+  ),
 ).pipe(Layer.provideMerge(ProdMode.Default), Layer.provideMerge(ServerInfo.Default));
