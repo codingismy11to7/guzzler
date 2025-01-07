@@ -1,5 +1,12 @@
 # @guzzler/cli
 
+## 0.0.3
+
+### Patch Changes
+
+- Updated dependencies [[`3b5a517`](https://github.com/codingismy11to7/guzzler/commit/3b5a51750b1521ac8f58cac85bae8739d6c30150)]:
+  - @guzzler/domain@0.0.3
+
 ## 0.0.2
 
 ### Patch Changes
