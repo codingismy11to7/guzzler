@@ -1,6 +1,6 @@
 {
   "name": "@guzzler/server",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "type": "module",
   "license": "MIT",
   "description": "The server template",
@@ -25,8 +25,8 @@
   "dependencies": {
     "@effect/platform": "^0.72.0",
     "@effect/platform-node": "^0.68.1",
-    "@guzzler/domain": "^0.0.3",
-    "@guzzler/mongodb": "^0.0.1",
+    "@guzzler/domain": "^0.0.4",
+    "@guzzler/mongodb": "^0.0.2",
     "@guzzler/utils": "^0.0.1",
     "@npmcli/package-json": "^6.1.0",
     "dotenv": "^16.4.7",
