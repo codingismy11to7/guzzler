@@ -61,16 +61,17 @@ export class MongoMigrationHandler extends Effect.Service<MongoMigrationHandler>
 
         const outstanding = Chunk.unsafeFromArray(migrations).pipe(Chunk.drop(appState.migrationVersion));
 
-        yield* Chunk.isEmpty(outstanding)
-          ? Effect.logInfo("No migrations to run")
-          : Effect.forEach(outstanding, handleMigration, { discard: true });
+        if (Chunk.isEmpty(outstanding)) yield* Effect.logInfo("No migrations to run");
+        else {
+          yield* Effect.forEach(outstanding, handleMigration, { discard: true });
 
-        yield* Effect.logInfo("Saving app state...");
+          yield* Effect.logInfo("Saving app state...");
 
-        yield* appStateColl.upsert(
-          { _id: Model.AppStateDocId },
-          { ...appState, migrationVersion: migrations.length + appState.migrationVersion },
-        );
+          yield* appStateColl.upsert(
+            { _id: Model.AppStateDocId },
+            { ...appState, migrationVersion: migrations.length },
+          );
+        }
 
         yield* Effect.logInfo("Complete");
       });

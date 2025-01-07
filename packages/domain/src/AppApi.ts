@@ -3,7 +3,6 @@ import { Schema } from "effect";
 import { nanoid } from "nanoid";
 import { AuthenticationMiddleware } from "./Authentication.js";
 import { OAuthUserInfo } from "./OAuthUserInfo.js";
-import { SessionId } from "./Session.js";
 
 /**
  * App schema & api

@@ -16,56 +16,58 @@ import { AppConfig } from "../../../AppConfig.js";
 
 export const UILive = HttpApiBuilder.group(AppApi, "ui", handlers =>
   handlers.handleRaw("ui", () =>
-    Effect.Do.pipe(
-      Effect.bind("req", () => HttpServerRequest.HttpServerRequest),
-      Effect.let("requestedPath", ({ req }) => new URL(req.url, "http://localhost").pathname),
-      Effect.bind("Path", () => Path.Path),
-      Effect.bind("webuiDir", () => AppConfig.webuiRoot),
-      Effect.andThen(({ req, requestedPath, Path, webuiDir }) => {
-        const withoutSlash = requestedPath.startsWith("/") ? requestedPath.slice(1) : requestedPath;
-        const relPath = ["", "index.html"].includes(withoutSlash) ? "index.html" : withoutSlash;
-        const fullPath = Path.resolve(webuiDir, relPath);
+    Effect.gen(function* () {
+      const req = yield* HttpServerRequest.HttpServerRequest;
+      const requestedPath = new URL(req.url, "http://localhost").pathname;
+      const path = yield* Path.Path;
+      const webuiDir = yield* AppConfig.webuiRoot.pipe(Effect.andThen(d => path.resolve(".", d)));
 
-        const hiddenError = (e: unknown) =>
-          pipe(
-            Effect.sync(() => nanoid()),
-            Effect.tap(id => Effect.logError(`Error serving url '${req.url}', error id: ${id}`, e)),
-            Effect.andThen(id => new ServerError({ message: `Unexpected server error. Error ID: ${id}` })),
-          );
+      const withoutSlash = requestedPath.startsWith("/") ? requestedPath.slice(1) : requestedPath;
+      const relPath = ["", "index.html"].includes(withoutSlash) ? "index.html" : withoutSlash;
+      const fullPath = path.resolve(webuiDir, relPath);
 
-        if (!fullPath.startsWith(webuiDir)) return Effect.dieMessage("forbidden");
-        else
-          return pipe(
-            HttpServerResponse.file(fullPath).pipe(
-              Effect.catchTags({
-                SystemError: e =>
-                  e.module === "FileSystem" && e.reason === "NotFound" ? new NotFound() : hiddenError(e),
+      const hiddenError = (e: unknown) =>
+        pipe(
+          Effect.sync(() => nanoid()),
+          Effect.tap(id => Effect.logError(`Error serving url '${req.url}', error id: ${id}`, e)),
+          Effect.andThen(id => new ServerError({ message: `Unexpected server error. Error ID: ${id}` })),
+        );
 
-                BadArgument: hiddenError,
-              }),
-            ),
-          );
-      }),
-      HttpMiddleware.withLoggerDisabled,
-    ),
+      if (!fullPath.startsWith(webuiDir)) return yield* new NotFound();
+      else
+        return yield* pipe(
+          HttpServerResponse.file(fullPath).pipe(
+            Effect.catchTags({
+              SystemError: e =>
+                e.module === "FileSystem" && e.reason === "NotFound"
+                  ? Effect.succeed(HttpServerResponse.redirect("/", { status: 303 }))
+                  : hiddenError(e),
+
+              BadArgument: hiddenError,
+            }),
+          ),
+        );
+    }).pipe(HttpMiddleware.withLoggerDisabled),
   ),
 );
 
 export const UIDev = HttpApiBuilder.group(AppApi, "ui", handlers =>
   handlers.handleRaw("ui", () =>
-    Effect.Do.pipe(
-      Effect.bind("req", () => HttpServerRequest.HttpServerRequest),
-      Effect.bind("httpClient", () => HttpClient.HttpClient),
-      Effect.tap(({ req }) => Effect.logTrace("Proxying request to", `http://localhost:3000${req.url}`)),
-      Effect.andThen(({ req, httpClient }) =>
-        httpClient.execute(
-          HttpClientRequest.make(req.method)(`http://localhost:3000${req.url}`, {
-            headers: Headers.remove(req.headers, "host"),
-            ...(req.method === "GET" || req.method === "HEAD" ? {} : { body: HttpBody.stream(req.stream) }),
-          }),
-        ),
-      ),
-      Effect.andThen(resp => HttpServerResponse.stream(resp.stream, resp)),
+    Effect.gen(function* () {
+      const req = yield* HttpServerRequest.HttpServerRequest;
+      const httpClient = yield* HttpClient.HttpClient;
+
+      yield* Effect.logTrace("Proxying request to", `http://localhost:3000${req.url}`);
+
+      const resp = yield* httpClient.execute(
+        HttpClientRequest.make(req.method)(`http://localhost:3000${req.url}`, {
+          headers: Headers.remove(req.headers, "host"),
+          ...(req.method === "GET" || req.method === "HEAD" ? {} : { body: HttpBody.stream(req.stream) }),
+        }),
+      );
+
+      return HttpServerResponse.stream(resp.stream, resp);
+    }).pipe(
       Effect.catchAllCause(e => new ServerError({ message: `Error proxying: ${Cause.pretty(e)}` })),
       HttpMiddleware.withLoggerDisabled,
     ),

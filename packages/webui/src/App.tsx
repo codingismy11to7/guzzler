@@ -36,12 +36,12 @@ const LoggedInApp = ({ userInfo }: Props) => {
   );
 
   const setDone = useCallback(
-    (id: number, done: boolean) => runP(TodosClient.edit(id, { done })).then(fetchTodos),
+    (id: AppApi.TodoId, done: boolean) => runP(TodosClient.edit(id, { done })).then(fetchTodos),
     [fetchTodos],
   );
 
   const doDelete = useCallback(
-    (id: number) => {
+    (id: AppApi.TodoId) => {
       if (window.confirm("Are you sure?")) {
         void runP(TodosClient.remove(id)).then(fetchTodos);
       }
@@ -50,13 +50,13 @@ const LoggedInApp = ({ userInfo }: Props) => {
   );
 
   const view = useCallback(
-    (id: number) =>
+    (id: AppApi.TodoId) =>
       void runP(TodosClient.fetch(id)).then(
         Option.match({
           onNone: () => window.alert("it got deleted? refresh?"),
           // this isn't true, maybe we delete this lint? but this is junk code anyway
-          // eslint-disable-next-line @typescript-eslint/no-base-to-string
-          onSome: todo => window.alert(`got todo ${todo}`),
+
+          onSome: todo => window.alert(`got todo ${JSON.stringify(todo)}`),
         }),
       ),
 

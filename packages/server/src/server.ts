@@ -17,8 +17,20 @@ if (process.argv.includes("--mostMinimalSmokeTest")) process.exit(0);
 const HttpLive = HttpApiBuilder.serve(
   flow(HttpMiddleware.logger, HttpMiddleware.cors(), HttpMiddleware.xForwardedHeaders),
 ).pipe(
-  Layer.provide(HttpApiSwagger.layer({ path: "/swagger" })),
-  Layer.provide(HttpApiBuilder.middlewareOpenApi({ path: "/swagger.json" })),
+  layer =>
+    pipe(
+      AppConfig.serveSwaggerUiAt,
+      Effect.andThen(path => Layer.provide(layer, HttpApiSwagger.layer({ path }))),
+      Effect.catchTag("NoSuchElementException", () => Effect.succeed(layer)),
+      Layer.unwrapEffect,
+    ),
+  layer =>
+    pipe(
+      AppConfig.serveOpenapiAt,
+      Effect.andThen(path => Layer.provide(layer, HttpApiBuilder.middlewareOpenApi({ path }))),
+      Effect.catchTag("NoSuchElementException", () => Effect.succeed(layer)),
+      Layer.unwrapEffect,
+    ),
   Layer.provide(ApiLive),
   Layer.provide(TodosRepository.Default),
   Layer.provide(

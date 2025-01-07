@@ -1,5 +1,5 @@
 import { HttpApiClient } from "@effect/platform";
-import { OptionalTodoWithoutId, AppApi } from "@guzzler/domain/AppApi";
+import { OptionalTodoWithoutId, AppApi, TodoId } from "@guzzler/domain/AppApi";
 import { Effect } from "effect";
 
 /**
@@ -20,13 +20,13 @@ export class TodosClient extends Effect.Service<TodosClient>()("cli/TodosClient"
 
     const list = client.todos.getAllTodos().pipe(Effect.flatMap(todos => Effect.logInfo(todos)));
 
-    const edit = (id: number, payload: OptionalTodoWithoutId) =>
+    const edit = (id: TodoId, payload: OptionalTodoWithoutId) =>
       client.todos.editTodo({ path: { id }, payload }).pipe(
         Effect.flatMap(todo => Effect.logInfo("Edited todo: ", todo)),
         Effect.catchTag("TodoNotFound", () => Effect.logError(`Failed to find todo with id: ${id}`)),
       );
 
-    const remove = (id: number) =>
+    const remove = (id: TodoId) =>
       client.todos.removeTodo({ path: { id } }).pipe(
         Effect.flatMap(() => Effect.logInfo(`Deleted todo with id: ${id}`)),
         Effect.catchTag("TodoNotFound", () => Effect.logError(`Failed to find todo with id: ${id}`)),

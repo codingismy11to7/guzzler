@@ -1,4 +1,5 @@
 import { Args, Command, Options } from "@effect/cli";
+import { TodoId } from "@guzzler/domain/AppApi";
 import { TodosClient } from "./TodosClient.js";
 
 /**
@@ -7,7 +8,7 @@ import { TodosClient } from "./TodosClient.js";
 
 const todoArg = Args.text({ name: "todo" }).pipe(Args.withDescription("The message associated with a todo"));
 
-const todoId = Options.integer("id").pipe(Options.withDescription("The identifier of the todo"));
+const todoId = Options.text("id").pipe(Options.map(TodoId.make), Options.withDescription("The identifier of the todo"));
 
 const add = Command.make("add", { todo: todoArg }).pipe(
   Command.withDescription("Add a new todo"),
