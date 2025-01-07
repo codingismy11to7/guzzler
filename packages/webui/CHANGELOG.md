@@ -1,5 +1,14 @@
 # @guzzler/webui
 
+## 0.0.3
+
+### Patch Changes
+
+- [#56](https://github.com/codingismy11to7/guzzler/pull/56) [`3b5a517`](https://github.com/codingismy11to7/guzzler/commit/3b5a51750b1521ac8f58cac85bae8739d6c30150) Thanks [@codingismy11to7](https://github.com/codingismy11to7)! - persist sessions in db
+
+- Updated dependencies [[`3b5a517`](https://github.com/codingismy11to7/guzzler/commit/3b5a51750b1521ac8f58cac85bae8739d6c30150)]:
+  - @guzzler/domain@0.0.3
+
 ## 0.0.2
 
 ### Patch Changes
