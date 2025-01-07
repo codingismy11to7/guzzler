@@ -73,9 +73,10 @@ const LoggedInApp = ({ userInfo }: Props) => {
           <img src={reactLogo} className="logo react" alt="React logo" />
         </a>
       </div>
-      <h1>Vite + React</h1>
+      <div>Hello, {userInfo.given_name}</div>
+      <div>{userInfo.picture && <img src={userInfo.picture} alt="profile image" />}</div>
       <div>
-        Hello, {userInfo.given_name} {userInfo.picture && <img src={userInfo.picture} alt="profile image" />}
+        <a href="/session/logout">Logout</a>
       </div>
       <div className="card">
         <button onClick={() => setCount(count => count + 1)}>count is {count}</button>

@@ -1,6 +1,6 @@
-import { Mongo } from "@guzzler/mongodb";
-import { MongoCollection, MongoMigrations as MM } from "@guzzler/mongodb";
-import { Effect, Layer, pipe, Redacted, Schema } from "effect";
+import { Session } from "@guzzler/domain/Session";
+import { Mongo, MongoCollection, MongoMigrations as MM } from "@guzzler/mongodb";
+import { Context, Effect, Layer, pipe, Redacted, Schema } from "effect";
 import { AppConfig, ProdMode } from "../AppConfig.js";
 
 const SS = Schema.Struct({
@@ -12,27 +12,25 @@ const SSE = Schema.Struct({
   c: Schema.Number,
 });
 
-export class CollectionRegistryService extends Effect.Service<CollectionRegistryService>()(
-  "CollectionRegistryService",
-  {
-    accessors: true,
-    effect: Effect.gen(function* () {
-      const mcl = yield* MongoCollection.MongoCollectionLayer;
+const collections = Effect.gen(function* () {
+  const mcl = yield* MongoCollection.MongoCollectionLayer;
 
-      const collections = mcl.createCollectionRegistry(c =>
-        pipe({}, c.collection("abc", SS), c.collection("def", SSE)),
-      );
+  return mcl.createCollectionRegistry(c =>
+    pipe({}, c.collection("sessions", Session), c.collection("abc", SS), c.collection("def", SSE)),
+  );
+});
 
-      return { collections };
-    }),
-  },
-) {}
-export type CollectionRegistry = Effect.Effect.Success<typeof CollectionRegistryService.collections>;
+export class CollectionRegistry extends Context.Tag("CollectionRegistry")<
+  CollectionRegistry,
+  Effect.Effect.Success<typeof collections>
+>() {}
+
+export const CollectionRegistryLive = Layer.effect(CollectionRegistry, collections);
 
 export const runMigrations = Effect.gen(function* () {
   yield* Effect.logInfo("Running migrations...");
 
-  const { abc, def } = yield* CollectionRegistryService.collections;
+  const { abc, def } = yield* CollectionRegistry;
   const mmh = yield* MM.MongoMigrationHandler;
 
   yield* mmh.handleMigrations(
@@ -46,7 +44,7 @@ export const mongoLiveLayers = Layer.unwrapEffect(
     const { url, dbName, username, password } = yield* AppConfig.mongo;
     const { isDevMode } = yield* ProdMode;
 
-    return CollectionRegistryService.Default.pipe(
+    return CollectionRegistryLive.pipe(
       Layer.provideMerge(
         Mongo.liveLayers(dbName, url, {
           auth: { username: Redacted.value(username), password: Redacted.value(password) },
