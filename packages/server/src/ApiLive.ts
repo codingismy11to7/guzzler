@@ -8,7 +8,7 @@ import { AuthApiLive } from "./internal/api/impl/auth.js";
 import { SessionApiLive } from "./internal/api/impl/SessionApiLive.js";
 import { TodosApiLive } from "./internal/api/impl/TodosApiLive.js";
 import { UIDev, UILive } from "./internal/api/impl/ui.js";
-import { CollectionRegistry } from "./internal/databaseInit.js";
+import { CollectionRegistry } from "./internal/database/CollectionRegistry.js";
 import { AuthenticationMiddlewareLive } from "./internal/middleware/AuthenticationMiddlewareLive.js";
 import * as OAuth2 from "./OAuth2.js";
 import { ExternalError, InvalidOptions } from "./OAuth2.js";

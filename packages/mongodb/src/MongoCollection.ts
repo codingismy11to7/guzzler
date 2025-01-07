@@ -7,6 +7,7 @@ import {
   DeleteOptions,
   DeleteResult,
   Filter,
+  FindCursor,
   FindOptions,
   InsertOneOptions,
   InsertOneResult,
@@ -56,6 +57,8 @@ export type MongoCollection<CName extends string, SchemaT extends AnySchema, Fie
     options?: Omit<FindOptions, "timeoutMode">,
   ) => Effect.Effect<WithId<DocSchema<SchemaT>>, NotFound>;
 
+  find: (filter?: Filter<DocSchema<SchemaT>>, options?: FindOptions) => Effect.Effect<FindResult<DocSchema<SchemaT>>>;
+
   insertOneRaw: (
     doc: OptionalUnlessRequiredId<DocSchema<SchemaT>>,
     options?: InsertOneOptions,
@@ -94,6 +97,13 @@ export type MongoCollection<CName extends string, SchemaT extends AnySchema, Fie
   deleteOne: (filter?: Filter<DocSchema<SchemaT>>, options?: DeleteOptions) => Effect.Effect<DeleteResult>;
 }>;
 
+// TODO lots more to add
+type FindResult<TSchema> = Readonly<{
+  raw: FindCursor<WithId<TSchema>>;
+  toArrayRaw: Effect.Effect<ReadonlyArray<WithId<TSchema>>, MongoError>;
+  toArray: Effect.Effect<ReadonlyArray<WithId<TSchema>>>;
+}>;
+
 const make = <CName extends string, SchemaT extends AnySchema, FieldsT extends SomeFields>(
   db: Db,
   collectionName: CName,
@@ -124,6 +134,19 @@ const make = <CName extends string, SchemaT extends AnySchema, FieldsT extends S
     Effect.andThen(Effect.fromNullable),
     Effect.catchTags({ ...die, NoSuchElementException: () => new NotFound() }),
   );
+
+  const toFindResult = (c: FindCursor<WithId<TSchema>>): FindResult<TSchema> => {
+    const toArrayRaw = mongoEff(() => c.toArray());
+    const toArray = toArrayRaw.pipe(Effect.catchTags(die));
+
+    return { raw: c, toArrayRaw, toArray };
+  };
+  const find = (filter?: Filter<TSchema>, options?: FindOptions): Effect.Effect<FindResult<TSchema>> =>
+    pipe(
+      connection,
+      Effect.andThen(coll => (filter ? coll.find(filter, options) : coll.find())),
+      Effect.andThen(toFindResult),
+    );
 
   const insertOneRaw = (
     doc: OptionalUnlessRequiredId<TSchema>,
@@ -168,6 +191,7 @@ const make = <CName extends string, SchemaT extends AnySchema, FieldsT extends S
     sortBy,
     findOneRaw,
     findOne,
+    find,
     insertOneRaw,
     insertOne,
     replaceOneRaw,

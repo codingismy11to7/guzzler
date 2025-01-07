@@ -1,31 +1,7 @@
-import { Session } from "@guzzler/domain/Session";
-import { Mongo, MongoCollection, MongoMigrations as MM } from "@guzzler/mongodb";
-import { Context, Effect, Layer, pipe, Redacted, Schema } from "effect";
-import { AppConfig, ProdMode } from "../AppConfig.js";
-
-const SS = Schema.Struct({
-  a: Schema.String,
-  b: Schema.Boolean,
-});
-const SSE = Schema.Struct({
-  ...SS.fields,
-  c: Schema.Number,
-});
-
-const collections = Effect.gen(function* () {
-  const mcl = yield* MongoCollection.MongoCollectionLayer;
-
-  return mcl.createCollectionRegistry(c =>
-    pipe({}, c.collection("sessions", Session), c.collection("abc", SS), c.collection("def", SSE)),
-  );
-});
-
-export class CollectionRegistry extends Context.Tag("CollectionRegistry")<
-  CollectionRegistry,
-  Effect.Effect.Success<typeof collections>
->() {}
-
-export const CollectionRegistryLive = Layer.effect(CollectionRegistry, collections);
+import { Mongo, MongoMigrations as MM } from "@guzzler/mongodb";
+import { Effect, Layer, Redacted } from "effect";
+import { AppConfig, ProdMode } from "../../AppConfig.js";
+import { CollectionRegistry, CollectionRegistryLive } from "./CollectionRegistry.js";
 
 export const runMigrations = Effect.gen(function* () {
   yield* Effect.logInfo("Running migrations...");

@@ -1,7 +1,7 @@
 import { Session, SessionId } from "@guzzler/domain/Session";
 import { Data, Effect, pipe } from "effect";
 import { AppConfig } from "./AppConfig.js";
-import { CollectionRegistry } from "./internal/databaseInit.js";
+import { CollectionRegistry } from "./internal/database/CollectionRegistry.js";
 import { OAuth2 } from "./OAuth2.js";
 
 export class SessionNotFound extends Data.TaggedError("SessionNotFound") {}
