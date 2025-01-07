@@ -1,5 +1,14 @@
 # @guzzler/cli
 
+## 0.0.4
+
+### Patch Changes
+
+- [#57](https://github.com/codingismy11to7/guzzler/pull/57) [`187adff`](https://github.com/codingismy11to7/guzzler/commit/187adff383e58c7cf7670334613d7523c5708e8d) Thanks [@codingismy11to7](https://github.com/codingismy11to7)! - temporarily persist todos, fix some bugs
+
+- Updated dependencies [[`187adff`](https://github.com/codingismy11to7/guzzler/commit/187adff383e58c7cf7670334613d7523c5708e8d)]:
+  - @guzzler/domain@0.0.4
+
 ## 0.0.3
 
 ### Patch Changes

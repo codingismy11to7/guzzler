@@ -1,5 +1,11 @@
 # @guzzler/mongodb
 
+## 0.0.2
+
+### Patch Changes
+
+- [#57](https://github.com/codingismy11to7/guzzler/pull/57) [`187adff`](https://github.com/codingismy11to7/guzzler/commit/187adff383e58c7cf7670334613d7523c5708e8d) Thanks [@codingismy11to7](https://github.com/codingismy11to7)! - temporarily persist todos, fix some bugs
+
 ## 0.0.1
 
 ### Patch Changes

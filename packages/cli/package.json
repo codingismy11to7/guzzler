@@ -1,6 +1,6 @@
 {
   "name": "@guzzler/cli",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "type": "module",
   "license": "MIT",
   "description": "The CLI template",
@@ -29,7 +29,7 @@
     "@effect/cli": "^0.51.1",
     "@effect/platform": "^0.72.0",
     "@effect/platform-node": "^0.68.1",
-    "@guzzler/domain": "^0.0.3",
+    "@guzzler/domain": "^0.0.4",
     "effect": "^3.12.1"
   },
   "effect": {
