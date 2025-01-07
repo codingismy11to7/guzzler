@@ -27,7 +27,7 @@ export const AuthApiLive = HttpApiBuilder.group(AppApi, "auth", handlers =>
               Effect.logDebug("received accessToken"),
               Effect.andThen(fetchUserInfo(userinfoUrl, Redacted.value(token.access_token))),
               Effect.tap(Effect.logDebug("received userInfo")),
-              Effect.andThen(ui => addSession(new Session({ token, oAuthUserInfo: ui }))),
+              Effect.andThen(ui => addSession(Session.make({ token, oAuthUserInfo: ui }))),
               Effect.andThen(session =>
                 Effect.reduce(
                   [

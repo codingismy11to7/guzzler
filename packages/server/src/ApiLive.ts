@@ -5,10 +5,11 @@ import { Effect, Layer, Option, pipe } from "effect";
 import { ParseError } from "effect/ParseResult";
 import { AppConfig, ProdMode } from "./AppConfig.js";
 import { AuthApiLive } from "./internal/api/impl/auth.js";
-import { SessionApiLive } from "./internal/api/impl/session.js";
-import { TodosApiLive } from "./internal/api/impl/todos.js";
+import { SessionApiLive } from "./internal/api/impl/SessionApiLive.js";
+import { TodosApiLive } from "./internal/api/impl/TodosApiLive.js";
 import { UIDev, UILive } from "./internal/api/impl/ui.js";
-import { AuthenticationMiddlewareLive } from "./internal/middleware/authentication.js";
+import { CollectionRegistry } from "./internal/databaseInit.js";
+import { AuthenticationMiddlewareLive } from "./internal/middleware/AuthenticationMiddlewareLive.js";
 import * as OAuth2 from "./OAuth2.js";
 import { ExternalError, InvalidOptions } from "./OAuth2.js";
 import { SessionStorage } from "./SessionStorage.js";
@@ -17,7 +18,7 @@ import { TodosRepository } from "./TodosRepository.js";
 export const ApiLive: Layer.Layer<
   HttpApi.Api,
   ExternalError | InvalidOptions | HttpClientError.HttpClientError | ParseError,
-  TodosRepository | AppConfig | ProdMode
+  TodosRepository | AppConfig | ProdMode | CollectionRegistry
 > = HttpApiBuilder.api(AppApi).pipe(
   Layer.provide(TodosApiLive),
   Layer.provide(AuthApiLive),

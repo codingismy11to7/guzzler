@@ -73,6 +73,7 @@ export class AuthApi extends HttpApiGroup.make("auth")
 
 export class SessionApi extends HttpApiGroup.make("session")
   .add(HttpApiEndpoint.get("getUserInfo", "/userInfo").addSuccess(OAuthUserInfo))
+  .add(HttpApiEndpoint.get("logout", "/logout").addSuccess(Schema.Void, { status: 303 }))
   .prefix("/session")
   .middleware(AuthenticationMiddleware) {}
 

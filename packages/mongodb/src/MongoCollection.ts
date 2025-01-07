@@ -1,9 +1,11 @@
-import { ObjectUtils } from "@guzzler/utils";
+import { ObjectUtils, DeRedact } from "@guzzler/utils";
 import { Document } from "bson";
 import { Effect, flow, pipe, Schema } from "effect";
 import {
   Collection,
   Db,
+  DeleteOptions,
+  DeleteResult,
   Filter,
   FindOptions,
   InsertOneOptions,
@@ -84,6 +86,12 @@ export type MongoCollection<CName extends string, SchemaT extends AnySchema, Fie
     replacement: WithoutId<DocSchema<SchemaT>>,
     options?: Omit<ReplaceOptions, "upsert">,
   ) => Effect.Effect<UpdateResult<DocSchema<SchemaT>> | Document>;
+
+  deleteOneRaw: (
+    filter?: Filter<DocSchema<SchemaT>>,
+    options?: DeleteOptions,
+  ) => Effect.Effect<DeleteResult, MongoError>;
+  deleteOne: (filter?: Filter<DocSchema<SchemaT>>, options?: DeleteOptions) => Effect.Effect<DeleteResult>;
 }>;
 
 const make = <CName extends string, SchemaT extends AnySchema, FieldsT extends SomeFields>(
@@ -123,7 +131,7 @@ const make = <CName extends string, SchemaT extends AnySchema, FieldsT extends S
   ): Effect.Effect<InsertOneResult<TSchema>, MongoError> =>
     pipe(
       connection,
-      Effect.andThen(coll => mongoEff(() => coll.insertOne(doc, options))),
+      Effect.andThen(coll => mongoEff(() => coll.insertOne(DeRedact.deRedact(doc), options))),
     );
   const insertOne = flow(insertOneRaw, Effect.catchTags(die));
 
@@ -134,7 +142,7 @@ const make = <CName extends string, SchemaT extends AnySchema, FieldsT extends S
   ): Effect.Effect<UpdateResult<TSchema> | Document, MongoError> =>
     pipe(
       connection,
-      Effect.andThen(coll => mongoEff(() => coll.replaceOne(filter, replacement, options))),
+      Effect.andThen(coll => mongoEff(() => coll.replaceOne(filter, DeRedact.deRedact(replacement), options))),
     );
   const replaceOne = flow(replaceOneRaw, Effect.catchTags(die));
 
@@ -145,6 +153,13 @@ const make = <CName extends string, SchemaT extends AnySchema, FieldsT extends S
   ): Effect.Effect<UpdateResult<TSchema> | Document, MongoError> =>
     replaceOneRaw(filter, replacement, { ...options, upsert: true });
   const upsert = flow(upsertRaw, Effect.catchTags(die));
+
+  const deleteOneRaw = (filter?: Filter<TSchema>, options?: DeleteOptions): Effect.Effect<DeleteResult, MongoError> =>
+    pipe(
+      connection,
+      Effect.andThen(coll => mongoEff(() => coll.deleteOne(filter, options))),
+    );
+  const deleteOne = flow(deleteOneRaw, Effect.catchTags(die));
 
   return {
     name: collectionName,
@@ -159,6 +174,8 @@ const make = <CName extends string, SchemaT extends AnySchema, FieldsT extends S
     replaceOne,
     upsertRaw,
     upsert,
+    deleteOneRaw,
+    deleteOne,
   };
 };
 
