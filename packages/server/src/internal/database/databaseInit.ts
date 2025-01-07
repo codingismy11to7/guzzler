@@ -24,6 +24,8 @@ export const mongoLiveLayers = Layer.unwrapEffect(
       Layer.provideMerge(
         Mongo.liveLayers(dbName, url, {
           auth: { username: Redacted.value(username), password: Redacted.value(password) },
+          // TODO this keeps us from connecting when we change to prod mode locally,
+          //  can we always set it to true? do change streams still work? to test
           directConnection: isDevMode,
         }),
       ),

@@ -20,7 +20,7 @@
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
     "coverage:watch": "vitest --coverage",
-    "dev": "cross-env NODE_ENV=development nodemon src/index.ts"
+    "dev": "nodemon src/index.ts"
   },
   "dependencies": {
     "@effect/platform": "^0.72.0",

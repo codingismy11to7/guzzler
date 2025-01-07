@@ -19,7 +19,7 @@ export class TodosClient extends Effect.Service<TodosClient>()("TodosClient", {
 
       const list = client.todos.getAllTodos().pipe(Effect.tap(ts => Effect.logInfo(`fetched ${ts.length} todos`, ts)));
 
-      const fetch = (id: number) =>
+      const fetch = (id: AppApi.TodoId) =>
         pipe(
           client.todos.getTodoById({ path: { id } }),
           Effect.asSome,
@@ -28,13 +28,13 @@ export class TodosClient extends Effect.Service<TodosClient>()("TodosClient", {
           ),
         );
 
-      const edit = (id: number, payload: AppApi.OptionalTodoWithoutId) =>
+      const edit = (id: AppApi.TodoId, payload: AppApi.OptionalTodoWithoutId) =>
         client.todos.editTodo({ path: { id }, payload }).pipe(
           Effect.andThen(todo => Effect.logInfo("Edited todo: ", todo)),
           Effect.catchTag("TodoNotFound", () => Effect.logError(`Failed to find todo with id: ${id}`)),
         );
 
-      const remove = (id: number) =>
+      const remove = (id: AppApi.TodoId) =>
         client.todos.removeTodo({ path: { id } }).pipe(
           Effect.andThen(Effect.logInfo(`Deleted todo with id: ${id}`)),
           Effect.catchTag("TodoNotFound", () => Effect.logError(`Failed to find todo with id: ${id}`)),
