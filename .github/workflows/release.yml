@@ -35,7 +35,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish
-        if: steps.changesets.outputs.hasChangesets == 'false'
         uses: ./.github/actions/dockerPublish
         with:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
