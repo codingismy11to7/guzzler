@@ -1,5 +1,6 @@
 import { OptionalTodoWithoutId, Todo, TodoId, TodoNotFound } from "@guzzler/domain/AppApi";
-import { Effect, HashMap, Ref } from "effect";
+import { Effect, pipe } from "effect";
+import { CollectionRegistry } from "./internal/database/CollectionRegistry.js";
 
 /**
  * Fake Todos database service
@@ -7,31 +8,33 @@ import { Effect, HashMap, Ref } from "effect";
 
 export class TodosRepository extends Effect.Service<TodosRepository>()("api/TodosRepository", {
   effect: Effect.gen(function* () {
-    const todos = yield* Ref.make(HashMap.empty<TodoId, Todo>());
+    const { todos } = yield* CollectionRegistry;
 
-    const getAll = Ref.get(todos).pipe(Effect.map(todos => Array.from(HashMap.values(todos))));
+    const getAll = todos.find().pipe(Effect.andThen(f => f.toArray));
 
-    const getById = (id: number): Effect.Effect<Todo, TodoNotFound> =>
-      Ref.get(todos).pipe(
-        Effect.flatMap(HashMap.get(id)),
-        Effect.catchTag("NoSuchElementException", () => new TodoNotFound({ id })),
+    const getById = (id: TodoId): Effect.Effect<Todo, TodoNotFound> =>
+      pipe(
+        todos.findOne({ _id: id }),
+        Effect.catchTag("NotFound", () => new TodoNotFound({ id })),
       );
 
     const create = (text: string): Effect.Effect<Todo> =>
-      Ref.modify(todos, map => {
-        const id = TodoId.make(1 + HashMap.reduce(map, -1, (max, todo) => (todo.id > max ? todo.id : max)));
-        const todo = new Todo({ id, text, done: false });
-        return [todo, HashMap.set(map, id, todo)];
-      });
-
-    const edit = (id: number, updates: OptionalTodoWithoutId): Effect.Effect<Todo, TodoNotFound> =>
-      getById(id).pipe(
-        Effect.map(todo => new Todo({ ...todo, ...updates })),
-        Effect.tap(todo => Ref.update(todos, HashMap.set(todo.id, todo))),
+      pipe(
+        Effect.succeed(Todo.make({ text })),
+        Effect.tap(t => todos.upsert({ _id: t.id }, t)),
       );
 
-    const remove = (id: number): Effect.Effect<void, TodoNotFound> =>
-      getById(id).pipe(Effect.flatMap(todo => Ref.update(todos, HashMap.remove(todo.id))));
+    const edit = (id: TodoId, updates: OptionalTodoWithoutId): Effect.Effect<Todo, TodoNotFound> =>
+      getById(id).pipe(
+        Effect.map(todo => Todo.make({ ...todo, ...updates })),
+        Effect.tap(todo => todos.upsert({ _id: todo.id }, todo)),
+      );
+
+    const remove = (id: TodoId): Effect.Effect<void, TodoNotFound> =>
+      pipe(
+        todos.deleteOne({ _id: id }),
+        Effect.tap(r => (r.deletedCount === 0 ? new TodoNotFound({ id }) : Effect.void)),
+      );
 
     return {
       getAll,

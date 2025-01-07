@@ -4,7 +4,7 @@ import { Effect, flow, Layer, pipe } from "effect";
 import { createServer } from "node:http";
 import { ApiLive } from "./ApiLive.js";
 import { AppConfig, AppConfigLive } from "./AppConfig.js";
-import { mongoLiveLayers, runMigrations } from "./internal/databaseInit.js";
+import { mongoLiveLayers, runMigrations } from "./internal/database/databaseInit.js";
 import { logServiceStarting, logVersion } from "./internal/util/logInfos.js";
 import { TodosRepository } from "./TodosRepository.js";
 

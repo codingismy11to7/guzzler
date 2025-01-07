@@ -1,32 +1,38 @@
 import { HttpApi, HttpApiEndpoint, HttpApiGroup, HttpApiSchema, OpenApi } from "@effect/platform";
 import { Schema } from "effect";
+import { nanoid } from "nanoid";
 import { AuthenticationMiddleware } from "./Authentication.js";
 import { OAuthUserInfo } from "./OAuthUserInfo.js";
+import { SessionId } from "./Session.js";
 
 /**
  * App schema & api
  */
 
-export const TodoId = Schema.Number.pipe(Schema.brand("TodoId"));
+export const TodoId = Schema.String.pipe(Schema.brand("TodoId"));
 export type TodoId = typeof TodoId.Type;
 
-export const TodoIdFromString = Schema.NumberFromString.pipe(Schema.compose(TodoId));
-
-class TodoWithoutId extends Schema.Class<TodoWithoutId>("TodoWithoutId")({
+const TodoWithoutId = Schema.Struct({
   text: Schema.NonEmptyTrimmedString,
-  done: Schema.Boolean,
-}) {}
-export class OptionalTodoWithoutId extends Schema.Class<OptionalTodoWithoutId>("OptionalTodoWithoutId")({
+  done: Schema.Boolean.pipe(Schema.optionalWith({ default: () => false, exact: true, nullable: true })),
+});
+export const OptionalTodoWithoutId = Schema.Struct({
   text: Schema.NonEmptyTrimmedString.pipe(Schema.optionalWith({ exact: true, nullable: true })),
   done: Schema.Boolean.pipe(Schema.optionalWith({ exact: true, nullable: true })),
-}) {}
+});
+export type OptionalTodoWithoutId = typeof OptionalTodoWithoutId.Type;
 
-export class Todo extends TodoWithoutId.extend<Todo>("Todo")({
-  id: TodoId,
-}) {}
+export const Todo = Schema.Struct({
+  id: TodoId.pipe(
+    Schema.optionalWith({ default: () => TodoId.make(nanoid()), exact: true, nullable: true }),
+    Schema.fromKey("_id"),
+  ),
+  ...TodoWithoutId.fields,
+});
+export type Todo = typeof Todo.Type;
 
 export class TodoNotFound extends Schema.TaggedError<TodoNotFound>()("TodoNotFound", {
-  id: Schema.Number,
+  id: Schema.String,
 }) {}
 
 export class TodosApiGroup extends HttpApiGroup.make("todos")
@@ -35,7 +41,7 @@ export class TodosApiGroup extends HttpApiGroup.make("todos")
     HttpApiEndpoint.get("getTodoById", "/:id")
       .addSuccess(Todo)
       .addError(TodoNotFound, { status: 404 })
-      .setPath(Schema.Struct({ id: Schema.NumberFromString })),
+      .setPath(Schema.Struct({ id: TodoId })),
   )
   .add(
     HttpApiEndpoint.post("createTodo", "/")
@@ -46,16 +52,17 @@ export class TodosApiGroup extends HttpApiGroup.make("todos")
     HttpApiEndpoint.patch("editTodo", "/:id")
       .addSuccess(Todo)
       .addError(TodoNotFound, { status: 404 })
-      .setPath(Schema.Struct({ id: Schema.NumberFromString }))
+      .setPath(Schema.Struct({ id: TodoId }))
       .setPayload(OptionalTodoWithoutId),
   )
   .add(
     HttpApiEndpoint.del("removeTodo", "/:id")
       .addSuccess(Schema.Void)
       .addError(TodoNotFound, { status: 404 })
-      .setPath(Schema.Struct({ id: Schema.NumberFromString })),
+      .setPath(Schema.Struct({ id: TodoId })),
   )
-  .prefix("/api/todos") {}
+  .prefix("/api/todos")
+  .middleware(AuthenticationMiddleware) {}
 
 export class ServerError extends Schema.TaggedError<ServerError>()(
   "ServerError",
