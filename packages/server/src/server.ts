@@ -16,7 +16,9 @@ if (error) throw error;
  * Server entrypoint
  */
 
-const HttpLive = HttpApiBuilder.serve(flow(HttpMiddleware.logger, HttpMiddleware.cors())).pipe(
+const HttpLive = HttpApiBuilder.serve(
+  flow(HttpMiddleware.logger, HttpMiddleware.cors(), HttpMiddleware.xForwardedHeaders),
+).pipe(
   Layer.provide(HttpApiSwagger.layer({ path: "/swagger" })),
   Layer.provide(HttpApiBuilder.middlewareOpenApi({ path: "/swagger.json" })),
   Layer.provide(ApiLive),
@@ -38,13 +40,9 @@ pipe(
     process.on("uncaughtException", e => Effect.runSync(Effect.logError("uncaught exception", e)));
     process.on("unhandledRejection", e => Effect.runSync(Effect.logError("unhandled rejection", e)));
   }),
-  Effect.andThen(
-    pipe(
-      AppConfig.withMinimumLogLevel(
-        pipe(runMigrations, Effect.withLogSpan("initialization"), Effect.andThen(Layer.launch(HttpLive))),
-      ),
-    ),
-  ),
+  Effect.andThen(runMigrations),
+  AppConfig.withMinimumLogLevel,
+  Effect.andThen(AppConfig.withMinimumLogLevel(Layer.launch(HttpLive))),
   Effect.provide(mongoLiveLayers),
   Effect.provide(AppConfigLive),
   NodeRuntime.runMain,

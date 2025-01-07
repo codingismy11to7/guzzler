@@ -57,6 +57,12 @@
       "**/test**",
       "**/dist/**"
     ],
+    "watch": [
+      "./src",
+      "../mongodb/src",
+      "../domain/src",
+      "./.env"
+    ],
     "delay": 5000,
     "execMap": {
       "ts": "tsx"

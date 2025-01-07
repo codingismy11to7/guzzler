@@ -1,8 +1,8 @@
-FROM node:20-slim as base
+FROM node:20-slim AS base
 
 WORKDIR /app
 
-FROM base as build
+FROM base AS build
 
 COPY ../.prettierrc.json eslint.* package.json package-lock.json setupTests.ts tsconfig.* vitest.* ./
 COPY ../packages ./packages/
