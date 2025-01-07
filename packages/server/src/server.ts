@@ -1,6 +1,5 @@
 import { HttpApiBuilder, HttpApiSwagger, HttpMiddleware } from "@effect/platform";
 import { NodeHttpServer, NodeRuntime } from "@effect/platform-node";
-import { configDotenv } from "dotenv";
 import { Effect, flow, Layer, pipe } from "effect";
 import { createServer } from "node:http";
 import { ApiLive } from "./ApiLive.js";
@@ -9,8 +8,7 @@ import { mongoLiveLayers, runMigrations } from "./internal/databaseInit.js";
 import { logServiceStarting, logVersion } from "./internal/util/logInfos.js";
 import { TodosRepository } from "./TodosRepository.js";
 
-const { error } = configDotenv();
-if (error) throw error;
+if (process.argv.includes("--mostMinimalSmokeTest")) process.exit(0);
 
 /**
  * Server entrypoint

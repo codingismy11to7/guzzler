@@ -1,4 +1,4 @@
-FROM node:20-slim AS base
+FROM node:22-slim AS base
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ RUN npm i
 RUN npm run build
 RUN NODE_OPTIONS=--max_old_space_size=8192 npm run test
 
-RUN npm prune --omit=dev --workspace=./packages/server
+RUN npm prune --omit=dev -w @guzzler/server
 
 FROM base
 
@@ -23,7 +23,10 @@ COPY --from=build /app/packages/server/node_modules /app/dist/node_modules
 COPY --from=build /app/packages/domain/dist /app/packages/domain
 COPY --from=build /app/packages/domain/node_modules /app/packages/domain/node_modules
 COPY --from=build /app/packages/mongodb/dist /app/packages/mongodb
+COPY --from=build /app/packages/utils/dist /app/packages/utils
 COPY --from=build /app/packages/webui/dist /app/webui
+
+RUN node --experimental-default-type=module /app/dist/dist/esm/server.js --mostMinimalSmokeTest
 
 ENV NODE_ENV=production
 ENV PORT=8080

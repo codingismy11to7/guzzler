@@ -1,4 +1,5 @@
 import PkgJson from "@npmcli/package-json";
+import { configDotenv } from "dotenv";
 import { Config, Effect, Layer, Logger, Option, pipe, Schema } from "effect";
 import { readFileSync } from "fs";
 
@@ -7,6 +8,9 @@ const prodModeConf = pipe(
   Config.withDefault("production"),
   Config.map(e => e !== "development"),
 );
+
+const { error } = configDotenv();
+if (!Effect.runSync(prodModeConf) && error) throw error;
 
 export class ProdMode extends Effect.Service<ProdMode>()("ProdMode", {
   accessors: true,
