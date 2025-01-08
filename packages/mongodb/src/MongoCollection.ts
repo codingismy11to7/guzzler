@@ -1,9 +1,9 @@
-import { ObjectUtils, DeRedact } from "@guzzler/utils";
+import { ObjectUtils } from "@guzzler/utils";
 import { Document } from "bson";
-import { Effect, flow, pipe, Schema } from "effect";
+import { Effect, Schema } from "effect";
+import { ParseError } from "effect/ParseResult";
 import {
   Collection,
-  Db,
   DeleteOptions,
   DeleteResult,
   Filter,
@@ -11,13 +11,11 @@ import {
   FindOptions,
   InsertOneOptions,
   InsertOneResult,
-  OptionalUnlessRequiredId,
   ReplaceOptions,
   UpdateResult,
   WithId,
-  WithoutId,
 } from "mongodb";
-import { mongoEff } from "./internal/utils.js";
+import * as internal from "./internal/collection.js";
 import { Conflict, MongoError, NotFound } from "./Model.js";
 import { Model, MongoDatabaseLayer } from "./index.js";
 
@@ -35,173 +33,87 @@ export type AnySchema = Schema.Schema.Any;
 // the fields in the document
 export type SomeFields = Schema.Struct.Fields;
 // a Schema.Struct that represents our document
-export type StructSchema<SchemaT extends AnySchema, FieldsT extends SomeFields> = SchemaT & Schema.Struct<FieldsT>;
+export type StructSchema<SchemaT extends AnySchema, FieldsT extends SomeFields> = SchemaT &
+  Schema.Struct<FieldsT> &
+  Schema.Schema<any, any>;
 
-// this is the type of the document
-// eg: our doc is defined as Schema.Struct({a:Schema<X>, b:Schema<Y>})
-// this type of the document/DocSchema is {a: X, b: Y}
-type DocSchema<SchemaT extends AnySchema> = Schema.Schema.Type<SchemaT>;
+// this is the type of the document in the db
+// eg: our doc is defined as Schema.Struct({a:Schema<X>, b:Schema<Redacted<Y>>})
+// this type of the document/DbSchema is {a: X, b: Y}
+type DbSchema<SchemaT extends AnySchema> = Schema.Schema.Encoded<SchemaT>;
+// this type is the instantiated Schema object, with type {a: X, B: Redacted<Y>}
+type MemSchema<SchemaT extends AnySchema> = Schema.Schema.Type<SchemaT>;
 
 export type MongoCollection<CName extends string, SchemaT extends AnySchema, FieldsT extends SomeFields> = Readonly<{
   name: CName;
   schema: StructSchema<SchemaT, FieldsT>;
-  connection: Effect.Effect<Collection<DocSchema<SchemaT>>>;
-  sortBy: (field: keyof DocSchema<SchemaT>, order: "asc" | "desc") => Model.SortParam<SchemaT>;
+  connection: Effect.Effect<Collection<DbSchema<SchemaT>>>;
+  sortBy: (field: keyof DbSchema<SchemaT>, order: "asc" | "desc") => Model.SortParam<SchemaT>;
 
   findOneRaw: (
-    filter?: Filter<DocSchema<SchemaT>>,
+    filter?: Filter<DbSchema<SchemaT>>,
     options?: Omit<FindOptions, "timeoutMode">,
-  ) => Effect.Effect<WithId<DocSchema<SchemaT>> | null, MongoError>;
+  ) => Effect.Effect<MemSchema<SchemaT> | null, MongoError | ParseError>;
   findOne: (
-    filter?: Filter<DocSchema<SchemaT>>,
+    filter?: Filter<DbSchema<SchemaT>>,
     options?: Omit<FindOptions, "timeoutMode">,
-  ) => Effect.Effect<WithId<DocSchema<SchemaT>>, NotFound>;
+  ) => Effect.Effect<MemSchema<SchemaT>, NotFound>;
 
-  find: (filter?: Filter<DocSchema<SchemaT>>, options?: FindOptions) => Effect.Effect<FindResult<DocSchema<SchemaT>>>;
+  find: (
+    filter?: Filter<DbSchema<SchemaT>>,
+    options?: FindOptions,
+  ) => Effect.Effect<FindResult<MemSchema<SchemaT>, DbSchema<SchemaT>>>;
 
   insertOneRaw: (
-    doc: OptionalUnlessRequiredId<DocSchema<SchemaT>>,
+    doc: MemSchema<SchemaT>,
     options?: InsertOneOptions,
-  ) => Effect.Effect<InsertOneResult<DocSchema<SchemaT>>, MongoError>;
+  ) => Effect.Effect<InsertOneResult<DbSchema<SchemaT>>, MongoError | ParseError>;
   insertOne: (
-    doc: OptionalUnlessRequiredId<DocSchema<SchemaT>>,
+    doc: MemSchema<SchemaT>,
     options?: InsertOneOptions,
-  ) => Effect.Effect<InsertOneResult<DocSchema<SchemaT>>, Conflict>;
+  ) => Effect.Effect<InsertOneResult<DbSchema<SchemaT>>, Conflict>;
 
   replaceOneRaw: (
-    filter: Filter<DocSchema<SchemaT>>,
-    replacement: WithoutId<DocSchema<SchemaT>>,
+    filter: Filter<DbSchema<SchemaT>>,
+    replacement: MemSchema<SchemaT>,
     options?: ReplaceOptions,
-  ) => Effect.Effect<UpdateResult<DocSchema<SchemaT>> | Document, MongoError>;
+  ) => Effect.Effect<UpdateResult<DbSchema<SchemaT>> | Document, MongoError | ParseError>;
   replaceOne: (
-    filter: Filter<DocSchema<SchemaT>>,
-    replacement: WithoutId<DocSchema<SchemaT>>,
+    filter: Filter<DbSchema<SchemaT>>,
+    replacement: MemSchema<SchemaT>,
     options?: ReplaceOptions,
-  ) => Effect.Effect<UpdateResult<DocSchema<SchemaT>> | Document>;
+  ) => Effect.Effect<UpdateResult<DbSchema<SchemaT>> | Document>;
 
   upsertRaw: (
-    filter: Filter<DocSchema<SchemaT>>,
-    replacement: WithoutId<DocSchema<SchemaT>>,
+    filter: Filter<DbSchema<SchemaT>>,
+    replacement: MemSchema<SchemaT>,
     options?: Omit<ReplaceOptions, "upsert">,
-  ) => Effect.Effect<UpdateResult<DocSchema<SchemaT>> | Document, MongoError>;
+  ) => Effect.Effect<UpdateResult<DbSchema<SchemaT>> | Document, MongoError | ParseError>;
   upsert: (
-    filter: Filter<DocSchema<SchemaT>>,
-    replacement: WithoutId<DocSchema<SchemaT>>,
+    filter: Filter<DbSchema<SchemaT>>,
+    replacement: MemSchema<SchemaT>,
     options?: Omit<ReplaceOptions, "upsert">,
-  ) => Effect.Effect<UpdateResult<DocSchema<SchemaT>> | Document>;
+  ) => Effect.Effect<UpdateResult<DbSchema<SchemaT>> | Document>;
 
   deleteOneRaw: (
-    filter?: Filter<DocSchema<SchemaT>>,
+    filter?: Filter<DbSchema<SchemaT>>,
     options?: DeleteOptions,
   ) => Effect.Effect<DeleteResult, MongoError>;
-  deleteOne: (filter?: Filter<DocSchema<SchemaT>>, options?: DeleteOptions) => Effect.Effect<DeleteResult>;
+  deleteOne: (filter?: Filter<DbSchema<SchemaT>>, options?: DeleteOptions) => Effect.Effect<DeleteResult>;
+
+  deleteManyRaw: (
+    filter?: Filter<DbSchema<SchemaT>>,
+    options?: DeleteOptions,
+  ) => Effect.Effect<DeleteResult, MongoError>;
+  deleteMany: (filter?: Filter<DbSchema<SchemaT>>, options?: DeleteOptions) => Effect.Effect<DeleteResult>;
 }>;
 
 // TODO lots more to add
-type FindResult<TSchema> = Readonly<{
-  raw: FindCursor<WithId<TSchema>>;
-  toArrayRaw: Effect.Effect<ReadonlyArray<WithId<TSchema>>, MongoError>;
-  toArray: Effect.Effect<ReadonlyArray<WithId<TSchema>>>;
+export type FindResult<MemSchema, DbSchema> = Readonly<{
+  raw: FindCursor<WithId<DbSchema>>;
+  toArrayRaw: Effect.Effect<readonly MemSchema[], MongoError | ParseError>;
+  toArray: Effect.Effect<readonly MemSchema[]>;
 }>;
-
-const make = <CName extends string, SchemaT extends AnySchema, FieldsT extends SomeFields>(
-  db: Db,
-  collectionName: CName,
-  schema: StructSchema<SchemaT, FieldsT>,
-): MongoCollection<CName, SchemaT, FieldsT> => {
-  type TSchema = Schema.Schema.Type<SchemaT>;
-
-  const connection = Effect.sync(() => db.collection<TSchema>(collectionName));
-
-  const sortBy = (field: keyof TSchema, order: "asc" | "desc") =>
-    ({ [field]: order === "asc" ? 1 : -1 }) as Model.SortParam<SchemaT>;
-
-  const die = {
-    MongoError: (e: MongoError) => Effect.die(e.underlying),
-  } as const;
-
-  const findOneRaw = (filter?: Filter<TSchema>, options?: Omit<FindOptions, "timeoutMode">) =>
-    pipe(
-      connection,
-      Effect.andThen(coll =>
-        mongoEff(() =>
-          options && filter ? coll.findOne(filter, options) : filter ? coll.findOne(filter) : coll.findOne(),
-        ),
-      ),
-    );
-  const findOne = flow(
-    findOneRaw,
-    Effect.andThen(Effect.fromNullable),
-    Effect.catchTags({ ...die, NoSuchElementException: () => new NotFound() }),
-  );
-
-  const toFindResult = (c: FindCursor<WithId<TSchema>>): FindResult<TSchema> => {
-    const toArrayRaw = mongoEff(() => c.toArray());
-    const toArray = toArrayRaw.pipe(Effect.catchTags(die));
-
-    return { raw: c, toArrayRaw, toArray };
-  };
-  const find = (filter?: Filter<TSchema>, options?: FindOptions): Effect.Effect<FindResult<TSchema>> =>
-    pipe(
-      connection,
-      Effect.andThen(coll => (filter ? coll.find(filter, options) : coll.find())),
-      Effect.andThen(toFindResult),
-    );
-
-  const insertOneRaw = (
-    doc: OptionalUnlessRequiredId<TSchema>,
-    options?: InsertOneOptions,
-  ): Effect.Effect<InsertOneResult<TSchema>, MongoError> =>
-    pipe(
-      connection,
-      Effect.andThen(coll => mongoEff(() => coll.insertOne(DeRedact.deRedact(doc), options))),
-    );
-  const insertOne = flow(insertOneRaw, Effect.catchTags(die));
-
-  const replaceOneRaw = (
-    filter: Filter<TSchema>,
-    replacement: WithoutId<TSchema>,
-    options?: ReplaceOptions,
-  ): Effect.Effect<UpdateResult<TSchema> | Document, MongoError> =>
-    pipe(
-      connection,
-      Effect.andThen(coll => mongoEff(() => coll.replaceOne(filter, DeRedact.deRedact(replacement), options))),
-    );
-  const replaceOne = flow(replaceOneRaw, Effect.catchTags(die));
-
-  const upsertRaw = (
-    filter: Filter<TSchema>,
-    replacement: WithoutId<TSchema>,
-    options?: Omit<ReplaceOptions, "upsert">,
-  ): Effect.Effect<UpdateResult<TSchema> | Document, MongoError> =>
-    replaceOneRaw(filter, replacement, { ...options, upsert: true });
-  const upsert = flow(upsertRaw, Effect.catchTags(die));
-
-  const deleteOneRaw = (filter?: Filter<TSchema>, options?: DeleteOptions): Effect.Effect<DeleteResult, MongoError> =>
-    pipe(
-      connection,
-      Effect.andThen(coll => mongoEff(() => coll.deleteOne(filter, options))),
-    );
-  const deleteOne = flow(deleteOneRaw, Effect.catchTags(die));
-
-  return {
-    name: collectionName,
-    schema,
-    connection,
-    sortBy,
-    findOneRaw,
-    findOne,
-    find,
-    insertOneRaw,
-    insertOne,
-    replaceOneRaw,
-    replaceOne,
-    upsertRaw,
-    upsert,
-    deleteOneRaw,
-    deleteOne,
-  };
-};
 
 export class MongoCollectionLayer extends Effect.Service<MongoCollectionLayer>()("MongoCollectionLayer", {
   accessors: true,
@@ -215,7 +127,7 @@ export class MongoCollectionLayer extends Effect.Service<MongoCollectionLayer>()
           schema: StructSchema<SchemaT, FieldsT>,
         ) =>
         (self: A) =>
-          ObjectUtils.addField(self, collectionName, make(db, collectionName, schema)),
+          ObjectUtils.addField(self, collectionName, internal.make(db, collectionName, schema)),
     };
     const createCollectionRegistry = <T>(f: (creator: typeof RegistryCreator) => T) => f(RegistryCreator);
 
