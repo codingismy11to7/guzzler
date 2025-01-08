@@ -4,7 +4,7 @@ import { AppApi } from "@guzzler/domain/AppApi";
 import { Effect, Layer, Option, pipe } from "effect";
 import { ParseError } from "effect/ParseResult";
 import { AppConfig, ProdMode } from "./AppConfig.js";
-import { AuthApiLive } from "./internal/api/impl/auth.js";
+import { AuthApiLive } from "./internal/api/impl/AuthApiLive.js";
 import { SessionApiLive } from "./internal/api/impl/SessionApiLive.js";
 import { TodosApiLive } from "./internal/api/impl/TodosApiLive.js";
 import { UIDev, UILive } from "./internal/api/impl/ui.js";
@@ -14,6 +14,7 @@ import * as OAuth2 from "./OAuth2.js";
 import { ExternalError, InvalidOptions } from "./OAuth2.js";
 import { SessionStorage } from "./SessionStorage.js";
 import { TodosRepository } from "./TodosRepository.js";
+import { Users } from "./Users.js";
 
 export const ApiLive: Layer.Layer<
   HttpApi.Api,
@@ -25,6 +26,7 @@ export const ApiLive: Layer.Layer<
   Layer.provide(SessionApiLive),
   Layer.provide(AuthenticationMiddlewareLive),
   Layer.provide(SessionStorage.Default),
+  Layer.provide(Users.Default),
   Layer.provide(
     OAuth2.make({
       scope: ["profile", "email"],

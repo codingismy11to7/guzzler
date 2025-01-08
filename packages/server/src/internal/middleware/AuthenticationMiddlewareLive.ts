@@ -3,7 +3,7 @@ import { AuthenticationMiddleware, Unauthenticated } from "@guzzler/domain/Authe
 import { SessionId } from "@guzzler/domain/Session";
 import { Effect, Layer, Option, pipe } from "effect";
 import { SessionStorage } from "../../SessionStorage.js";
-import { SessionCookieName } from "../api/impl/auth.js";
+import { SessionCookieName } from "../api/impl/AuthApiLive.js";
 
 export const AuthenticationMiddlewareLive = Layer.effect(
   AuthenticationMiddleware,

@@ -12,19 +12,33 @@ import {
   InsertOneResult,
   OptionalUnlessRequiredId,
   ReplaceOptions,
+  UpdateFilter,
+  UpdateOptions,
   UpdateResult,
   WithId,
 } from "mongodb";
 import { Model } from "../index.js";
 import { MongoError, NotFound } from "../Model.js";
-import { AnySchema, FindResult, MongoCollection, SomeFields, StructSchema } from "../MongoCollection.js";
+import {
+  AnySchema,
+  FindResult,
+  MongoCollection,
+  SomeFields,
+  StructSchema,
+  StructUnionSchema,
+} from "../MongoCollection.js";
 import { mongoEff } from "./utils.js";
 
-export const make = <CName extends string, SchemaT extends AnySchema, FieldsT extends SomeFields>(
+export const make = <
+  CName extends string,
+  SchemaT extends AnySchema,
+  FieldsT extends SomeFields,
+  Structs extends ReadonlyArray<Schema.TaggedStruct<any, any>>,
+>(
   db: Db,
   collectionName: CName,
-  schema: StructSchema<SchemaT, FieldsT>,
-): MongoCollection<CName, SchemaT, FieldsT> => {
+  schema: StructSchema<SchemaT, FieldsT> | StructUnionSchema<SchemaT, Structs>,
+): MongoCollection<CName, SchemaT, FieldsT, Structs> => {
   type DbSchema = Schema.Schema.Encoded<SchemaT>;
   type MemSchema = Schema.Schema.Type<SchemaT>;
 
@@ -101,6 +115,30 @@ export const make = <CName extends string, SchemaT extends AnySchema, FieldsT ex
     });
   const replaceOne = flow(replaceOneRaw, Effect.catchTags(die));
 
+  const updateOneRaw = (
+    filter: Filter<DbSchema>,
+    update: UpdateFilter<DbSchema> | Document[],
+    options?: UpdateOptions,
+  ): Effect.Effect<UpdateResult<DbSchema>, MongoError> =>
+    Effect.gen(function* () {
+      const coll = yield* connection;
+
+      return yield* mongoEff(() => coll.updateOne(filter, update, options));
+    });
+  const updateOne = flow(updateOneRaw, Effect.catchTags(dieMongo));
+
+  const setFieldsOneRaw = (
+    filter: Filter<DbSchema>,
+    fields: Partial<MemSchema>,
+    options?: UpdateOptions,
+  ): Effect.Effect<UpdateResult<DbSchema>, MongoError | ParseError> =>
+    pipe(
+      Schema.encode(Schema.partial(schema))(fields) as Effect.Effect<Partial<DbSchema>, ParseError>,
+      Effect.map($set => ({ $set }) as UpdateFilter<DbSchema>),
+      Effect.andThen(upd => updateOneRaw(filter, upd, options)),
+    );
+  const setFieldsOne = flow(setFieldsOneRaw, Effect.catchTags(die));
+
   const upsertRaw = (
     filter: Filter<DbSchema>,
     replacement: MemSchema,
@@ -135,6 +173,10 @@ export const make = <CName extends string, SchemaT extends AnySchema, FieldsT ex
     insertOne,
     replaceOneRaw,
     replaceOne,
+    updateOneRaw,
+    updateOne,
+    setFieldsOneRaw,
+    setFieldsOne,
     upsertRaw,
     upsert,
     deleteOneRaw,

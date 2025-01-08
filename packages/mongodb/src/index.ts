@@ -4,8 +4,14 @@ export * as Mongo from "./Mongo.js";
 
 export * as MongoClientLayer from "./MongoClientLayer.js";
 
+/**
+ * Warning: these two functions don't do schema encoding for you
+ */
 export * as MongoCollection from "./MongoCollection.js";
 
 export * as MongoDatabaseLayer from "./MongoDatabaseLayer.js";
 
+/**
+ * To be used for removed migrations
+ */
 export * as MongoMigrations from "./MongoMigrations.js";

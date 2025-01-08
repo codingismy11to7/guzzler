@@ -8,7 +8,7 @@ import {
   HttpServerResponse,
 } from "@effect/platform";
 import { Cookie, CookiesError } from "@effect/platform/Cookies";
-import { OAuthUserInfo, Token as TokenNS } from "@guzzler/domain";
+import { OAuthUserInfo, OAuthToken as T } from "@guzzler/domain";
 import { ObjectUtils } from "@guzzler/utils";
 import { createHash, randomBytes } from "crypto";
 import { Context, Data, Duration, Effect, Layer, Option, pipe, Redacted, Schema } from "effect";
@@ -20,7 +20,6 @@ import * as url from "node:url";
 import { AuthorizationCode, ModuleOptions, TokenType } from "simple-oauth2";
 import { AppConfig } from "./AppConfig.js";
 import { stringQueryParam } from "./internal/util/misc.js";
-import Token = TokenNS.Token;
 
 // port of https://github.com/fastify/fastify-oauth2
 // their copyright, MIT license, etc
@@ -209,7 +208,7 @@ export class OAuth2 extends Context.Tag("OAuth2")<
     oauth2: AuthorizationCode;
     getAccessTokenFromAuthorizationCodeFlow: (request: HttpServerRequest.HttpServerRequest) => Effect.Effect<
       {
-        token: Token;
+        token: T.OAuthToken;
         modifyReply: ReadonlyArray<
           (resp: HttpServerResponse.HttpServerResponse) => HttpServerResponse.HttpServerResponse
         >;
@@ -217,12 +216,12 @@ export class OAuth2 extends Context.Tag("OAuth2")<
       InvalidState | Error
     >;
     getNewAccessTokenUsingRefreshToken: (
-      refreshToken: Token,
+      refreshToken: T.OAuthToken,
       refreshParams?: {
         scope?: string | string[] | undefined;
         onlyIfExpiringWithin: Duration.DurationInput | "disableExpirationCheck" | undefined;
       },
-    ) => Effect.Effect<Token, Error | ParseError>;
+    ) => Effect.Effect<T.OAuthToken, Error | ParseError>;
     generateAuthorizationUri: (request: HttpServerRequest.HttpServerRequest) => Effect.Effect<
       {
         authorizeURL: string;
@@ -234,8 +233,8 @@ export class OAuth2 extends Context.Tag("OAuth2")<
       },
       CouldNotGenerateState
     >;
-    revokeToken: (token: Token, tokenType: TokenType) => Effect.Effect<void, Error>;
-    revokeAllToken: (token: Token) => Effect.Effect<void, Error>;
+    revokeToken: (token: T.OAuthToken, tokenType: TokenType) => Effect.Effect<void, Error>;
+    revokeAllToken: (token: T.OAuthToken) => Effect.Effect<void, Error>;
     userinfo: (
       tokenSetOrToken: string | Readonly<{ access_token: string }>,
       params?: MethodViaParams,
@@ -464,13 +463,13 @@ export const make = (inputOptions: Omit<OAuth2Options, "credentials">) =>
                 }),
               ),
               Effect.mapError(e => e.error as Error),
-              Effect.andThen(a => Schema.decodeUnknown(Token)(a.token)),
+              Effect.andThen(a => Schema.decodeUnknown(T.OAuthToken)(a.token)),
             );
             return { token, modifyReply };
           });
 
         const getNewAccessTokenUsingRefreshToken = (
-          token: Token,
+          token: T.OAuthToken,
           refreshParams?: {
             scope?: string | string[] | undefined;
             onlyIfExpiringWithin: Duration.DurationInput | "disableExpirationCheck" | undefined;
@@ -483,19 +482,19 @@ export const make = (inputOptions: Omit<OAuth2Options, "credentials">) =>
                   Effect.logWarning("SENDING REFRESH"),
                   Effect.andThen(Effect.tryPromise(() => accessToken.refresh({ scope: refreshParams?.scope }))),
                   Effect.catchTag("UnknownException", e => Effect.fail(e.error as Error)),
-                  Effect.andThen(a => Schema.decodeUnknown(Token)(a.token)),
+                  Effect.andThen(a => Schema.decodeUnknown(T.OAuthToken)(a.token)),
                 )
               : Effect.succeed(token),
           );
 
-        const revokeToken = (token: Token, tokenType: TokenType) =>
+        const revokeToken = (token: T.OAuthToken, tokenType: TokenType) =>
           pipe(
             oauth2.createToken({ ...token }),
             accessToken => Effect.tryPromise(() => accessToken.revoke(tokenType)),
             Effect.catchTag("UnknownException", e => Effect.fail(e.error as Error)),
           );
 
-        const revokeAllToken = (token: Token) =>
+        const revokeAllToken = (token: T.OAuthToken) =>
           pipe(
             oauth2.createToken({ ...token }),
             accessToken => Effect.tryPromise(() => accessToken.revokeAll()),

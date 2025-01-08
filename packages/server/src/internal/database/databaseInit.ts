@@ -6,12 +6,16 @@ import { CollectionRegistry, CollectionRegistryLive } from "./CollectionRegistry
 export const runMigrations = Effect.gen(function* () {
   yield* Effect.logInfo("Running migrations...");
 
-  const { abc, def, sessions } = yield* CollectionRegistry;
+  const { sessions, users } = yield* CollectionRegistry;
   const mmh = yield* MM.MongoMigrationHandler;
 
   yield* mmh.handleMigrations(
-    MM.addIndex(abc, { unique: true }, abc.sortBy("a", "asc")),
-    MM.addIndex(def, { name: "coolidx" }, def.sortBy("c", "desc"), def.sortBy("b", "desc")),
+    MM.noOp(),
+    MM.noOp(),
+    MM.clearCollection(sessions),
+    MM.addIndex(users, { unique: true, name: "username" }, users.sortBy("username", "asc")),
+    MM.dropCollection("abc"),
+    MM.dropCollection("def"),
     MM.clearCollection(sessions),
   );
 }).pipe(Effect.withLogSpan("migrations"));

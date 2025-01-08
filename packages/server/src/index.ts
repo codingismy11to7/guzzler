@@ -14,6 +14,8 @@ export * as SessionStorage from "./SessionStorage.js";
  */
 export * as TodosRepository from "./TodosRepository.js";
 
+export * as Users from "./Users.js";
+
 /**
  * Server entrypoint
  */
