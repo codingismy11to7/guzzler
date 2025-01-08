@@ -1,4 +1,4 @@
-import { Chunk, Effect, Match } from "effect";
+import { Chunk, Effect, Match, pipe } from "effect";
 import { CreateIndexesOptions } from "mongodb";
 import { mongoEff } from "./internal/utils.js";
 import { AppState } from "./Model.js";
@@ -20,11 +20,15 @@ type AddIndex<
 > = BaseMigration<CollName, SchemaT, FieldsT> &
   Readonly<{ _tag: "AddIndex"; indexSpec: Model.SortParams<SchemaT>; options: CreateIndexesOptions }>;
 
-type Migration<CollName extends string, SchemaT extends AnySchema, FieldsT extends SomeFields> = AddIndex<
-  CollName,
-  SchemaT,
-  FieldsT
->;
+type ClearCollection<
+  CollName extends string,
+  SchemaT extends MongoCollection.AnySchema,
+  FieldsT extends MongoCollection.SomeFields,
+> = BaseMigration<CollName, SchemaT, FieldsT> & Readonly<{ _tag: "ClearCollection" }>;
+
+type Migration<CollName extends string, SchemaT extends AnySchema, FieldsT extends SomeFields> =
+  | AddIndex<CollName, SchemaT, FieldsT>
+  | ClearCollection<CollName, SchemaT, FieldsT>;
 
 export class MongoMigrationHandler extends Effect.Service<MongoMigrationHandler>()("MongoMigrationHandler", {
   accessors: true,
@@ -48,8 +52,20 @@ export class MongoMigrationHandler extends Effect.Service<MongoMigrationHandler>
         yield* mongoEff(() => coll.createIndex(indexSpec, options));
       });
 
+    const clearCollection = ({ collection }: ClearCollection<any, any, any>) =>
+      pipe(
+        Effect.logInfo(`Deleting documents from ${collection.name}`),
+        Effect.andThen(collection.connection),
+        Effect.andThen(c => c.deleteMany()),
+        Effect.andThen(r => Effect.logInfo(` - deleted ${r.deletedCount}`)),
+      );
+
     const handleMigration = (mig: Migration<any, any, any>) =>
-      Match.value(mig).pipe(Match.tag("AddIndex", addIndex), Match.exhaustive);
+      Match.value(mig).pipe(
+        Match.tag("AddIndex", addIndex),
+        Match.tag("ClearCollection", clearCollection),
+        Match.exhaustive,
+      );
 
     const handleMigrations = (...migrations: ReadonlyArray<Migration<any, any, any>>) =>
       Effect.gen(function* () {
@@ -99,4 +115,15 @@ export const addIndex = <
     indexSpec: [initial, ...fields],
   };
   return x as unknown as AddIndex<any, any, any>;
+};
+
+export const clearCollection = <
+  CollName extends string,
+  SchemaT extends MongoCollection.AnySchema,
+  FieldsT extends MongoCollection.SomeFields,
+>(
+  collection: MongoCollection.MongoCollection<CollName, SchemaT, FieldsT>,
+): Migration<any, any, any> => {
+  const x: ClearCollection<CollName, SchemaT, FieldsT> = { collection, _tag: "ClearCollection" };
+  return x as unknown as ClearCollection<any, any, any>;
 };
