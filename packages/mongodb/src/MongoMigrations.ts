@@ -1,48 +1,34 @@
-import { Chunk, Effect, Match, pipe, Schema } from "effect";
+import { Chunk, Effect, Match, pipe } from "effect";
 import { CreateIndexesOptions, DropCollectionOptions } from "mongodb";
 import { mongoEff } from "./internal/utils.js";
 import { AppState } from "./Model.js";
-import { AnySchema, SomeFields } from "./MongoCollection.js";
+import { AnySchema } from "./MongoCollection.js";
 import { Model, MongoCollection, MongoDatabaseLayer } from "./index.js";
 
 const AppStateDbName = "appState";
 
-type BaseMigration<
-  CollName extends string,
-  SchemaT extends MongoCollection.AnySchema,
-  FieldsT extends MongoCollection.SomeFields,
-  Structs extends ReadonlyArray<Schema.TaggedStruct<any, any>>,
-> = Readonly<{ collection: MongoCollection.MongoCollection<CollName, SchemaT, FieldsT, Structs> }>;
+type BaseMigration<CollName extends string, SchemaT extends MongoCollection.AnySchema> = Readonly<{
+  collection: MongoCollection.MongoCollection<CollName, SchemaT>;
+}>;
 
 type NoOp = Readonly<{ _tag: "NoOp" }>;
 
-type AddIndex<
-  CollName extends string,
-  SchemaT extends MongoCollection.AnySchema,
-  FieldsT extends MongoCollection.SomeFields,
-  Structs extends ReadonlyArray<Schema.TaggedStruct<any, any>>,
-> = BaseMigration<CollName, SchemaT, FieldsT, Structs> &
+type AddIndex<CollName extends string, SchemaT extends MongoCollection.AnySchema> = BaseMigration<CollName, SchemaT> &
   Readonly<{ _tag: "AddIndex"; indexSpec: Model.SortParams<SchemaT>; options: CreateIndexesOptions }>;
 
-type ClearCollection<
-  CollName extends string,
-  SchemaT extends MongoCollection.AnySchema,
-  FieldsT extends MongoCollection.SomeFields,
-  Structs extends ReadonlyArray<Schema.TaggedStruct<any, any>>,
-> = BaseMigration<CollName, SchemaT, FieldsT, Structs> & Readonly<{ _tag: "ClearCollection" }>;
+type ClearCollection<CollName extends string, SchemaT extends MongoCollection.AnySchema> = BaseMigration<
+  CollName,
+  SchemaT
+> &
+  Readonly<{ _tag: "ClearCollection" }>;
 
 type DropCollection = Readonly<{ _tag: "DropCollection"; collectionName: string; options?: DropCollectionOptions }>;
 
-type Migration<
-  CollName extends string,
-  SchemaT extends AnySchema,
-  FieldsT extends SomeFields,
-  Structs extends ReadonlyArray<Schema.TaggedStruct<any, any>>,
-> =
+type Migration<CollName extends string, SchemaT extends AnySchema = AnySchema> =
   | NoOp
-  | AddIndex<CollName, SchemaT, FieldsT, Structs>
+  | AddIndex<CollName, SchemaT>
   | DropCollection
-  | ClearCollection<CollName, SchemaT, FieldsT, Structs>;
+  | ClearCollection<CollName, SchemaT>;
 
 export class MongoMigrationHandler extends Effect.Service<MongoMigrationHandler>()("MongoMigrationHandler", {
   accessors: true,
@@ -51,7 +37,7 @@ export class MongoMigrationHandler extends Effect.Service<MongoMigrationHandler>
     const mcl = yield* MongoCollection.MongoCollectionLayer;
     const appStateColl = mcl.createCollectionRegistry(c => c.collection(AppStateDbName, AppState)({})).appState;
 
-    const addIndex = ({ options, collection, indexSpec }: AddIndex<any, any, any, any>) =>
+    const addIndex = ({ options, collection, indexSpec }: AddIndex<any, AnySchema>) =>
       Effect.gen(function* () {
         const { unique, name } = options;
 
@@ -74,7 +60,7 @@ export class MongoMigrationHandler extends Effect.Service<MongoMigrationHandler>
         yield* mongoEff(() => db.dropCollection(collectionName, options));
       });
 
-    const clearCollection = ({ collection }: ClearCollection<any, any, any, any>) =>
+    const clearCollection = ({ collection }: ClearCollection<any, AnySchema>) =>
       pipe(
         Effect.logInfo(`Deleting documents from ${collection.name}`),
         Effect.andThen(collection.connection),
@@ -82,7 +68,7 @@ export class MongoMigrationHandler extends Effect.Service<MongoMigrationHandler>
         Effect.andThen(r => Effect.logInfo(` - deleted ${r.deletedCount}`)),
       );
 
-    const handleMigration = (mig: Migration<any, any, any, any>) =>
+    const handleMigration = (mig: Migration<any>) =>
       Match.value(mig).pipe(
         Match.tag("NoOp", () => Effect.void),
         Match.tag("AddIndex", addIndex),
@@ -91,7 +77,7 @@ export class MongoMigrationHandler extends Effect.Service<MongoMigrationHandler>
         Match.exhaustive,
       );
 
-    const handleMigrations = (...migrations: ReadonlyArray<Migration<any, any, any, any>>) =>
+    const handleMigrations = (...migrations: ReadonlyArray<Migration<any>>) =>
       Effect.gen(function* () {
         const appState = yield* appStateColl
           .findOne({ _id: Model.AppStateDocId })
@@ -124,27 +110,17 @@ export class MongoMigrationHandler extends Effect.Service<MongoMigrationHandler>
  */
 export const noOp = (): NoOp => ({ _tag: "NoOp" });
 
-export const addIndex = <
-  CollName extends string,
-  SchemaT extends MongoCollection.AnySchema,
-  FieldsT extends MongoCollection.SomeFields,
-  Structs extends ReadonlyArray<Schema.TaggedStruct<any, any>>,
->(
-  collection: MongoCollection.MongoCollection<CollName, SchemaT, FieldsT, Structs>,
+export const addIndex = <CollName extends string, SchemaT extends MongoCollection.AnySchema>(
+  collection: MongoCollection.MongoCollection<CollName, SchemaT>,
   options: CreateIndexesOptions,
   initial: Model.SortParam<SchemaT>,
   ...fields: Model.SortParams<SchemaT>
-): Migration<any, any, any, any> => {
-  // TODO got something going on here with variance that needs to get fixed
-  //  to remove casts and the anys
-  const x: AddIndex<CollName, SchemaT, FieldsT, Structs> = {
-    collection,
-    _tag: "AddIndex",
-    options,
-    indexSpec: [initial, ...fields],
-  };
-  return x as unknown as AddIndex<any, any, any, any>;
-};
+): AddIndex<CollName, SchemaT> => ({
+  collection,
+  _tag: "AddIndex",
+  options,
+  indexSpec: [initial, ...fields],
+});
 
 export const dropCollection = (collectionName: string, options?: DropCollectionOptions): DropCollection => ({
   _tag: "DropCollection",
@@ -152,14 +128,6 @@ export const dropCollection = (collectionName: string, options?: DropCollectionO
   ...(options ? { options } : {}),
 });
 
-export const clearCollection = <
-  CollName extends string,
-  SchemaT extends MongoCollection.AnySchema,
-  FieldsT extends MongoCollection.SomeFields,
-  Structs extends ReadonlyArray<Schema.TaggedStruct<any, any>>,
->(
-  collection: MongoCollection.MongoCollection<CollName, SchemaT, FieldsT, Structs>,
-): Migration<any, any, any, any> => {
-  const x: ClearCollection<CollName, SchemaT, FieldsT, Structs> = { collection, _tag: "ClearCollection" };
-  return x as unknown as ClearCollection<any, any, any, any>;
-};
+export const clearCollection = <CollName extends string, SchemaT extends MongoCollection.AnySchema>(
+  collection: MongoCollection.MongoCollection<CollName, SchemaT>,
+): ClearCollection<CollName, SchemaT> => ({ collection, _tag: "ClearCollection" });

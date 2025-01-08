@@ -76,7 +76,7 @@ const LoggedInApp = ({ userInfo }: Props) => {
       <div>
         <a href="/session/userInfo">Hello, {userInfo.given_name}</a>
       </div>
-      <div>{userInfo.picture && <img src={userInfo.picture} alt="profile image" />}</div>
+      <div>{userInfo.picture && <img src={userInfo.picture} alt="profile image" referrerPolicy="no-referrer" />}</div>
       <div>
         <a href="/session/logout">Logout</a>
       </div>

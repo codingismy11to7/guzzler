@@ -1,7 +1,6 @@
 import { ObjectUtils } from "@guzzler/utils";
 import { Document } from "bson";
 import { Effect, Schema } from "effect";
-import { ParseError } from "effect/ParseResult";
 import {
   Collection,
   DeleteOptions,
@@ -18,7 +17,7 @@ import {
   WithId,
 } from "mongodb";
 import * as internal from "./internal/collection.js";
-import { Conflict, MongoError, NotFound } from "./Model.js";
+import { Conflict, MongoError, NotFound, SchemaMismatch } from "./Model.js";
 import { Model, MongoDatabaseLayer } from "./index.js";
 
 /*
@@ -32,6 +31,7 @@ DocSchema<SchemaT> - the final type of the documents
 
 // it must be a Schema
 export type AnySchema = Schema.Schema.Any;
+/*
 // the fields in the document
 export type SomeFields = Schema.Struct.Fields;
 // a Schema.Struct that represents our document
@@ -43,6 +43,7 @@ export type StructUnionSchema<
   SchemaT extends AnySchema,
   Structs extends ReadonlyArray<Schema.TaggedStruct<any, any>>,
 > = SchemaT & Schema.Schema<any, any> & Schema.Union<Structs>;
+*/
 
 // this is the type of the document in the db
 // eg: our doc is defined as Schema.Struct({a:Schema<X>, b:Schema<Redacted<Y>>})
@@ -51,21 +52,16 @@ type DbSchema<SchemaT extends AnySchema> = Schema.Schema.Encoded<SchemaT>;
 // this type is the instantiated Schema object, with type {a: X, B: Redacted<Y>}
 type MemSchema<SchemaT extends AnySchema> = Schema.Schema.Type<SchemaT>;
 
-export type MongoCollection<
-  CName extends string,
-  SchemaT extends AnySchema,
-  FieldsT extends SomeFields,
-  Structs extends ReadonlyArray<Schema.TaggedStruct<any, any>>,
-> = Readonly<{
+export type MongoCollection<CName extends string, SchemaT extends AnySchema> = Readonly<{
   name: CName;
-  schema: StructSchema<SchemaT, FieldsT> | StructUnionSchema<SchemaT, Structs>;
+  schema: SchemaT;
   connection: Effect.Effect<Collection<DbSchema<SchemaT>>>;
   sortBy: (field: keyof DbSchema<SchemaT>, order: "asc" | "desc") => Model.SortParam<SchemaT>;
 
   findOneRaw: (
     filter?: Filter<DbSchema<SchemaT>>,
     options?: Omit<FindOptions, "timeoutMode">,
-  ) => Effect.Effect<MemSchema<SchemaT> | null, MongoError | ParseError>;
+  ) => Effect.Effect<MemSchema<SchemaT> | null, MongoError | SchemaMismatch>;
   findOne: (
     filter?: Filter<DbSchema<SchemaT>>,
     options?: Omit<FindOptions, "timeoutMode">,
@@ -79,7 +75,7 @@ export type MongoCollection<
   insertOneRaw: (
     doc: MemSchema<SchemaT>,
     options?: InsertOneOptions,
-  ) => Effect.Effect<InsertOneResult<DbSchema<SchemaT>>, MongoError | ParseError>;
+  ) => Effect.Effect<InsertOneResult<DbSchema<SchemaT>>, MongoError | SchemaMismatch>;
   insertOne: (
     doc: MemSchema<SchemaT>,
     options?: InsertOneOptions,
@@ -89,7 +85,7 @@ export type MongoCollection<
     filter: Filter<DbSchema<SchemaT>>,
     replacement: MemSchema<SchemaT>,
     options?: ReplaceOptions,
-  ) => Effect.Effect<UpdateResult<DbSchema<SchemaT>> | Document, MongoError | ParseError>;
+  ) => Effect.Effect<UpdateResult<DbSchema<SchemaT>> | Document, MongoError | SchemaMismatch>;
   replaceOne: (
     filter: Filter<DbSchema<SchemaT>>,
     replacement: MemSchema<SchemaT>,
@@ -114,7 +110,7 @@ export type MongoCollection<
     filter: Filter<DbSchema<SchemaT>>,
     fields: Partial<MemSchema<SchemaT>>,
     options?: UpdateOptions,
-  ) => Effect.Effect<UpdateResult<DbSchema<SchemaT>>, MongoError | ParseError>;
+  ) => Effect.Effect<UpdateResult<DbSchema<SchemaT>>, MongoError | SchemaMismatch>;
   setFieldsOne: (
     filter: Filter<DbSchema<SchemaT>>,
     fields: Partial<MemSchema<SchemaT>>,
@@ -125,7 +121,7 @@ export type MongoCollection<
     filter: Filter<DbSchema<SchemaT>>,
     replacement: MemSchema<SchemaT>,
     options?: Omit<ReplaceOptions, "upsert">,
-  ) => Effect.Effect<UpdateResult<DbSchema<SchemaT>> | Document, MongoError | ParseError>;
+  ) => Effect.Effect<UpdateResult<DbSchema<SchemaT>> | Document, MongoError | SchemaMismatch>;
   upsert: (
     filter: Filter<DbSchema<SchemaT>>,
     replacement: MemSchema<SchemaT>,
@@ -148,7 +144,7 @@ export type MongoCollection<
 // TODO lots more to add
 export type FindResult<MemSchema, DbSchema> = Readonly<{
   raw: FindCursor<WithId<DbSchema>>;
-  toArrayRaw: Effect.Effect<readonly MemSchema[], MongoError | ParseError>;
+  toArrayRaw: Effect.Effect<readonly MemSchema[], MongoError | SchemaMismatch>;
   toArray: Effect.Effect<readonly MemSchema[]>;
 }>;
 
@@ -159,16 +155,7 @@ export class MongoCollectionLayer extends Effect.Service<MongoCollectionLayer>()
 
     const RegistryCreator = {
       collection:
-        <
-          CName extends string,
-          A extends object,
-          SchemaT extends AnySchema,
-          FieldsT extends SomeFields,
-          Structs extends ReadonlyArray<Schema.TaggedStruct<any, any>>,
-        >(
-          collectionName: Exclude<CName, keyof A>,
-          schema: StructSchema<SchemaT, FieldsT> | StructUnionSchema<SchemaT, Structs>,
-        ) =>
+        <CName extends string, A extends object>(collectionName: Exclude<CName, keyof A>, schema: AnySchema) =>
         (self: A) =>
           ObjectUtils.addField(self, collectionName, internal.make(db, collectionName, schema)),
     };

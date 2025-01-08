@@ -18,50 +18,36 @@ import {
   WithId,
 } from "mongodb";
 import { Model } from "../index.js";
-import { MongoError, NotFound } from "../Model.js";
-import {
-  AnySchema,
-  FindResult,
-  MongoCollection,
-  SomeFields,
-  StructSchema,
-  StructUnionSchema,
-} from "../MongoCollection.js";
+import { MongoError, NotFound, SchemaMismatch } from "../Model.js";
+import { AnySchema, FindResult, MongoCollection } from "../MongoCollection.js";
 import { mongoEff } from "./utils.js";
 
-export const make = <
-  CName extends string,
-  SchemaT extends AnySchema,
-  FieldsT extends SomeFields,
-  Structs extends ReadonlyArray<Schema.TaggedStruct<any, any>>,
->(
+export const make = <CName extends string, SchemaT extends AnySchema>(
   db: Db,
   collectionName: CName,
-  schema: StructSchema<SchemaT, FieldsT> | StructUnionSchema<SchemaT, Structs>,
-): MongoCollection<CName, SchemaT, FieldsT, Structs> => {
+  schema: SchemaT,
+): MongoCollection<CName, SchemaT> => {
   type DbSchema = Schema.Schema.Encoded<SchemaT>;
   type MemSchema = Schema.Schema.Type<SchemaT>;
 
-  const encode = (d: MemSchema) => Schema.encode(schema)(d) as Effect.Effect<DbSchema, ParseError>;
-  const decode = (d: unknown) => Schema.decodeUnknown(schema)(d) as Effect.Effect<MemSchema, ParseError>;
+  const toMismatch = Effect.catchTags({ ParseError: (p: ParseError) => new SchemaMismatch({ underlying: p }) });
+  const encode = (d: MemSchema) => Schema.encode(schema)(d).pipe(toMismatch) as Effect.Effect<DbSchema, SchemaMismatch>;
+  const decode = (d: unknown) =>
+    Schema.decodeUnknown(schema)(d).pipe(toMismatch) as Effect.Effect<MemSchema, SchemaMismatch>;
 
   const connection = Effect.sync(() => db.collection<DbSchema>(collectionName));
 
   const sortBy = (field: keyof DbSchema, order: "asc" | "desc") =>
     ({ [field]: order === "asc" ? 1 : -1 }) as Model.SortParam<MemSchema>;
 
-  const dieMongo = {
-    MongoError: (e: MongoError) => Effect.die(e.underlying),
-  } as const;
-  const dieSchema = {
-    ParseError: (p: ParseError) => Effect.die(p),
-  } as const;
-  const die = { ...dieMongo, ...dieSchema } as const;
+  const dieMongo = { MongoError: (e: MongoError) => Effect.die(e.underlying) } as const;
+  const dieSchema = { SchemaMismatch: (s: SchemaMismatch) => Effect.die(s) } as const;
+  const dieFromFatal = { ...dieMongo, ...dieSchema } as const;
 
   const findOneRaw = (
     filter?: Filter<DbSchema>,
     options?: Omit<FindOptions, "timeoutMode">,
-  ): Effect.Effect<MemSchema | null, MongoError | ParseError> =>
+  ): Effect.Effect<MemSchema | null, MongoError | SchemaMismatch> =>
     pipe(
       connection,
       Effect.andThen(coll =>
@@ -74,14 +60,14 @@ export const make = <
   const findOne = flow(
     findOneRaw,
     Effect.andThen(Effect.fromNullable),
-    Effect.catchTags({ ...die, NoSuchElementException: () => new NotFound() }),
+    Effect.catchTags({ ...dieFromFatal, NoSuchElementException: () => new NotFound() }),
   );
 
   const toFindResult = (c: FindCursor<WithId<DbSchema>>): FindResult<MemSchema, DbSchema> => {
     const toArrayRaw = mongoEff(() => c.toArray()).pipe(
       Effect.andThen(Effect.forEach(decode, { concurrency: "unbounded" })),
     );
-    const toArray = toArrayRaw.pipe(Effect.catchTags(die));
+    const toArray = toArrayRaw.pipe(Effect.catchTags(dieFromFatal));
 
     return { raw: c, toArrayRaw, toArray };
   };
@@ -95,25 +81,25 @@ export const make = <
   const insertOneRaw = (
     doc: MemSchema,
     options?: InsertOneOptions,
-  ): Effect.Effect<InsertOneResult<DbSchema>, MongoError | ParseError> =>
+  ): Effect.Effect<InsertOneResult<DbSchema>, MongoError | SchemaMismatch> =>
     Effect.gen(function* () {
       const coll = yield* connection;
       const toIns = yield* encode(doc);
       return yield* mongoEff(() => coll.insertOne(toIns as OptionalUnlessRequiredId<DbSchema>, options));
     });
-  const insertOne = flow(insertOneRaw, Effect.catchTags(die));
+  const insertOne = flow(insertOneRaw, Effect.catchTags(dieFromFatal));
 
   const replaceOneRaw = (
     filter: Filter<DbSchema>,
     replacement: MemSchema,
     options?: ReplaceOptions,
-  ): Effect.Effect<UpdateResult<DbSchema> | Document, MongoError | ParseError> =>
+  ): Effect.Effect<UpdateResult<DbSchema> | Document, MongoError | SchemaMismatch> =>
     Effect.gen(function* () {
       const coll = yield* connection;
       const toIns = yield* encode(replacement);
       return yield* mongoEff(() => coll.replaceOne(filter, toIns, options));
     });
-  const replaceOne = flow(replaceOneRaw, Effect.catchTags(die));
+  const replaceOne = flow(replaceOneRaw, Effect.catchTags(dieFromFatal));
 
   const updateOneRaw = (
     filter: Filter<DbSchema>,
@@ -131,21 +117,24 @@ export const make = <
     filter: Filter<DbSchema>,
     fields: Partial<MemSchema>,
     options?: UpdateOptions,
-  ): Effect.Effect<UpdateResult<DbSchema>, MongoError | ParseError> =>
+  ): Effect.Effect<UpdateResult<DbSchema>, MongoError | SchemaMismatch> =>
     pipe(
-      Schema.encode(Schema.partial(schema))(fields) as Effect.Effect<Partial<DbSchema>, ParseError>,
+      Schema.encode(Schema.partial(schema))(fields).pipe(toMismatch) as Effect.Effect<
+        Partial<DbSchema>,
+        SchemaMismatch
+      >,
       Effect.map($set => ({ $set }) as UpdateFilter<DbSchema>),
       Effect.andThen(upd => updateOneRaw(filter, upd, options)),
     );
-  const setFieldsOne = flow(setFieldsOneRaw, Effect.catchTags(die));
+  const setFieldsOne = flow(setFieldsOneRaw, Effect.catchTags(dieFromFatal));
 
   const upsertRaw = (
     filter: Filter<DbSchema>,
     replacement: MemSchema,
     options?: Omit<ReplaceOptions, "upsert">,
-  ): Effect.Effect<UpdateResult<DbSchema> | Document, MongoError | ParseError> =>
+  ): Effect.Effect<UpdateResult<DbSchema> | Document, MongoError | SchemaMismatch> =>
     replaceOneRaw(filter, replacement, { ...options, upsert: true });
-  const upsert = flow(upsertRaw, Effect.catchTags(die));
+  const upsert = flow(upsertRaw, Effect.catchTags(dieFromFatal));
 
   const deleteOneRaw = (filter?: Filter<DbSchema>, options?: DeleteOptions): Effect.Effect<DeleteResult, MongoError> =>
     pipe(

@@ -1,4 +1,11 @@
-import { Mongo, MongoMigrations as MM } from "@guzzler/mongodb";
+import { Mongo } from "@guzzler/mongodb";
+import {
+  addIndex,
+  clearCollection,
+  dropCollection,
+  MongoMigrationHandler,
+  noOp,
+} from "@guzzler/mongodb/MongoMigrations";
 import { Effect, Layer, Redacted } from "effect";
 import { AppConfig, ProdMode } from "../../AppConfig.js";
 import { CollectionRegistry, CollectionRegistryLive } from "./CollectionRegistry.js";
@@ -7,16 +14,16 @@ export const runMigrations = Effect.gen(function* () {
   yield* Effect.logInfo("Running migrations...");
 
   const { sessions, users } = yield* CollectionRegistry;
-  const mmh = yield* MM.MongoMigrationHandler;
+  const mmh = yield* MongoMigrationHandler;
 
   yield* mmh.handleMigrations(
-    MM.noOp(),
-    MM.noOp(),
-    MM.clearCollection(sessions),
-    MM.addIndex(users, { unique: true, name: "username" }, users.sortBy("username", "asc")),
-    MM.dropCollection("abc"),
-    MM.dropCollection("def"),
-    MM.clearCollection(sessions),
+    noOp(),
+    noOp(),
+    clearCollection(sessions),
+    addIndex(users, { unique: true, name: "username" }, users.sortBy("username", "asc")),
+    dropCollection("abc"),
+    dropCollection("def"),
+    clearCollection(sessions),
   );
 }).pipe(Effect.withLogSpan("migrations"));
 
