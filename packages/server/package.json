@@ -10,6 +10,7 @@
     "directory": "packages/server"
   },
   "scripts": {
+    "dev": "nodemon src/main.ts",
     "codegen": "build-utils prepare-v2",
     "build": "npm run build-esm && npm run build-annotate && npm run build-cjs && build-utils pack-v2",
     "build-esm": "tsc -b tsconfig.build.json",
@@ -20,7 +21,8 @@
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
     "coverage:watch": "vitest --coverage",
-    "dev": "nodemon src/index.ts"
+    "pullEnv": "npx --yes dotenv-vault@latest pull",
+    "pushEnv": "npx --yes dotenv-vault@latest push"
   },
   "dependencies": {
     "@effect/platform": "^0.72.0",
@@ -50,6 +52,7 @@
   "devDependencies": {
     "@types/npmcli__package-json": "^4.0.4",
     "@types/simple-oauth2": "^5.0.7",
+    "dotenv-vault": "^1.26.2",
     "nodemon": "^3.1.9"
   },
   "nodemonConfig": {

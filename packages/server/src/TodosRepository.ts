@@ -1,5 +1,6 @@
 import { OptionalTodoWithoutId, Todo, TodoId, TodoNotFound } from "@guzzler/domain/AppApi";
 import { Effect, pipe } from "effect";
+import { nanoid } from "nanoid";
 import { CollectionRegistry } from "./internal/database/CollectionRegistry.js";
 
 /**
@@ -14,25 +15,25 @@ export class TodosRepository extends Effect.Service<TodosRepository>()("api/Todo
 
     const getById = (id: TodoId): Effect.Effect<Todo, TodoNotFound> =>
       pipe(
-        todos.findOne({ _id: id }),
+        todos.findOne({ id }),
         Effect.catchTag("NotFound", () => new TodoNotFound({ id })),
       );
 
     const create = (text: string): Effect.Effect<Todo> =>
       pipe(
-        Effect.succeed(Todo.make({ text })),
-        Effect.tap(t => todos.upsert({ _id: t.id }, t)),
+        Effect.succeed(Todo.make({ id: TodoId.make(nanoid()), done: false, text })),
+        Effect.tap(t => todos.upsert({ id: t.id }, t)),
       );
 
     const edit = (id: TodoId, updates: OptionalTodoWithoutId): Effect.Effect<Todo, TodoNotFound> =>
       getById(id).pipe(
         Effect.map(todo => Todo.make({ ...todo, ...updates })),
-        Effect.tap(todo => todos.upsert({ _id: todo.id }, todo)),
+        Effect.tap(todo => todos.upsert({ id: todo.id }, todo)),
       );
 
     const remove = (id: TodoId): Effect.Effect<void, TodoNotFound> =>
       pipe(
-        todos.deleteOne({ _id: id }),
+        todos.deleteOne({ id }),
         Effect.tap(r => (r.deletedCount === 0 ? new TodoNotFound({ id }) : Effect.void)),
       );
 
