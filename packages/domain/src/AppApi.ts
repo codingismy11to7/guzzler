@@ -1,8 +1,10 @@
 import { HttpApi, HttpApiEndpoint, HttpApiGroup, HttpApiSchema, OpenApi } from "@effect/platform";
-import { Schema } from "effect";
+import { Conflict, Forbidden } from "@effect/platform/HttpApiError";
+import { Schema, Struct } from "effect";
 import { nanoid } from "nanoid";
-import { AuthenticationMiddleware } from "./Authentication.js";
+import { AuthenticationMiddleware, NewUserSetupRedirectMiddleware, OptionalAuthMiddleware } from "./Authentication.js";
 import { OAuthUserInfo } from "./OAuthUserInfo.js";
+import { User, Username } from "./User.js";
 
 /**
  * App schema & api
@@ -13,7 +15,7 @@ export type TodoId = typeof TodoId.Type;
 
 const TodoWithoutId = Schema.Struct({
   text: Schema.NonEmptyTrimmedString,
-  done: Schema.Boolean.pipe(Schema.optionalWith({ default: () => false, exact: true, nullable: true })),
+  done: Schema.Boolean,
 });
 export const OptionalTodoWithoutId = Schema.Struct({
   text: Schema.NonEmptyTrimmedString.pipe(Schema.optionalWith({ exact: true, nullable: true })),
@@ -22,10 +24,7 @@ export const OptionalTodoWithoutId = Schema.Struct({
 export type OptionalTodoWithoutId = typeof OptionalTodoWithoutId.Type;
 
 export const Todo = Schema.Struct({
-  id: TodoId.pipe(
-    Schema.optionalWith({ default: () => TodoId.make(nanoid()), exact: true, nullable: true }),
-    Schema.fromKey("_id"),
-  ),
+  id: Schema.propertySignature(TodoId).pipe(Schema.fromKey("_id")),
   ...TodoWithoutId.fields,
 });
 export type Todo = typeof Todo.Type;
@@ -65,28 +64,62 @@ export class TodosApiGroup extends HttpApiGroup.make("todos")
 
 export class ServerError extends Schema.TaggedError<ServerError>()(
   "ServerError",
+  { message: Schema.String },
+  HttpApiSchema.annotations({ status: 500 }),
+) {}
+
+export class RedactedError extends Schema.TaggedError<RedactedError>()(
+  "RedactedError",
   {
-    message: Schema.String,
+    id: Schema.String.pipe(Schema.optionalWith({ default: () => nanoid() })),
   },
   HttpApiSchema.annotations({ status: 500 }),
 ) {}
 
 export class AuthApi extends HttpApiGroup.make("auth")
-  .add(HttpApiEndpoint.get("oAuthCallback", "/callback").addError(ServerError))
+  .add(HttpApiEndpoint.get("oAuthCallback", "/callback").addError(RedactedError))
   .add(HttpApiEndpoint.get("startRedirect", "/"))
   .annotateContext(OpenApi.annotations({ exclude: true }))
   .prefix("/auth/google") {}
 
+export const SessionWithoutUser = Schema.TaggedStruct("SessionWithoutUser", {
+  userInfo: OAuthUserInfo,
+});
+export type SessionWithoutUser = typeof SessionWithoutUser.Type;
+export const FullSession = Schema.TaggedStruct("FullSession", {
+  ...Struct.omit(SessionWithoutUser.fields, "_tag"),
+  user: User,
+});
+export type FullSession = typeof FullSession.Type;
+export const SessionInfo = Schema.Union(FullSession, SessionWithoutUser);
+export type SessionInfo = typeof SessionInfo.Type;
+
 export class SessionApi extends HttpApiGroup.make("session")
-  .add(HttpApiEndpoint.get("getUserInfo", "/userInfo").addSuccess(OAuthUserInfo))
+  .add(HttpApiEndpoint.get("getSessionInfo", "/info").addSuccess(SessionInfo))
   .add(HttpApiEndpoint.get("logout", "/logout").addSuccess(Schema.Void, { status: 303 }))
+  .add(
+    HttpApiEndpoint.get("validateUsername", "/username/:username/validate")
+      .setPath(Schema.Struct({ username: Username }))
+      .addSuccess(Schema.Struct({ available: Schema.Boolean })),
+  )
+  .add(
+    HttpApiEndpoint.post("setUsername", "/username/set")
+      .setPayload(Schema.Struct({ username: Username }).pipe(HttpApiSchema.withEncoding({ kind: "UrlParams" })))
+      .addSuccess(Schema.Void, { status: 303 })
+      .addError(Conflict)
+      .addError(Forbidden),
+  )
   .prefix("/session")
   .middleware(AuthenticationMiddleware) {}
 
 export class NotFound extends Schema.TaggedError<NotFound>()("NotFound", {}) {}
 
 class UI extends HttpApiGroup.make("ui")
-  .add(HttpApiEndpoint.get("ui", "/*").addError(NotFound, { status: 404 }).addError(ServerError))
+  .add(
+    HttpApiEndpoint.get("ui", "/*").addError(NotFound, { status: 404 }).addError(RedactedError).addError(ServerError),
+  )
+  .middleware(NewUserSetupRedirectMiddleware)
+  .middleware(OptionalAuthMiddleware)
   .annotateContext(OpenApi.annotations({ exclude: true })) {}
 
 export class AppApi extends HttpApi.make("Guzzler")

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@effect/vitest";
-import { AppConfig, AppConfigLive } from "@guzzler/server/src/AppConfig.js";
 import { ConfigError, ConfigProvider, Effect, Layer } from "effect";
+import { AppConfig, AppConfigLive } from "../src/AppConfig.js";
 
 describe("AppConfig", () => {
   it.effect.each([

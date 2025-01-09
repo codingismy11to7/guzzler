@@ -1,6 +1,8 @@
-import { AppApi, OAuthUserInfo } from "@guzzler/domain";
-import { Effect, Option } from "effect";
-import React, { useCallback, useEffect, useState } from "react";
+import { AppApi, OAuthUserInfo, User as U } from "@guzzler/domain";
+import { FullSession, SessionInfo, SessionWithoutUser } from "@guzzler/domain/AppApi";
+import { Effect, Either, Option, pipe, Schema } from "effect";
+import { isNotUndefined, isUndefined } from "effect/Predicate";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import "./App.css";
@@ -8,9 +10,17 @@ import { runP } from "./bootstrap.js";
 import { SessionClient } from "./SessionClient.js";
 import { TodosClient } from "./TodosClient.js";
 
-type Props = Readonly<{ userInfo: OAuthUserInfo.OAuthUserInfo }>;
+const UserInfo = ({ given_name, picture }: OAuthUserInfo.OAuthUserInfo) => (
+  <>
+    <div>Hello, {given_name}</div>
+    <div>{picture && <img src={picture} alt="profile image" referrerPolicy="no-referrer" />}</div>
+    <div>
+      <a href="/session/logout">Logout</a>
+    </div>
+  </>
+);
 
-const LoggedInApp = ({ userInfo }: Props) => {
+const LoggedInApp = ({ userInfo, user }: Omit<FullSession, "_tag">) => {
   const [todos, setTodos] = useState<readonly AppApi.Todo[]>([]);
   const [count, setCount] = useState(0);
   const [text, setText] = useState("");
@@ -73,13 +83,8 @@ const LoggedInApp = ({ userInfo }: Props) => {
           <img src={reactLogo} className="logo react" alt="React logo" />
         </a>
       </div>
-      <div>
-        <a href="/session/userInfo">Hello, {userInfo.given_name}</a>
-      </div>
-      <div>{userInfo.picture && <img src={userInfo.picture} alt="profile image" />}</div>
-      <div>
-        <a href="/session/logout">Logout</a>
-      </div>
+      <div>{user.username}</div>
+      <UserInfo {...userInfo} />
       <div className="card">
         <button onClick={() => setCount(count => count + 1)}>count is {count}</button>
         <p>
@@ -109,30 +114,118 @@ const LoginScreen = () => (
   </div>
 );
 
+const CreateUser = ({ userInfo }: Omit<SessionWithoutUser, "_tag">) => {
+  const [username, _setUsername] = useState<string>();
+  const [checkingForConflict, setCheckingForConflict] = useState(false);
+  const [error, setError] = useState<string>();
+  const [available, setAvailable] = useState<boolean>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  const checkUsername = () => {
+    _setUsername(username => {
+      if (isNotUndefined(username)) {
+        Either.match(Schema.decodeEither(U.Username)(username, { errors: "first" }), {
+          onRight: u => {
+            void pipe(
+              SessionClient.validateUsername(u),
+              Effect.andThen(({ available }) => setAvailable(available)),
+              Effect.catchAllDefect(() => Effect.void),
+              Effect.ensuring(Effect.sync(() => setCheckingForConflict(false))),
+              runP,
+            );
+          },
+          onLeft: e => {
+            setCheckingForConflict(false);
+            setError(e.message);
+          },
+        });
+        return username;
+      }
+    });
+  };
+
+  const setUsername = (u: string) => {
+    const newName = u.trim().toLowerCase();
+    if (username !== newName) {
+      setCheckingForConflict(true);
+      setAvailable(undefined);
+      setError(undefined);
+      _setUsername(newName);
+      pipe(timerRef.current, Option.fromNullable, Option.andThen(clearTimeout));
+      timerRef.current = setTimeout(() => checkUsername(), 1000);
+    }
+  };
+
+  const handleSave = () => {
+    if (isNotUndefined(username)) {
+      const form = document.createElement("form");
+      form.method = AppApi.SessionApi.endpoints.setUsername.method;
+      form.action = AppApi.SessionApi.endpoints.setUsername.path;
+      const inp = document.createElement("input");
+      inp.type = "hidden";
+      inp.name = "username";
+      inp.value = username;
+      form.appendChild(inp);
+      document.body.appendChild(form);
+      form.submit();
+    }
+  };
+
+  return (
+    <>
+      <h1>New User</h1>
+      <UserInfo {...userInfo} />
+      <div style={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
+        <div style={{ display: "flex", flexDirection: "column", padding: "8px", backgroundColor: "#111" }}>
+          <span>☝️</span>
+          <span>Not you? Click Logout</span>
+        </div>
+      </div>
+      <hr />
+      <div>Let&#39;s pick a username:</div>
+      <div>
+        <input type="text" value={username ?? ""} onChange={e => setUsername(e.target.value.trim().toLowerCase())} />
+        <span style={{ opacity: isNotUndefined(available) ? undefined : "0%" }}>{available ? "✅" : "❌"}</span>
+      </div>
+      {error && (
+        <div style={{ color: "red", fontSize: "small", whiteSpace: "pre-wrap", textAlign: "start" }}>{error}</div>
+      )}
+      {checkingForConflict && <div style={{ fontSize: "small" }}>Checking for availability...</div>}
+      <div>
+        <button disabled={!available} onClick={handleSave}>
+          {!available ? "Save" : "I'm super happy with this"}
+        </button>
+      </div>
+    </>
+  );
+};
+
 const App = () => {
-  const [userInfo, setUserInfo] = useState<OAuthUserInfo.OAuthUserInfo>();
+  const [sessionInfo, setSessionInfo] = useState<SessionInfo>();
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    runP(
-      SessionClient.getUserInfo.pipe(
-        Effect.catchTag("Unauthenticated", () => Effect.succeed(undefined)),
-        Effect.catchAll(e => Effect.sync(() => setError(e.message)).pipe(Effect.as(undefined))),
-      ),
-    )
-      .then(setUserInfo)
-      .finally(() => setLoading(false));
+    pipe(
+      SessionClient.getSessionInfo,
+      Effect.andThen(setSessionInfo),
+      Effect.catchTag("Unauthenticated", () => Effect.succeed(undefined)),
+      Effect.catchAll(e => Effect.sync(() => setError(e.message)).pipe(Effect.as(undefined))),
+      Effect.ensuring(Effect.sync(() => setLoading(false))),
+      runP,
+    );
   }, []);
 
   return loading ? (
     <div>Loading...</div>
   ) : error ? (
     <div>Error: {error}</div>
-  ) : userInfo ? (
-    <LoggedInApp userInfo={userInfo} />
-  ) : (
+  ) : isUndefined(sessionInfo) ? (
     <LoginScreen />
+  ) : sessionInfo._tag === "SessionWithoutUser" ? (
+    <CreateUser userInfo={sessionInfo.userInfo} />
+  ) : (
+    <LoggedInApp userInfo={sessionInfo.userInfo} user={sessionInfo.user} />
   );
 };
 

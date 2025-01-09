@@ -81,7 +81,7 @@ export default tseslint.config([
       "@typescript-eslint/interface-name-prefix": "off",
       "@typescript-eslint/member-delimiter-style": "off",
       "@typescript-eslint/member-ordering": "off",
-      "@typescript-eslint/no-empty-function": "off",
+      "@typescript-eslint/no-duplicate-type-constituents": "warn",
       "@typescript-eslint/no-empty-interface": "error",
       "@typescript-eslint/no-empty-object-type": "error",
       "@typescript-eslint/no-explicit-any": "off",
@@ -92,7 +92,9 @@ export default tseslint.config([
       "@typescript-eslint/no-namespace": "error",
       "@typescript-eslint/no-non-null-assertion": "off",
       "@typescript-eslint/no-parameter-properties": "off",
+      "@typescript-eslint/no-unnecessary-type-arguments": "warn",
       "@typescript-eslint/no-unnecessary-type-assertion": "warn",
+      "@typescript-eslint/no-unnecessary-type-parameters": "warn",
       "@typescript-eslint/no-unused-expressions": "warn",
       "@typescript-eslint/no-unused-vars": [
         "warn",
@@ -180,6 +182,7 @@ export default tseslint.config([
       "no-underscore-dangle": "off",
       "no-unsafe-finally": "error",
       "no-unused-labels": "error",
+      "no-useless-escape": "warn",
       "no-var": "error",
       "object-shorthand": "warn",
       "one-var": [

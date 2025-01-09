@@ -1,30 +1,19 @@
 import { Todo } from "@guzzler/domain/AppApi";
 import { Session } from "@guzzler/domain/Session";
-import { MongoCollection } from "@guzzler/mongodb";
-import { Context, Effect, Layer, pipe, Schema } from "effect";
+import { User } from "@guzzler/domain/User";
+import { MongoCollectionLayer } from "@guzzler/mongodb/MongoCollection";
+import { Context, Effect, Layer, pipe } from "effect";
 
-const SS = Schema.Struct({
-  a: Schema.String,
-  b: Schema.Boolean,
-});
-const SSE = Schema.Struct({
-  ...SS.fields,
-  c: Schema.Number,
-});
-
-const collections = Effect.gen(function* () {
-  const mcl = yield* MongoCollection.MongoCollectionLayer;
-
-  return mcl.createCollectionRegistry(c =>
-    pipe(
-      {},
-      c.collection("sessions", Session),
-      c.collection("todos", Todo),
-      c.collection("abc", SS),
-      c.collection("def", SSE),
-    ),
-  );
-});
+const collections = pipe(
+  MongoCollectionLayer,
+  Effect.andThen(mcl =>
+    mcl.createCollectionRegistry(c => ({
+      sessions: c.collection("sessions", Session),
+      todos: c.collection("todos", Todo),
+      users: c.collection("users", User),
+    })),
+  ),
+);
 
 export class CollectionRegistry extends Context.Tag("CollectionRegistry")<
   CollectionRegistry,

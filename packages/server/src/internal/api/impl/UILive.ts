@@ -1,16 +1,6 @@
-import {
-  Headers,
-  HttpApiBuilder,
-  HttpBody,
-  HttpClient,
-  HttpClientRequest,
-  HttpMiddleware,
-  HttpServerRequest,
-  HttpServerResponse,
-  Path,
-} from "@effect/platform";
+import { HttpApiBuilder, HttpMiddleware, HttpServerRequest, HttpServerResponse, Path } from "@effect/platform";
 import { AppApi, NotFound, ServerError } from "@guzzler/domain/AppApi";
-import { Cause, Effect, pipe } from "effect";
+import { Effect, pipe } from "effect";
 import { nanoid } from "nanoid";
 import { AppConfig } from "../../../AppConfig.js";
 
@@ -48,28 +38,5 @@ export const UILive = HttpApiBuilder.group(AppApi, "ui", handlers =>
           ),
         );
     }).pipe(HttpMiddleware.withLoggerDisabled),
-  ),
-);
-
-export const UIDev = HttpApiBuilder.group(AppApi, "ui", handlers =>
-  handlers.handleRaw("ui", () =>
-    Effect.gen(function* () {
-      const req = yield* HttpServerRequest.HttpServerRequest;
-      const httpClient = yield* HttpClient.HttpClient;
-
-      yield* Effect.logTrace("Proxying request to", `http://localhost:3000${req.url}`);
-
-      const resp = yield* httpClient.execute(
-        HttpClientRequest.make(req.method)(`http://localhost:3000${req.url}`, {
-          headers: Headers.remove(req.headers, "host"),
-          ...(req.method === "GET" || req.method === "HEAD" ? {} : { body: HttpBody.stream(req.stream) }),
-        }),
-      );
-
-      return HttpServerResponse.stream(resp.stream, resp);
-    }).pipe(
-      Effect.catchAllCause(e => new ServerError({ message: `Error proxying: ${Cause.pretty(e)}` })),
-      HttpMiddleware.withLoggerDisabled,
-    ),
   ),
 );

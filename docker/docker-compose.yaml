@@ -9,7 +9,7 @@ services:
   mongo:
     container_name: mongo
     image: mongo:8
-    command: --auth --replSet rs0 --bind_ip mongo,localhost --keyFile /data/configdb/mongoKeyFile --noscripting
+    command: --auth --replSet rs0 --bind_ip mongo,localhost --keyFile /data/configdb/keyFile --noscripting
     user: mongodb:mongodb
     ports:
       - 27017:27017
@@ -29,3 +29,4 @@ services:
       retries: 30
     volumes:
       - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
+      - ./misc/keyFile.txt:/run/secrets/keyFile:ro

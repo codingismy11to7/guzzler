@@ -45,10 +45,6 @@ const redacted = (name: string) =>
 const OAuthConfig = Config.all({
   clientId: redacted("OAUTH_CLIENT_ID"),
   clientSecret: redacted("OAUTH_CLIENT_SECRET"),
-  tokenExpirationWindow: Config.duration("OAUTH_TOKEN_EXPIRATION_WINDOW").pipe(
-    Config.withDescription("Try to refresh the token this much time before we think it's actually going to expire."),
-    Config.withDefault("30 seconds"),
-  ),
   userinfoUrl: Config.url("OAUTH_USERINFO_URL").pipe(
     Config.withDefault("https://www.googleapis.com/oauth2/v1/userinfo"),
   ),

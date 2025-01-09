@@ -1,6 +1,6 @@
 import { BrowserHttpClient } from "@effect/platform-browser";
 import { format } from "date-fns/fp";
-import { Layer, Logger, ManagedRuntime } from "effect";
+import { Effect, Layer, Logger, ManagedRuntime } from "effect";
 import { SessionClient } from "./SessionClient.js";
 import { TodosClient } from "./TodosClient.js";
 
@@ -14,6 +14,8 @@ const MainLive = Layer.merge(SessionClient.Default, TodosClient.Default).pipe(
   ),
 );
 const MainLiveRuntime = ManagedRuntime.make(MainLive);
-export const runP = MainLiveRuntime.runPromise;
-export const runS = MainLiveRuntime.runSync;
+export const runPromise = MainLiveRuntime.runPromise;
+export const runP = <A>(e: Effect.Effect<A, never, Layer.Layer.Success<typeof MainLive>>) =>
+  MainLiveRuntime.runPromise(e);
+export const runSync = MainLiveRuntime.runSync;
 export const runFork = MainLiveRuntime.runFork;

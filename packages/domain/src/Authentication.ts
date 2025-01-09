@@ -1,6 +1,9 @@
 import { HttpApiMiddleware, HttpApiSchema } from "@effect/platform";
+import { apiKey } from "@effect/platform/HttpApiSecurity";
 import { Context, Schema } from "effect";
 import { Session } from "./Session.js";
+
+export const SessionCookieName = "guzzler-session-id";
 
 export class Unauthenticated extends Schema.TaggedError<Unauthenticated>("Unauthenticated")(
   "Unauthenticated",
@@ -14,4 +17,15 @@ export class AuthenticationMiddleware extends HttpApiMiddleware.Tag<Authenticati
   failure: Unauthenticated,
   provides: CurrentSession,
   optional: false,
+  security: { SessionCookie: apiKey({ key: SessionCookieName, in: "cookie" }) },
 }) {}
+export class OptionalAuthMiddleware extends HttpApiMiddleware.Tag<OptionalAuthMiddleware>()("OptionalAuthMiddleware", {
+  provides: CurrentSession,
+  optional: true,
+  security: { SessionCookie: apiKey({ key: SessionCookieName, in: "cookie" }) },
+}) {}
+
+export class NewUserSetupRedirectMiddleware extends HttpApiMiddleware.Tag<NewUserSetupRedirectMiddleware>()(
+  "NewUserSetupRedirectMiddleware",
+  { optional: false },
+) {}
