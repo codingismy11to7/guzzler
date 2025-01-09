@@ -7,26 +7,44 @@ import { AppConfig, ProdMode } from "./AppConfig.js";
 import { AuthApiLive } from "./internal/api/impl/AuthApiLive.js";
 import { SessionApiLive } from "./internal/api/impl/SessionApiLive.js";
 import { TodosApiLive } from "./internal/api/impl/TodosApiLive.js";
-import { UIDev, UILive } from "./internal/api/impl/ui.js";
+import { UIDev } from "./internal/api/impl/UIDev.js";
+import { UILive } from "./internal/api/impl/UILive.js";
 import { CollectionRegistry } from "./internal/database/CollectionRegistry.js";
-import { AuthenticationMiddlewareLive } from "./internal/middleware/AuthenticationMiddlewareLive.js";
 import * as OAuth2 from "./OAuth2.js";
 import { ExternalError, InvalidOptions } from "./OAuth2.js";
 import { SessionStorage } from "./SessionStorage.js";
 import { TodosRepository } from "./TodosRepository.js";
 import { Users } from "./Users.js";
+import { AuthenticationMiddleware } from "./index.js";
+
+const UILayer = Layer.unwrapEffect(
+  pipe(
+    ProdMode.isProdMode,
+    Effect.andThen(prodMode => (prodMode ? UILive : UIDev.pipe(Layer.provide(NodeHttpClient.layerUndici)))),
+  ),
+);
+
+const AuthLayers = Layer.suspend(() =>
+  pipe(
+    AuthenticationMiddleware.OptionalLive,
+    Layer.provideMerge(AuthenticationMiddleware.Live),
+    Layer.merge(AuthenticationMiddleware.NewUserRedirectLive),
+  ),
+);
 
 export const ApiLive: Layer.Layer<
   HttpApi.Api,
   ExternalError | InvalidOptions | HttpClientError.HttpClientError | ParseError,
-  TodosRepository | AppConfig | ProdMode | CollectionRegistry
+  AppConfig | ProdMode | CollectionRegistry
 > = HttpApiBuilder.api(AppApi).pipe(
   Layer.provide(TodosApiLive),
   Layer.provide(AuthApiLive),
   Layer.provide(SessionApiLive),
-  Layer.provide(AuthenticationMiddlewareLive),
-  Layer.provide(SessionStorage.Default),
   Layer.provide(Users.Default),
+  Layer.provide(UILayer),
+  Layer.provide(AuthLayers),
+  Layer.provide(SessionStorage.Default),
+  Layer.provide(TodosRepository.Default),
   Layer.provide(
     OAuth2.make({
       scope: ["profile", "email"],
@@ -42,12 +60,4 @@ export const ApiLive: Layer.Layer<
     }),
   ),
   Layer.provide(NodeHttpClient.layer),
-  Layer.provide(
-    Layer.unwrapEffect(
-      pipe(
-        ProdMode.isProdMode,
-        Effect.andThen(prodMode => (prodMode ? UILive : UIDev.pipe(Layer.provide(NodeHttpClient.layerUndici)))),
-      ),
-    ),
-  ),
 );

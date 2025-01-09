@@ -10,6 +10,18 @@ import { TodosClient } from "./TodosClient.js";
 
 type Props = Readonly<{ userInfo: OAuthUserInfo.OAuthUserInfo }>;
 
+const UserInfo = ({ given_name, picture }: OAuthUserInfo.OAuthUserInfo) => (
+  <>
+    <div>
+      <a href="/session/userInfo">Hello, {given_name}</a>
+    </div>
+    <div>{picture && <img src={picture} alt="profile image" referrerPolicy="no-referrer" />}</div>
+    <div>
+      <a href="/session/logout">Logout</a>
+    </div>
+  </>
+);
+
 const LoggedInApp = ({ userInfo }: Props) => {
   const [todos, setTodos] = useState<readonly AppApi.Todo[]>([]);
   const [count, setCount] = useState(0);
@@ -73,13 +85,7 @@ const LoggedInApp = ({ userInfo }: Props) => {
           <img src={reactLogo} className="logo react" alt="React logo" />
         </a>
       </div>
-      <div>
-        <a href="/session/userInfo">Hello, {userInfo.given_name}</a>
-      </div>
-      <div>{userInfo.picture && <img src={userInfo.picture} alt="profile image" referrerPolicy="no-referrer" />}</div>
-      <div>
-        <a href="/session/logout">Logout</a>
-      </div>
+      <UserInfo {...userInfo} />
       <div className="card">
         <button onClick={() => setCount(count => count + 1)}>count is {count}</button>
         <p>

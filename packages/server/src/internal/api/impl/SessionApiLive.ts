@@ -1,9 +1,8 @@
 import { HttpApiBuilder, HttpServerResponse } from "@effect/platform";
 import { AppApi } from "@guzzler/domain/AppApi";
-import { CurrentSession } from "@guzzler/domain/Authentication";
+import { CurrentSession, SessionCookieName } from "@guzzler/domain/Authentication";
 import { Effect } from "effect";
 import { SessionStorage } from "../../../SessionStorage.js";
-import { SessionCookieName } from "./AuthApiLive.js";
 
 export const SessionApiLive = HttpApiBuilder.group(AppApi, "session", handlers =>
   handlers

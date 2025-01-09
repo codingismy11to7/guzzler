@@ -26,7 +26,7 @@ COPY --from=build /app/packages/mongodb/dist /app/packages/mongodb
 COPY --from=build /app/packages/utils/dist /app/packages/utils
 COPY --from=build /app/packages/webui/dist /app/webui
 
-RUN node --experimental-default-type=module /app/dist/dist/esm/server.js --mostMinimalSmokeTest
+RUN node --experimental-default-type=module /app/dist/dist/esm/main.js --mostMinimalSmokeTest
 
 ENV NODE_ENV=production
 ENV PORT=8080
@@ -38,4 +38,4 @@ ENV MONGO_DATABASE=guzzler
 
 EXPOSE 8080
 
-CMD [ "node", "--experimental-default-type=module", "dist/dist/esm/server.js" ]
+CMD [ "node", "--experimental-default-type=module", "dist/dist/esm/main.js" ]

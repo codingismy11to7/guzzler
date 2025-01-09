@@ -18,9 +18,11 @@ export class SchemaMismatch extends Data.TaggedError("SchemaMismatch")<{ underly
 }
 export class MongoError extends Data.TaggedError("MongoError")<{ underlying: RealMongoError }> {}
 
-const AppStateId = Schema.String.pipe(Schema.brand("AppStateId"));
-export const AppStateDocId = AppStateId.make("appState");
+export const AppStateId = Schema.Literal("AppStateId");
+export type AppStateId = typeof AppStateId.Type;
+export const AppStateDocId = "AppStateId";
 export const AppState = Schema.Struct({
-  _id: AppStateId.pipe(Schema.optionalWith({ default: () => AppStateDocId, exact: true, nullable: true })),
-  migrationVersion: Schema.NonNegativeInt.pipe(Schema.optionalWith({ default: () => 0, exact: true, nullable: true })),
+  id: Schema.propertySignature(AppStateId).pipe(Schema.fromKey("_id")),
+  migrationVersion: Schema.NonNegativeInt,
 });
+export type AppState = typeof AppState.Type;

@@ -8,7 +8,7 @@ import {
   HttpServerResponse,
 } from "@effect/platform";
 import { Cookie, CookiesError } from "@effect/platform/Cookies";
-import { OAuthUserInfo, OAuthToken as T } from "@guzzler/domain";
+import { OAuthToken as T, OAuthUserInfo } from "@guzzler/domain";
 import { ObjectUtils } from "@guzzler/utils";
 import { createHash, randomBytes } from "crypto";
 import { Context, Data, Duration, Effect, Layer, Option, pipe, Redacted, Schema } from "effect";
@@ -249,6 +249,7 @@ export class OAuth2 extends Context.Tag("OAuth2")<
     ) => Effect.Effect<OAuthUserInfo.OAuthUserInfo, ExternalError | HttpClientError.HttpClientError | ParseError>;
     startRedirectHandler: (
       request: HttpServerRequest.HttpServerRequest,
+      initialResponseOptions: Omit<HttpServerResponse.Options.WithContentType, "status"> | undefined,
     ) => Effect.Effect<HttpServerResponse.HttpServerResponse>;
   }>
 >() {}
@@ -424,11 +425,18 @@ export const make = (inputOptions: Omit<OAuth2Options, "credentials">) =>
             return { authorizeURL, modifyReply };
           });
 
-        const startRedirectHandler = (request: HttpServerRequest.HttpServerRequest) =>
+        const startRedirectHandler = (
+          request: HttpServerRequest.HttpServerRequest,
+          initialResponseOptions?: Omit<HttpServerResponse.Options.WithContentType, "status">,
+        ) =>
           pipe(
             generateAuthorizationUri(request),
             Effect.andThen(({ authorizeURL, modifyReply }) =>
-              Effect.reduce(modifyReply, HttpServerResponse.redirect(authorizeURL), (acc, m) => m(acc)),
+              Effect.reduce(
+                modifyReply,
+                HttpServerResponse.redirect(authorizeURL, { ...initialResponseOptions, status: 303 }),
+                (acc, m) => m(acc),
+              ),
             ),
             Effect.catchAll(e => HttpServerResponse.text(e.message, { status: 500 })),
           );

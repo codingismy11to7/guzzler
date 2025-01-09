@@ -8,10 +8,9 @@ export class Users extends Effect.Service<Users>()("Users", {
   effect: Effect.gen(function* () {
     const { users } = yield* CollectionRegistry;
 
-    const getUser = (id: UserId) => users.findOne({ _id: id });
+    const getUser = (id: UserId) => users.findOne({ id });
 
-    const updateUserInfo = (id: UserId, oAuthUserInfo: OAuthUserInfo) =>
-      users.setFieldsOne({ _id: id }, { oAuthUserInfo });
+    const updateUserInfo = (id: UserId, oAuthUserInfo: OAuthUserInfo) => users.setFieldsOne({ id }, { oAuthUserInfo });
 
     return { getUser, updateUserInfo };
   }),

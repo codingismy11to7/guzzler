@@ -1,9 +1,9 @@
 import { Chunk, Effect, Match, pipe } from "effect";
 import { CreateIndexesOptions, DropCollectionOptions } from "mongodb";
 import { mongoEff } from "./internal/utils.js";
-import { AppState } from "./Model.js";
+import { AppState, AppStateDocId, SortParam, SortParams } from "./Model.js";
 import { AnySchema } from "./MongoCollection.js";
-import { Model, MongoCollection, MongoDatabaseLayer } from "./index.js";
+import { MongoCollection, MongoDatabaseLayer } from "./index.js";
 
 const AppStateDbName = "appState";
 
@@ -14,7 +14,7 @@ type BaseMigration<CollName extends string, SchemaT extends MongoCollection.AnyS
 type NoOp = Readonly<{ _tag: "NoOp" }>;
 
 type AddIndex<CollName extends string, SchemaT extends MongoCollection.AnySchema> = BaseMigration<CollName, SchemaT> &
-  Readonly<{ _tag: "AddIndex"; indexSpec: Model.SortParams<SchemaT>; options: CreateIndexesOptions }>;
+  Readonly<{ _tag: "AddIndex"; indexSpec: SortParams<SchemaT>; options: CreateIndexesOptions }>;
 
 type ClearCollection<CollName extends string, SchemaT extends MongoCollection.AnySchema> = BaseMigration<
   CollName,
@@ -35,7 +35,9 @@ export class MongoMigrationHandler extends Effect.Service<MongoMigrationHandler>
   effect: Effect.gen(function* () {
     const db = yield* MongoDatabaseLayer.MongoDatabaseLayer;
     const mcl = yield* MongoCollection.MongoCollectionLayer;
-    const appStateColl = mcl.createCollectionRegistry(c => c.collection(AppStateDbName, AppState)({})).appState;
+    const appStateColl = mcl.createCollectionRegistry(c => ({
+      [AppStateDbName]: c.collection(AppStateDbName, AppState),
+    })).appState;
 
     const addIndex = ({ options, collection, indexSpec }: AddIndex<any, AnySchema>) =>
       Effect.gen(function* () {
@@ -80,8 +82,12 @@ export class MongoMigrationHandler extends Effect.Service<MongoMigrationHandler>
     const handleMigrations = (...migrations: ReadonlyArray<Migration<any>>) =>
       Effect.gen(function* () {
         const appState = yield* appStateColl
-          .findOne({ _id: Model.AppStateDocId })
-          .pipe(Effect.catchTag("NotFound", () => Effect.succeed(AppState.make())));
+          .findOne({ id: AppStateDocId })
+          .pipe(
+            Effect.catchTag("NotFound", () =>
+              Effect.succeed(AppState.make({ id: AppStateDocId, migrationVersion: 0 })),
+            ),
+          );
 
         yield* Effect.logInfo(`Current db migration version is ${appState.migrationVersion}`);
 
@@ -95,7 +101,7 @@ export class MongoMigrationHandler extends Effect.Service<MongoMigrationHandler>
           yield* Effect.logInfo(`New db migration version is ${newState.migrationVersion}`);
 
           yield* Effect.logInfo("Saving app state...");
-          yield* appStateColl.upsert({ _id: Model.AppStateDocId }, newState);
+          yield* appStateColl.upsert({ id: AppStateDocId }, newState);
         }
 
         yield* Effect.logInfo("Complete");
@@ -113,14 +119,17 @@ export const noOp = (): NoOp => ({ _tag: "NoOp" });
 export const addIndex = <CollName extends string, SchemaT extends MongoCollection.AnySchema>(
   collection: MongoCollection.MongoCollection<CollName, SchemaT>,
   options: CreateIndexesOptions,
-  initial: Model.SortParam<SchemaT>,
-  ...fields: Model.SortParams<SchemaT>
-): AddIndex<CollName, SchemaT> => ({
-  collection,
-  _tag: "AddIndex",
-  options,
-  indexSpec: [initial, ...fields],
-});
+  initial: SortParam<SchemaT>,
+  ...fields: SortParams<SchemaT>
+): Migration<CollName> => {
+  const x: AddIndex<CollName, SchemaT> = {
+    collection,
+    _tag: "AddIndex",
+    options,
+    indexSpec: [initial, ...fields],
+  };
+  return x as Migration<CollName>;
+};
 
 export const dropCollection = (collectionName: string, options?: DropCollectionOptions): DropCollection => ({
   _tag: "DropCollection",
@@ -130,4 +139,7 @@ export const dropCollection = (collectionName: string, options?: DropCollectionO
 
 export const clearCollection = <CollName extends string, SchemaT extends MongoCollection.AnySchema>(
   collection: MongoCollection.MongoCollection<CollName, SchemaT>,
-): ClearCollection<CollName, SchemaT> => ({ collection, _tag: "ClearCollection" });
+): Migration<CollName> => {
+  const x: ClearCollection<CollName, SchemaT> = { collection, _tag: "ClearCollection" };
+  return x as Migration<CollName>;
+};

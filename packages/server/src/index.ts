@@ -5,6 +5,10 @@ export * as ApiLive from "./ApiLive.js";
  */
 export * as AppConfig from "./AppConfig.js";
 
+export * as AuthenticationMiddleware from "./AuthenticationMiddleware.js";
+
+export * as HttpLive from "./HttpLive.js";
+
 export * as OAuth2 from "./OAuth2.js";
 
 export * as SessionStorage from "./SessionStorage.js";
@@ -16,7 +20,4 @@ export * as TodosRepository from "./TodosRepository.js";
 
 export * as Users from "./Users.js";
 
-/**
- * Server entrypoint
- */
-export * as server from "./server.js";
+export * as main from "./main.js";

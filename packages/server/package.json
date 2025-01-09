@@ -10,7 +10,7 @@
     "directory": "packages/server"
   },
   "scripts": {
-    "dev": "nodemon src/index.ts",
+    "dev": "nodemon src/main.ts",
     "codegen": "build-utils prepare-v2",
     "build": "npm run build-esm && npm run build-annotate && npm run build-cjs && build-utils pack-v2",
     "build-esm": "tsc -b tsconfig.build.json",
