@@ -1,5 +1,5 @@
 import { OAuthUserInfo } from "@guzzler/domain/OAuthUserInfo";
-import { UserId } from "@guzzler/domain/User";
+import { User, UserId, Username } from "@guzzler/domain/User";
 import { Effect } from "effect";
 import { CollectionRegistry } from "./internal/database/CollectionRegistry.js";
 
@@ -10,8 +10,12 @@ export class Users extends Effect.Service<Users>()("Users", {
 
     const getUser = (id: UserId) => users.findOne({ id });
 
+    const addUser = (user: User) => users.insertOne(user).pipe(Effect.asVoid);
+
     const updateUserInfo = (id: UserId, oAuthUserInfo: OAuthUserInfo) => users.setFieldsOne({ id }, { oAuthUserInfo });
 
-    return { getUser, updateUserInfo };
+    const usernameAvailable = (username: Username) => users.count({ username }).pipe(Effect.andThen(c => c === 0));
+
+    return { getUser, addUser, updateUserInfo, usernameAvailable };
   }),
 }) {}

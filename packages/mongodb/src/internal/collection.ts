@@ -2,6 +2,7 @@ import { Document } from "bson";
 import { Effect, flow, Schema } from "effect";
 import { ParseError } from "effect/ParseResult";
 import {
+  CountDocumentsOptions,
   Db,
   DeleteOptions,
   DeleteResult,
@@ -10,6 +11,7 @@ import {
   FindOptions,
   InsertOneOptions,
   InsertOneResult,
+  MongoServerError,
   OptionalUnlessRequiredId,
   ReplaceOptions,
   UpdateFilter,
@@ -18,7 +20,7 @@ import {
   WithId,
 } from "mongodb";
 import { Model } from "../index.js";
-import { MongoError, NotFound, SchemaMismatch } from "../Model.js";
+import { Conflict, MongoError, NotFound, SchemaMismatch } from "../Model.js";
 import { AnySchema, FindResult, MongoCollection } from "../MongoCollection.js";
 import { mongoEff } from "./utils.js";
 
@@ -46,13 +48,26 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
   const dieSchema = { SchemaMismatch: (s: SchemaMismatch) => Effect.die(s) } as const;
   const dieFromFatal = { ...dieMongo, ...dieSchema } as const;
 
+  const encodeFilter = (filter?: Filter<MemSchema>) => (filter ? encodePartial(filter) : Effect.succeed(undefined));
+
+  const countRaw = (
+    filter?: Filter<MemSchema>,
+    options?: CountDocumentsOptions,
+  ): Effect.Effect<number, MongoError | SchemaMismatch> =>
+    Effect.gen(function* () {
+      const coll = yield* connection;
+      const filt = yield* encodeFilter(filter);
+      return yield* mongoEff(() => coll.countDocuments(filt, options));
+    });
+  const count = flow(countRaw, Effect.catchTags(dieFromFatal));
+
   const findOneRaw = (
     filter?: Filter<MemSchema>,
     options?: Omit<FindOptions, "timeoutMode">,
   ): Effect.Effect<MemSchema | null, MongoError | SchemaMismatch> =>
     Effect.gen(function* () {
       const coll = yield* connection;
-      const filt = yield* filter ? encodePartial(filter) : Effect.succeed(undefined);
+      const filt = yield* encodeFilter(filter);
       const res = yield* mongoEff(() =>
         filt && options ? coll.findOne(filt, options) : filt ? coll.findOne(filt) : coll.findOne(),
       );
@@ -78,7 +93,7 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
   ): Effect.Effect<FindResult<MemSchema, DbSchema>, SchemaMismatch> =>
     Effect.gen(function* () {
       const coll = yield* connection;
-      const filt = yield* filter ? encodePartial(filter) : Effect.succeed(undefined);
+      const filt = yield* encodeFilter(filter);
       return toFindResult(filt ? coll.find(filt, options) : coll.find());
     });
   const find = flow(findRaw, Effect.catchTags(dieSchema));
@@ -92,7 +107,14 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
       const toIns = yield* encode(doc);
       return yield* mongoEff(() => coll.insertOne(toIns as OptionalUnlessRequiredId<DbSchema>, options));
     });
-  const insertOne = flow(insertOneRaw, Effect.catchTags(dieFromFatal));
+  // noinspection SuspiciousTypeOfGuard
+  const insertOne = flow(
+    insertOneRaw,
+    Effect.catchTag("MongoError", e =>
+      Effect.fail(e instanceof MongoServerError && e.code === 11000 ? new Conflict({ underlying: e }) : e),
+    ),
+    Effect.catchTags(dieFromFatal),
+  );
 
   const replaceOneRaw = (
     filter: Filter<MemSchema>,
@@ -145,7 +167,7 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
   ): Effect.Effect<DeleteResult, MongoError | SchemaMismatch> =>
     Effect.gen(function* () {
       const coll = yield* connection;
-      const filt = yield* filter ? encodePartial(filter) : Effect.succeed(undefined);
+      const filt = yield* encodeFilter(filter);
       return yield* mongoEff(() => coll.deleteOne(filt, options));
     });
   const deleteOne = flow(deleteOneRaw, Effect.catchTags(dieFromFatal));
@@ -156,7 +178,7 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
   ): Effect.Effect<DeleteResult, MongoError | SchemaMismatch> =>
     Effect.gen(function* () {
       const coll = yield* connection;
-      const filt = yield* filter ? encodePartial(filter) : Effect.succeed(undefined);
+      const filt = yield* encodeFilter(filter);
       return yield* mongoEff(() => coll.deleteMany(filt, options));
     });
   const deleteMany = flow(deleteManyRaw, Effect.catchTags(dieFromFatal));
@@ -166,6 +188,8 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
     schema,
     connection,
     sortBy,
+    countRaw,
+    count,
     findOneRaw,
     findOne,
     findRaw,

@@ -13,7 +13,19 @@ import { Users } from "../../../Users.js";
 import { setSecureCookie } from "./setSecureCookie.js";
 
 export const NewUserRedirectUrl = "/newUser";
-export const PostLoginRedirectCookieName = "guzzler-post-login-url";
+const PostLoginRedirectCookieName = "guzzler-post-login-url";
+export const DefaultCookieOpts = {
+  path: "/",
+  sameSite: "lax",
+  httpOnly: true,
+  secure: true,
+} as const;
+export const removePostLoginCookie = pipe(
+  Cookies.makeCookie(PostLoginRedirectCookieName, "", { ...DefaultCookieOpts, maxAge: 0 }),
+  Either.andThen(newCookie => Cookies.setCookie(Cookies.empty, newCookie)),
+  Either.getOrElse(() => Cookies.empty),
+);
+export const postLoginUrl = (req: HttpServerRequest) => req.cookies[PostLoginRedirectCookieName] ?? "/";
 
 export const AuthApiLive = HttpApiBuilder.group(AppApi, "auth", handlers =>
   Effect.gen(function* () {
@@ -29,12 +41,11 @@ export const AuthApiLive = HttpApiBuilder.group(AppApi, "auth", handlers =>
             startRedirectHandler(req, {
               cookies: pipe(
                 // TODO https://github.com/codingismy11to7/guzzler/issues/65
-                Cookies.makeCookie(PostLoginRedirectCookieName, (req.headers.referer as string | undefined) ?? "/", {
-                  path: "/",
-                  sameSite: "lax",
-                  httpOnly: true,
-                  secure: true,
-                }),
+                Cookies.makeCookie(
+                  PostLoginRedirectCookieName,
+                  (req.headers.referer as string | undefined) ?? "/",
+                  DefaultCookieOpts,
+                ),
                 Either.andThen(newCookie => Cookies.setCookie(Cookies.empty, newCookie)),
                 Either.getOrElse(() => Cookies.empty),
               ),
@@ -69,9 +80,12 @@ export const AuthApiLive = HttpApiBuilder.group(AppApi, "auth", handlers =>
 
             yield* setSecureCookie(SessionCookieName, session.id);
 
-            return yield* Effect.reduce(modifyReply, HttpServerResponse.redirect("/", { status: 303 }), (acc, m) =>
-              m(acc),
-            );
+            const baseResp = yield* HttpServerResponse.redirect(postLoginUrl(req), {
+              status: 303,
+              cookies: removePostLoginCookie,
+            });
+
+            return yield* Effect.reduce(modifyReply, baseResp, (acc, m) => m(acc));
           }),
           Effect.catchAll(cause =>
             Effect.gen(function* () {

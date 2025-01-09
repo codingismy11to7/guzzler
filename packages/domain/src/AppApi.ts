@@ -1,8 +1,10 @@
 import { HttpApi, HttpApiEndpoint, HttpApiGroup, HttpApiSchema, OpenApi } from "@effect/platform";
-import { Schema } from "effect";
+import { Conflict, Forbidden } from "@effect/platform/HttpApiError";
+import { Schema, Struct } from "effect";
 import { nanoid } from "nanoid";
 import { AuthenticationMiddleware, NewUserSetupRedirectMiddleware, OptionalAuthMiddleware } from "./Authentication.js";
 import { OAuthUserInfo } from "./OAuthUserInfo.js";
+import { User, Username } from "./User.js";
 
 /**
  * App schema & api
@@ -80,9 +82,33 @@ export class AuthApi extends HttpApiGroup.make("auth")
   .annotateContext(OpenApi.annotations({ exclude: true }))
   .prefix("/auth/google") {}
 
+export const SessionWithoutUser = Schema.TaggedStruct("SessionWithoutUser", {
+  userInfo: OAuthUserInfo,
+});
+export type SessionWithoutUser = typeof SessionWithoutUser.Type;
+export const FullSession = Schema.TaggedStruct("FullSession", {
+  ...Struct.omit(SessionWithoutUser.fields, "_tag"),
+  user: User,
+});
+export type FullSession = typeof FullSession.Type;
+export const SessionInfo = Schema.Union(FullSession, SessionWithoutUser);
+export type SessionInfo = typeof SessionInfo.Type;
+
 export class SessionApi extends HttpApiGroup.make("session")
-  .add(HttpApiEndpoint.get("getUserInfo", "/userInfo").addSuccess(OAuthUserInfo))
+  .add(HttpApiEndpoint.get("getSessionInfo", "/info").addSuccess(SessionInfo))
   .add(HttpApiEndpoint.get("logout", "/logout").addSuccess(Schema.Void, { status: 303 }))
+  .add(
+    HttpApiEndpoint.get("validateUsername", "/username/:username/validate")
+      .setPath(Schema.Struct({ username: Username }))
+      .addSuccess(Schema.Struct({ available: Schema.Boolean })),
+  )
+  .add(
+    HttpApiEndpoint.post("setUsername", "/username/set")
+      .setPayload(Schema.Struct({ username: Username }).pipe(HttpApiSchema.withEncoding({ kind: "UrlParams" })))
+      .addSuccess(Schema.Void, { status: 303 })
+      .addError(Conflict)
+      .addError(Forbidden),
+  )
   .prefix("/session")
   .middleware(AuthenticationMiddleware) {}
 

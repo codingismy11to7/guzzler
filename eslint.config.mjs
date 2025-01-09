@@ -182,6 +182,7 @@ export default tseslint.config([
       "no-underscore-dangle": "off",
       "no-unsafe-finally": "error",
       "no-unused-labels": "error",
+      "no-useless-escape": "warn",
       "no-var": "error",
       "object-shorthand": "warn",
       "one-var": [

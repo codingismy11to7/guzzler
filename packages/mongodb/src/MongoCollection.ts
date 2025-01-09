@@ -2,6 +2,7 @@ import { Document } from "bson";
 import { Effect, Schema } from "effect";
 import {
   Collection,
+  CountDocumentsOptions,
   DeleteOptions,
   DeleteResult,
   Filter,
@@ -56,6 +57,12 @@ export type MongoCollection<CName extends string, SchemaT extends AnySchema> = R
   schema: SchemaT;
   connection: Effect.Effect<Collection<DbSchema<SchemaT>>>;
   sortBy: (field: keyof DbSchema<SchemaT>, order: "asc" | "desc") => Model.SortParam<SchemaT>;
+
+  countRaw: (
+    filter?: Filter<MemSchema<SchemaT>>,
+    options?: CountDocumentsOptions,
+  ) => Effect.Effect<number, MongoError | SchemaMismatch>;
+  count: (filter?: Filter<MemSchema<SchemaT>>, options?: CountDocumentsOptions) => Effect.Effect<number>;
 
   findOneRaw: (
     filter?: Filter<MemSchema<SchemaT>>,
