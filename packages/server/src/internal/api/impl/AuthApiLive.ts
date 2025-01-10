@@ -1,10 +1,10 @@
-import { Cookies, HttpApiBuilder, HttpServerResponse } from "@effect/platform";
+import { HttpApiBuilder, HttpServerResponse } from "@effect/platform";
 import { HttpServerRequest } from "@effect/platform/HttpServerRequest";
 import { AppApi, RedactedError } from "@guzzler/domain/AppApi";
 import { SessionCookieName } from "@guzzler/domain/Authentication";
 import { SessionId, UnknownUserSession, UserSession } from "@guzzler/domain/Session";
 import { UserId } from "@guzzler/domain/User";
-import { Effect, Either, pipe, Redacted, Struct } from "effect";
+import { Effect, pipe, Redacted, Struct } from "effect";
 import { nanoid } from "nanoid";
 import { AppConfig } from "../../../AppConfig.js";
 import { OAuth2 } from "../../../OAuth2.js";
@@ -13,6 +13,7 @@ import { Users } from "../../../Users.js";
 import { setSecureCookie } from "./setSecureCookie.js";
 
 export const NewUserRedirectUrl = "/newUser";
+/*
 const PostLoginRedirectCookieName = "guzzler-post-login-url";
 export const DefaultCookieOpts = {
   path: "/",
@@ -26,6 +27,7 @@ export const removePostLoginCookie = pipe(
   Either.getOrElse(() => Cookies.empty),
 );
 export const postLoginUrl = (req: HttpServerRequest) => req.cookies[PostLoginRedirectCookieName] ?? "/";
+*/
 
 export const AuthApiLive = HttpApiBuilder.group(AppApi, "auth", handlers =>
   Effect.gen(function* () {
@@ -39,6 +41,7 @@ export const AuthApiLive = HttpApiBuilder.group(AppApi, "auth", handlers =>
         HttpServerRequest.pipe(
           Effect.andThen(req =>
             startRedirectHandler(req, {
+              /*
               cookies: pipe(
                 // TODO https://github.com/codingismy11to7/guzzler/issues/65
                 Cookies.makeCookie(
@@ -49,6 +52,7 @@ export const AuthApiLive = HttpApiBuilder.group(AppApi, "auth", handlers =>
                 Either.andThen(newCookie => Cookies.setCookie(Cookies.empty, newCookie)),
                 Either.getOrElse(() => Cookies.empty),
               ),
+*/
             }),
           ),
         ),
@@ -80,9 +84,11 @@ export const AuthApiLive = HttpApiBuilder.group(AppApi, "auth", handlers =>
 
             yield* setSecureCookie(SessionCookieName, session.id);
 
-            const baseResp = yield* HttpServerResponse.redirect(postLoginUrl(req), {
+            const baseResp = yield* HttpServerResponse.redirect(/*postLoginUrl(req)*/ "/", {
               status: 303,
+              /*
               cookies: removePostLoginCookie,
+*/
             });
 
             return yield* Effect.reduce(modifyReply, baseResp, (acc, m) => m(acc));

@@ -70,14 +70,14 @@ export class MongoMigrationHandler extends Effect.Service<MongoMigrationHandler>
         Effect.andThen(r => Effect.logInfo(` - deleted ${r.deletedCount}`)),
       );
 
-    const handleMigration = (mig: Migration<any>) =>
-      Match.value(mig).pipe(
-        Match.tag("NoOp", () => Effect.void),
-        Match.tag("AddIndex", addIndex),
-        Match.tag("DropCollection", dropCollection),
-        Match.tag("ClearCollection", clearCollection),
-        Match.exhaustive,
-      );
+    const handleMigration = Match.type<Migration<any>>().pipe(
+      Match.tagsExhaustive({
+        NoOp: () => Effect.void,
+        AddIndex: addIndex,
+        DropCollection: dropCollection,
+        ClearCollection: clearCollection,
+      }),
+    );
 
     const handleMigrations = (...migrations: ReadonlyArray<Migration<any>>) =>
       Effect.gen(function* () {

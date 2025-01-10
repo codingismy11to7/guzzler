@@ -1,26 +1,44 @@
 import { AppApi, OAuthUserInfo, User as U } from "@guzzler/domain";
-import { FullSession, SessionInfo, SessionWithoutUser } from "@guzzler/domain/AppApi";
-import { Effect, Either, Option, pipe, Schema } from "effect";
-import { isNotUndefined, isUndefined } from "effect/Predicate";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { FullSession, SessionWithoutUser } from "@guzzler/domain/AppApi";
+import { Effect, Either, Match, Option, ParseResult, pipe, Schema } from "effect";
+import { isNotUndefined } from "effect/Predicate";
+import React, { ReactElement, useCallback, useEffect, useRef, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
-import "./App.css";
 import { runP } from "./bootstrap.js";
+import {
+  defaultGlobalContext,
+  Errored,
+  FullSessionContext,
+  GlobalContext,
+  Succeeded,
+  Unauthenticated,
+  useCurrentSessionInfo,
+} from "./GlobalContext.js";
+import { useTranslation } from "./i18n.js";
+import Loading from "./Loading.js";
+import { Login } from "./pages/Login.js";
+import { AppRoute, routes, useRoute } from "./router.js";
 import { SessionClient } from "./SessionClient.js";
 import { TodosClient } from "./TodosClient.js";
 
-const UserInfo = ({ given_name, picture }: OAuthUserInfo.OAuthUserInfo) => (
-  <>
-    <div>Hello, {given_name}</div>
-    <div>{picture && <img src={picture} alt="profile image" referrerPolicy="no-referrer" />}</div>
-    <div>
-      <a href="/session/logout">Logout</a>
-    </div>
-  </>
-);
+const UserInfo = ({ given_name: name, picture }: OAuthUserInfo.OAuthUserInfo) => {
+  const { t } = useTranslation();
 
-const LoggedInApp = ({ userInfo, user }: Omit<FullSession, "_tag">) => {
+  return (
+    <>
+      <div>{t("trash.hello", { name })}</div>
+      <div>{picture && <img src={picture} alt="profile image" referrerPolicy="no-referrer" />}</div>
+      <div>
+        <a href="/session/logout">Logout</a>
+      </div>
+    </>
+  );
+};
+
+const LoggedInApp = (session: FullSession) => {
+  const { userInfo, user } = session;
+  const { t } = useTranslation();
   const [todos, setTodos] = useState<readonly AppApi.Todo[]>([]);
   const [count, setCount] = useState(0);
   const [text, setText] = useState("");
@@ -74,7 +92,8 @@ const LoggedInApp = ({ userInfo, user }: Omit<FullSession, "_tag">) => {
   );
 
   return (
-    <>
+    <FullSessionContext.Provider value={session}>
+      <p>{t("appName")}</p>
       <div>
         <a href="https://vite.dev" target="_blank" rel="noreferrer">
           <img src={viteLogo} className="logo" alt="Vite logo" />
@@ -104,22 +123,21 @@ const LoggedInApp = ({ userInfo, user }: Omit<FullSession, "_tag">) => {
         <button onClick={addTodo}>Add</button>
       </div>
       <p className="read-the-docs">Click on the Vite and React logos to learn more</p>
-    </>
+    </FullSessionContext.Provider>
   );
 };
+const LoggedInAppWrapper = () => {
+  const session = useCurrentSessionInfo();
 
-const LoginScreen = () => (
-  <div>
-    <a href="/auth/google">Google Login</a>
-  </div>
-);
+  return session?._tag === "FullSession" ? <LoggedInApp {...session} /> : <></>;
+};
 
 const CreateUser = ({ userInfo }: Omit<SessionWithoutUser, "_tag">) => {
   const [username, _setUsername] = useState<string>();
   const [checkingForConflict, setCheckingForConflict] = useState(false);
   const [error, setError] = useState<string>();
   const [available, setAvailable] = useState<boolean>();
-  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const timerRef = useRef<number | undefined>(undefined);
 
   const checkUsername = () => {
     _setUsername(username => {
@@ -129,6 +147,7 @@ const CreateUser = ({ userInfo }: Omit<SessionWithoutUser, "_tag">) => {
             void pipe(
               SessionClient.validateUsername(u),
               Effect.andThen(({ available }) => setAvailable(available)),
+              Effect.catchTag("Forbidden", () => Effect.sync(() => setAvailable(false))),
               Effect.catchAllDefect(() => Effect.void),
               Effect.ensuring(Effect.sync(() => setCheckingForConflict(false))),
               runP,
@@ -136,7 +155,11 @@ const CreateUser = ({ userInfo }: Omit<SessionWithoutUser, "_tag">) => {
           },
           onLeft: e => {
             setCheckingForConflict(false);
-            setError(e.message);
+            setError(
+              ParseResult.ArrayFormatter.formatErrorSync(e)
+                .map(i => `${i.path.join(".")} ${i.message}`)
+                .join("\n"),
+            );
           },
         });
         return username;
@@ -199,33 +222,93 @@ const CreateUser = ({ userInfo }: Omit<SessionWithoutUser, "_tag">) => {
     </>
   );
 };
+const CreateUserWrapper = () => {
+  const sess = useCurrentSessionInfo();
 
+  return sess ? <CreateUser {...sess} /> : <></>;
+};
+
+const Page = (): ReactElement =>
+  Match.value(useRoute()).pipe(
+    Match.when(
+      route => route.name === false,
+      () => (
+        <>
+          <div>Not Found</div>
+          <div>
+            <a {...routes.home().link}>Go Home</a>
+          </div>
+        </>
+      ),
+    ),
+    Match.discriminatorsExhaustive("name")({
+      login: () => <Login />,
+      home: () => <LoggedInAppWrapper />,
+      newUser: () => <CreateUserWrapper />,
+      // false:()=><><div>Not Found</div><div><a {...routes.home().link}>Go Home</a></div></>
+    }),
+  );
+
+/*
+  switch (route.name) {
+    case "login":
+      return <Login />;
+    case "home":
+      return <LoggedInAppWrapper />;
+    case "newUser":
+      return <CreateUserWrapper />;
+    case false:
+      return (
+        <>
+          <div>Not Found</div>
+          <div>
+            <a {...routes.home().link}>Go Home</a>
+          </div>
+        </>
+      );
+  }
+*/
 const App = () => {
-  const [sessionInfo, setSessionInfo] = useState<SessionInfo>();
-  const [error, setError] = useState<string>();
-  const [loading, setLoading] = useState(true);
+  const [globalContext, setGlobalContext] = useState(defaultGlobalContext);
+  const route = useRoute();
+
+  useEffect(
+    () =>
+      void pipe(
+        SessionClient.getSessionInfo,
+        Effect.andThen(si => setGlobalContext(Succeeded.make({ sessionInfo: si }))),
+        Effect.catchTag("Unauthenticated", () => Effect.sync(() => setGlobalContext(Unauthenticated.make()))),
+        Effect.catchAll(e => Effect.sync(() => setGlobalContext(Errored.make({ error: e.message })))),
+        runP,
+      ),
+    [],
+  );
+
+  const isUnauthenticated = !globalContext.loading && globalContext._tag === "Unauthenticated";
+  const isNewUser =
+    !globalContext.loading &&
+    globalContext._tag === "Succeeded" &&
+    globalContext.sessionInfo._tag === "SessionWithoutUser";
 
   useEffect(() => {
-    pipe(
-      SessionClient.getSessionInfo,
-      Effect.andThen(setSessionInfo),
-      Effect.catchTag("Unauthenticated", () => Effect.succeed(undefined)),
-      Effect.catchAll(e => Effect.sync(() => setError(e.message)).pipe(Effect.as(undefined))),
-      Effect.ensuring(Effect.sync(() => setLoading(false))),
-      runP,
-    );
-  }, []);
+    const replaceIf = (replaceWith: AppRoute, b: boolean) => {
+      if (b && route.name !== replaceWith.name) replaceWith.replace();
+    };
+    replaceIf(routes.login(), isUnauthenticated);
+    replaceIf(routes.newUser(), isNewUser);
+  }, [isNewUser, isUnauthenticated, route.name]);
 
-  return loading ? (
-    <div>Loading...</div>
-  ) : error ? (
-    <div>Error: {error}</div>
-  ) : isUndefined(sessionInfo) ? (
-    <LoginScreen />
-  ) : sessionInfo._tag === "SessionWithoutUser" ? (
-    <CreateUser userInfo={sessionInfo.userInfo} />
-  ) : (
-    <LoggedInApp userInfo={sessionInfo.userInfo} user={sessionInfo.user} />
+  return (
+    <GlobalContext.Provider value={globalContext}>
+      {globalContext.loading ? (
+        <Loading />
+      ) : (
+        Match.value(globalContext).pipe(
+          Match.tag("Errored", e => <div>Error: {e.error}</div>),
+          Match.orElse(() => <Page />),
+        )
+      )}
+    </GlobalContext.Provider>
   );
 };
 

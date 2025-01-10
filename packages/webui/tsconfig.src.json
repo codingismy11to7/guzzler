@@ -5,7 +5,7 @@
     { "path": "../domain" }
   ],
   "compilerOptions": {
-    "types": ["node"],
+    "types": [],
     "outDir": "build/src",
     "jsx": "react-jsx",
     "tsBuildInfoFile": ".tsbuildinfo/src.tsbuildinfo",

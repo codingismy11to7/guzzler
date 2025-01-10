@@ -100,7 +100,8 @@ export class SessionApi extends HttpApiGroup.make("session")
   .add(
     HttpApiEndpoint.get("validateUsername", "/username/:username/validate")
       .setPath(Schema.Struct({ username: Username }))
-      .addSuccess(Schema.Struct({ available: Schema.Boolean })),
+      .addSuccess(Schema.Struct({ available: Schema.Boolean }))
+      .addError(Forbidden),
   )
   .add(
     HttpApiEndpoint.post("setUsername", "/username/set")

@@ -1,0 +1,6 @@
+{
+  "appName": "Guzzler",
+  "trash": {
+    "hello": "Hello, {{name}}"
+  }
+}
