@@ -1,7 +1,8 @@
-import { AppApi as Api } from "@guzzler/domain";
-import { FullSession } from "@guzzler/domain/AppApi";
+import { SessionApi } from "@guzzler/domain";
 import { Schema } from "effect";
 import { createContext, useContext } from "react";
+import SessionInfo = SessionApi.SessionInfo;
+import FullSession = SessionApi.FullSession;
 
 const Loading = Schema.Struct({
   loading: Schema.Literal(true).pipe(Schema.optionalWith({ default: () => true })),
@@ -16,7 +17,7 @@ export const Errored = Schema.TaggedStruct("Errored", {
 });
 export const Succeeded = Schema.TaggedStruct("Succeeded", {
   ...Rest.fields,
-  sessionInfo: Api.SessionInfo,
+  sessionInfo: SessionInfo,
 });
 
 const GlobalContextS = Schema.Union(Loading, Unauthenticated, Errored, Succeeded);
@@ -26,7 +27,7 @@ export const defaultGlobalContext = (): GlobalContextS => Loading.make();
 export const GlobalContext = createContext<GlobalContextS>(defaultGlobalContext());
 
 export const useGlobalContext = () => useContext(GlobalContext);
-export const useCurrentSessionInfo = (): Api.SessionInfo | undefined => {
+export const useCurrentSessionInfo = (): SessionInfo | undefined => {
   const gc = useGlobalContext();
 
   return !gc.loading && gc._tag === "Succeeded" ? gc.sessionInfo : undefined;

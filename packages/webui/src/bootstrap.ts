@@ -1,10 +1,17 @@
 import { BrowserHttpClient } from "@effect/platform-browser";
 import { format } from "date-fns/fp";
 import { Effect, Layer, Logger, ManagedRuntime } from "effect";
-import { SessionClient } from "./SessionClient.js";
-import { TodosClient } from "./TodosClient.js";
+import { AccountClient } from "./apiclients/AccountClient.js";
+import { SessionClient } from "./apiclients/SessionClient.js";
+import { SignupClient } from "./apiclients/SignupClient.js";
+import { TodosClient } from "./apiclients/TodosClient.js";
 
-const MainLive = Layer.merge(SessionClient.Default, TodosClient.Default).pipe(
+const MainLive = Layer.mergeAll(
+  AccountClient.Default,
+  SessionClient.Default,
+  SignupClient.Default,
+  TodosClient.Default,
+).pipe(
   Layer.provide(BrowserHttpClient.layerXMLHttpRequest),
   Layer.provide(
     Logger.replace(

@@ -4,8 +4,10 @@ import { AppApi } from "@guzzler/domain/AppApi";
 import { Effect, Layer, Option, pipe } from "effect";
 import { ParseError } from "effect/ParseResult";
 import { AppConfig, ProdMode } from "./AppConfig.js";
+import { AccountApiLive } from "./internal/api/impl/AccountApiLive.js";
 import { AuthApiLive } from "./internal/api/impl/AuthApiLive.js";
 import { SessionApiLive } from "./internal/api/impl/SessionApiLive.js";
+import { SignupApiLive } from "./internal/api/impl/SignupApiLive.js";
 import { TodosApiLive } from "./internal/api/impl/TodosApiLive.js";
 import { UIDev } from "./internal/api/impl/UIDev.js";
 import { UILive } from "./internal/api/impl/UILive.js";
@@ -25,10 +27,11 @@ const UILayer = Layer.unwrapEffect(
 );
 
 const AuthLayers = Layer.suspend(() =>
-  pipe(
-    AuthenticationMiddleware.OptionalLive,
-    Layer.provideMerge(AuthenticationMiddleware.Live),
-    Layer.merge(AuthenticationMiddleware.NewUserRedirectLive),
+  Layer.mergeAll(
+    AuthenticationMiddleware.TryToLoadSession_DoNotUseLive,
+    AuthenticationMiddleware.RequireNewUserSessionLive,
+    AuthenticationMiddleware.RequireFullSessionLive,
+    AuthenticationMiddleware.NewUserRedirectLive,
   ),
 );
 
@@ -37,9 +40,11 @@ export const ApiLive: Layer.Layer<
   ExternalError | InvalidOptions | HttpClientError.HttpClientError | ParseError,
   AppConfig | ProdMode | CollectionRegistry
 > = HttpApiBuilder.api(AppApi).pipe(
-  Layer.provide(TodosApiLive),
+  Layer.provide(AccountApiLive),
   Layer.provide(AuthApiLive),
   Layer.provide(SessionApiLive),
+  Layer.provide(SignupApiLive),
+  Layer.provide(TodosApiLive),
   Layer.provide(Users.Default),
   Layer.provide(UILayer),
   Layer.provide(AuthLayers),

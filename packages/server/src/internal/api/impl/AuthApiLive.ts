@@ -1,7 +1,8 @@
 import { HttpApiBuilder, HttpServerResponse } from "@effect/platform";
 import { HttpServerRequest } from "@effect/platform/HttpServerRequest";
-import { AppApi, RedactedError } from "@guzzler/domain/AppApi";
+import { AppApi } from "@guzzler/domain/AppApi";
 import { SessionCookieName } from "@guzzler/domain/Authentication";
+import { RedactedError } from "@guzzler/domain/Errors";
 import { SessionId, UnknownUserSession, UserSession } from "@guzzler/domain/Session";
 import { UserId } from "@guzzler/domain/User";
 import { Effect, pipe, Redacted, Struct } from "effect";
@@ -12,7 +13,9 @@ import { SessionStorage } from "../../../SessionStorage.js";
 import { Users } from "../../../Users.js";
 import { setSecureCookie } from "./setSecureCookie.js";
 
-export const NewUserRedirectUrl = "/newUser";
+// not real server routes so must treat specially
+export const NewUserRedirectUrl = "/signup";
+export const LoginUrl = "/login";
 /*
 const PostLoginRedirectCookieName = "guzzler-post-login-url";
 export const DefaultCookieOpts = {
@@ -72,10 +75,13 @@ export const AuthApiLive = HttpApiBuilder.group(AppApi, "auth", handlers =>
               UnknownUserSession.make({ id: pipe(nanoid(), Redacted.make, SessionId.make), token, oAuthUserInfo: ui }),
             );
 
-            const userOpt = yield* getUser(UserId.make(`google/${session.oAuthUserInfo.id}`)).pipe(Effect.option);
+            const userOpt = yield* getUser(UserId.make(session.oAuthUserInfo.id)).pipe(Effect.option);
             yield* pipe(
               Effect.gen(function* () {
                 const user = yield* userOpt;
+
+                yield* Effect.logDebug("fetched local user");
+
                 yield* updateUserInfo(user.id, ui);
                 yield* addSession(UserSession.make({ ...Struct.omit(session, "_tag"), user }));
               }),

@@ -1,5 +1,7 @@
 import { HttpApiBuilder, HttpMiddleware, HttpServerRequest, HttpServerResponse, Path } from "@effect/platform";
-import { AppApi, NotFound, ServerError } from "@guzzler/domain/AppApi";
+import { NotFound } from "@effect/platform/HttpApiError";
+import { AppApi } from "@guzzler/domain/AppApi";
+import { ServerError } from "@guzzler/domain/Errors";
 import { Effect, pipe } from "effect";
 import { nanoid } from "nanoid";
 import { AppConfig } from "../../../AppConfig.js";

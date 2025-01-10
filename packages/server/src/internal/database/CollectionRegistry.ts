@@ -1,4 +1,4 @@
-import { Todo } from "@guzzler/domain/AppApi";
+import { Todo } from "@guzzler/domain/apis/TodosApi";
 import { Session } from "@guzzler/domain/Session";
 import { User } from "@guzzler/domain/User";
 import { MongoCollectionLayer } from "@guzzler/mongodb/MongoCollection";

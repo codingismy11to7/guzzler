@@ -1,5 +1,6 @@
 import { HttpApiClient } from "@effect/platform";
-import { OptionalTodoWithoutId, AppApi, TodoId } from "@guzzler/domain/AppApi";
+import { OptionalTodoWithoutId, TodoId } from "@guzzler/domain/apis/TodosApi";
+import { AppApi } from "@guzzler/domain/AppApi";
 import { Effect } from "effect";
 
 /**

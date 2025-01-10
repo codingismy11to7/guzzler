@@ -1,22 +1,21 @@
 import { HttpApiBuilder, HttpServerResponse } from "@effect/platform";
-import { Forbidden } from "@effect/platform/HttpApiError";
-import { AppApi, FullSession, SessionWithoutUser } from "@guzzler/domain/AppApi";
-import { CurrentSession } from "@guzzler/domain/Authentication";
+import { Unauthorized } from "@effect/platform/HttpApiError";
+import { FullSession, SessionWithoutUser } from "@guzzler/domain/apis/SessionApi";
+import { AppApi } from "@guzzler/domain/AppApi";
+import { RawCurrentSession_DoNotUse } from "@guzzler/domain/Authentication";
 import { Session } from "@guzzler/domain/Session";
-import { UserId } from "@guzzler/domain/User";
-import { Effect, Match, pipe } from "effect";
+import { Effect, identity, Match, Option, pipe } from "effect";
 import { SessionStorage } from "../../../SessionStorage.js";
-import { Users } from "../../../Users.js";
 
 export const SessionApiLive = HttpApiBuilder.group(AppApi, "session", handlers =>
   Effect.gen(function* () {
     const { clearSession } = yield* SessionStorage;
-    const { addUser, usernameAvailable } = yield* Users;
 
     return handlers
       .handle("getSessionInfo", () =>
         pipe(
-          CurrentSession,
+          Effect.serviceOption(RawCurrentSession_DoNotUse),
+          Effect.flatMap(identity),
           Effect.andThen(
             Match.type<Session>().pipe(
               Match.tagsExhaustive({
@@ -26,13 +25,15 @@ export const SessionApiLive = HttpApiBuilder.group(AppApi, "session", handlers =
               }),
             ),
           ),
+          Effect.catchTag("NoSuchElementException", () => new Unauthorized()),
         ),
       )
 
       .handleRaw("logout", () =>
         Effect.gen(function* () {
-          const { id } = yield* CurrentSession;
-          yield* clearSession(id);
+          const sessOpt = yield* Effect.serviceOption(RawCurrentSession_DoNotUse);
+
+          if (Option.isSome(sessOpt)) yield* clearSession(sessOpt.value.id);
 
           return HttpServerResponse.redirect("/", {
             status: 303,
@@ -41,55 +42,6 @@ export const SessionApiLive = HttpApiBuilder.group(AppApi, "session", handlers =
   */
           });
         }),
-      )
-
-      .handle("validateUsername", ({ path: { username } }) =>
-        pipe(
-          CurrentSession,
-          Effect.andThen(
-            Match.type<Session>().pipe(
-              Match.tagsExhaustive({
-                UserSession: () => new Forbidden(),
-
-                UnknownUserSession: () =>
-                  pipe(
-                    usernameAvailable(username),
-                    Effect.andThen(available => ({ available })),
-                  ),
-              }),
-            ),
-          ),
-        ),
-      )
-
-      .handleRaw("setUsername", ({ payload: { username } }) =>
-        pipe(
-          CurrentSession,
-          Effect.andThen(
-            Match.type<Session>().pipe(
-              Match.tagsExhaustive({
-                UserSession: () => new Forbidden(),
-
-                UnknownUserSession: sess =>
-                  Effect.gen(function* () {
-                    /*
-                  const req = yield* HttpServerRequest;
-    */
-
-                    yield* addUser({ ...sess, id: UserId.make(`google/${sess.oAuthUserInfo.id}`), username });
-                    yield* clearSession(sess.id);
-
-                    return yield* HttpServerResponse.redirect(/*postLoginUrl(req)*/ "/", {
-                      status: 303,
-                      /*
-                    cookies: removePostLoginCookie,
-    */
-                    });
-                  }),
-              }),
-            ),
-          ),
-        ),
       );
   }),
 );

@@ -1,41 +1,84 @@
 import { HttpApp } from "@effect/platform";
+import { Forbidden, Unauthorized } from "@effect/platform/HttpApiError";
 import { HttpServerRequest } from "@effect/platform/HttpServerRequest";
 import { redirect } from "@effect/platform/HttpServerResponse";
 import {
-  AuthenticationMiddleware,
-  CurrentSession,
-  NewUserSetupRedirectMiddleware,
-  OptionalAuthMiddleware,
-  Unauthenticated,
+  AuthRedirectMiddleware,
+  RawCurrentSession_DoNotUse,
+  RawSessionAccess_DoNotUse,
+  RequireFullSession,
+  RequireNewUserSession,
 } from "@guzzler/domain/Authentication";
-import { SessionId } from "@guzzler/domain/Session";
-import { Effect, HashSet, Layer, Option } from "effect";
+import { Session, SessionId } from "@guzzler/domain/Session";
+import { Effect, HashSet, Layer, Option, pipe } from "effect";
+import { Redacted } from "effect/Redacted";
 import { ProdMode } from "../AppConfig.js";
 import { SessionStorage } from "../SessionStorage.js";
-import { NewUserRedirectUrl } from "./api/impl/AuthApiLive.js";
+import { LoginUrl, NewUserRedirectUrl } from "./api/impl/AuthApiLive.js";
 
-export const Live = Layer.effect(
-  AuthenticationMiddleware,
+const fetchSession =
+  ({ getSession }: typeof SessionStorage.Service) =>
+  (sessId: Redacted): Effect.Effect<Session, Unauthorized> =>
+    pipe(
+      getSession(SessionId.make(sessId)),
+      Effect.catchTag("SessionNotFound", () => new Unauthorized()),
+    );
+
+export const TryToLoadSession_DoNotUseLive = Layer.effect(
+  RawSessionAccess_DoNotUse,
   Effect.gen(function* () {
-    const { getSession } = yield* SessionStorage;
+    const ss = yield* SessionStorage;
 
     return {
-      SessionCookie: sessId =>
-        getSession(SessionId.make(sessId)).pipe(Effect.catchTag("SessionNotFound", () => new Unauthenticated())),
+      SessionCookie: fetchSession(ss),
     };
   }),
 );
 
-export const OptionalLive = Layer.effect(OptionalAuthMiddleware, AuthenticationMiddleware);
+const filterLoadSession =
+  <T>(ss: typeof SessionStorage.Service, f: (session: Session) => Effect.Effect<T, Forbidden>) =>
+  (sessId: Redacted): Effect.Effect<T, Unauthorized | Forbidden> =>
+    Effect.gen(function* () {
+      const sess = yield* fetchSession(ss)(sessId);
 
-export const NewUserRedirectLive = Layer.effect(
-  NewUserSetupRedirectMiddleware,
+      return yield* f(sess);
+    });
+
+export const RequireFullSessionLive = Layer.effect(
+  RequireFullSession,
   Effect.gen(function* () {
-    yield* Effect.log("creating NewUserSetupRedirect middleware");
+    const ss = yield* SessionStorage;
+
+    return {
+      SessionCookie: filterLoadSession(ss, s =>
+        s._tag === "UnknownUserSession" ? new Forbidden() : Effect.succeed(s),
+      ),
+    };
+  }),
+);
+
+export const RequireNewUserSessionLive = Layer.effect(
+  RequireNewUserSession,
+  Effect.gen(function* () {
+    const ss = yield* SessionStorage;
+
+    return {
+      SessionCookie: filterLoadSession(ss, s => (s._tag === "UserSession" ? new Forbidden() : Effect.succeed(s))),
+    };
+  }),
+);
+
+export const AuthRedirectLive = Layer.effect(
+  AuthRedirectMiddleware,
+  Effect.gen(function* () {
+    yield* Effect.log("creating AuthRedirectLive middleware");
     const { isProdMode } = yield* ProdMode;
 
     const ignoreList = HashSet.make(
+      "/",
+      "/index.html",
       NewUserRedirectUrl,
+      LoginUrl,
       ...(isProdMode
         ? []
         : [
@@ -52,9 +95,9 @@ export const NewUserRedirectLive = Layer.effect(
 
     return Effect.gen(function* () {
       const req = yield* HttpServerRequest;
-      const session = yield* Effect.serviceOption(CurrentSession);
+      const session = yield* Effect.serviceOption(RawCurrentSession_DoNotUse);
 
-      Effect.logDebug("checking session").pipe(Effect.annotateLogs({ session, url: req.url }));
+      yield* Effect.logTrace("checking session").pipe(Effect.annotateLogs({ url: req.url }));
 
       // if we have a non-user session (and we're not already there), we need to redirect (if we're not going to an
       // ignored url)
@@ -62,12 +105,12 @@ export const NewUserRedirectLive = Layer.effect(
         Option.getOrUndefined(session)?._tag === "UnknownUserSession" &&
         HashSet.every(ignoreList, pre => !req.url.startsWith(pre))
       ) {
-        yield* Effect.logWarning("Redirecting to new user setup");
+        yield* Effect.logInfo("Redirecting to new user setup");
         yield* HttpApp.appendPreResponseHandler(() => redirect(NewUserRedirectUrl, { status: 303 }));
       } else if (Option.getOrUndefined(session)?._tag === "UserSession" && req.url === NewUserRedirectUrl) {
         yield* Effect.log("At new user setup but we have a user, redirecting to home");
         yield* HttpApp.appendPreResponseHandler(() => Effect.succeed(redirect("/", { status: 303 })));
       }
-    }).pipe(Effect.annotateLogs({ layer: "NewUserRedirectLive" }));
+    }).pipe(Effect.annotateLogs({ layer: "AuthRedirectLive" }));
   }),
 );

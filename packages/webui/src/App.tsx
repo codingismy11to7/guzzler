@@ -1,8 +1,13 @@
-import { AppApi, OAuthUserInfo, User as U } from "@guzzler/domain";
-import { FullSession, SessionWithoutUser } from "@guzzler/domain/AppApi";
+import { OAuthUserInfo, SignupApi, User as U } from "@guzzler/domain";
+import { FullSession, SessionWithoutUser } from "@guzzler/domain/apis/SessionApi";
+import { Todo, TodoId } from "@guzzler/domain/apis/TodosApi";
 import { Effect, Either, Match, Option, ParseResult, pipe, Schema } from "effect";
 import { isNotUndefined } from "effect/Predicate";
 import React, { ReactElement, useCallback, useEffect, useRef, useState } from "react";
+import { AccountClient } from "./apiclients/AccountClient.js";
+import { SessionClient } from "./apiclients/SessionClient.js";
+import { SignupClient } from "./apiclients/SignupClient.js";
+import { TodosClient } from "./apiclients/TodosClient.js";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import { runP } from "./bootstrap.js";
@@ -19,8 +24,6 @@ import { useTranslation } from "./i18n.js";
 import Loading from "./Loading.js";
 import { Login } from "./pages/Login.js";
 import { AppRoute, routes, useRoute } from "./router.js";
-import { SessionClient } from "./SessionClient.js";
-import { TodosClient } from "./TodosClient.js";
 
 const UserInfo = ({ given_name: name, picture }: OAuthUserInfo.OAuthUserInfo) => {
   const { t } = useTranslation();
@@ -39,8 +42,7 @@ const UserInfo = ({ given_name: name, picture }: OAuthUserInfo.OAuthUserInfo) =>
 const LoggedInApp = (session: FullSession) => {
   const { userInfo, user } = session;
   const { t } = useTranslation();
-  const [todos, setTodos] = useState<readonly AppApi.Todo[]>([]);
-  const [count, setCount] = useState(0);
+  const [todos, setTodos] = useState<readonly Todo[]>([]);
   const [text, setText] = useState("");
 
   const fetchTodos = useCallback(() => runP(TodosClient.list).then(setTodos), []);
@@ -64,12 +66,12 @@ const LoggedInApp = (session: FullSession) => {
   );
 
   const setDone = useCallback(
-    (id: AppApi.TodoId, done: boolean) => runP(TodosClient.edit(id, { done })).then(fetchTodos),
+    (id: TodoId, done: boolean) => runP(TodosClient.edit(id, { done })).then(fetchTodos),
     [fetchTodos],
   );
 
   const doDelete = useCallback(
-    (id: AppApi.TodoId) => {
+    (id: TodoId) => {
       if (window.confirm("Are you sure?")) {
         void runP(TodosClient.remove(id)).then(fetchTodos);
       }
@@ -78,7 +80,7 @@ const LoggedInApp = (session: FullSession) => {
   );
 
   const view = useCallback(
-    (id: AppApi.TodoId) =>
+    (id: TodoId) =>
       void runP(TodosClient.fetch(id)).then(
         Option.match({
           onNone: () => window.alert("it got deleted? refresh?"),
@@ -90,6 +92,12 @@ const LoggedInApp = (session: FullSession) => {
 
     [],
   );
+
+  const onDeleteClick = () => {
+    if (window.confirm("Are you sure?")) {
+      void runP(AccountClient.deleteAccount());
+    }
+  };
 
   return (
     <FullSessionContext.Provider value={session}>
@@ -105,7 +113,7 @@ const LoggedInApp = (session: FullSession) => {
       <div>{user.username}</div>
       <UserInfo {...userInfo} />
       <div className="card">
-        <button onClick={() => setCount(count => count + 1)}>count is {count}</button>
+        <button onClick={onDeleteClick}>Delete Account</button>
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR
         </p>
@@ -145,10 +153,9 @@ const CreateUser = ({ userInfo }: Omit<SessionWithoutUser, "_tag">) => {
         Either.match(Schema.decodeEither(U.Username)(username, { errors: "first" }), {
           onRight: u => {
             void pipe(
-              SessionClient.validateUsername(u),
+              SignupClient.validateUsername(u),
               Effect.andThen(({ available }) => setAvailable(available)),
-              Effect.catchTag("Forbidden", () => Effect.sync(() => setAvailable(false))),
-              Effect.catchAllDefect(() => Effect.void),
+              Effect.catchAllDefect(() => Effect.sync(() => setAvailable(false))),
               Effect.ensuring(Effect.sync(() => setCheckingForConflict(false))),
               runP,
             );
@@ -182,8 +189,8 @@ const CreateUser = ({ userInfo }: Omit<SessionWithoutUser, "_tag">) => {
   const handleSave = () => {
     if (isNotUndefined(username)) {
       const form = document.createElement("form");
-      form.method = AppApi.SessionApi.endpoints.setUsername.method;
-      form.action = AppApi.SessionApi.endpoints.setUsername.path;
+      form.method = SignupApi.SignupApi.endpoints.setUsername.method;
+      form.action = SignupApi.SignupApi.endpoints.setUsername.path;
       const inp = document.createElement("input");
       inp.type = "hidden";
       inp.name = "username";
@@ -245,29 +252,9 @@ const Page = (): ReactElement =>
       login: () => <Login />,
       home: () => <LoggedInAppWrapper />,
       newUser: () => <CreateUserWrapper />,
-      // false:()=><><div>Not Found</div><div><a {...routes.home().link}>Go Home</a></div></>
     }),
   );
 
-/*
-  switch (route.name) {
-    case "login":
-      return <Login />;
-    case "home":
-      return <LoggedInAppWrapper />;
-    case "newUser":
-      return <CreateUserWrapper />;
-    case false:
-      return (
-        <>
-          <div>Not Found</div>
-          <div>
-            <a {...routes.home().link}>Go Home</a>
-          </div>
-        </>
-      );
-  }
-*/
 const App = () => {
   const [globalContext, setGlobalContext] = useState(defaultGlobalContext);
   const route = useRoute();
@@ -277,7 +264,7 @@ const App = () => {
       void pipe(
         SessionClient.getSessionInfo,
         Effect.andThen(si => setGlobalContext(Succeeded.make({ sessionInfo: si }))),
-        Effect.catchTag("Unauthenticated", () => Effect.sync(() => setGlobalContext(Unauthenticated.make()))),
+        Effect.catchTag("Unauthorized", () => Effect.sync(() => setGlobalContext(Unauthenticated.make()))),
         Effect.catchAll(e => Effect.sync(() => setGlobalContext(Errored.make({ error: e.message })))),
         runP,
       ),

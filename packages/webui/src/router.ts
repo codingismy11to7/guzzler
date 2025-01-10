@@ -2,7 +2,7 @@ import { Route, createRouter, defineRoute } from "type-route";
 
 export const { RouteProvider, useRoute, routes } = createRouter({
   login: defineRoute("/login"),
-  newUser: defineRoute("/newUser"),
+  newUser: defineRoute("/signup"),
   home: defineRoute("/"),
 });
 

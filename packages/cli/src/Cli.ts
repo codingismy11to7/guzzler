@@ -1,5 +1,5 @@
 import { Args, Command, Options } from "@effect/cli";
-import { TodoId } from "@guzzler/domain/AppApi";
+import { TodoId } from "@guzzler/domain/apis/TodosApi";
 import { TodosClient } from "./TodosClient.js";
 
 /**
