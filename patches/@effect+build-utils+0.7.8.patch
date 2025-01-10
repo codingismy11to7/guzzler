@@ -1,0 +1,13 @@
+diff --git a/node_modules/@effect/build-utils/main.js b/node_modules/@effect/build-utils/main.js
+index febfc07..6c22046 100644
+--- a/node_modules/@effect/build-utils/main.js
++++ b/node_modules/@effect/build-utils/main.js
+@@ -32634,7 +32634,7 @@ var run13 = gen2(function* () {
+       "**/index.ts"
+     ]
+   });
+-  const modules = entrypoints.map((file3) => file3.replace(/\.ts$/, "")).sort();
++  const modules = entrypoints.map((file3) => file3.replace(/\\/, "/").replace(/\.ts$/, "")).sort();
+   const template = yield* fs.readFileString("src/.index.ts").pipe(
+     map15((_) => _.trim() + "\n\n"),
+     orElseSucceed2(() => "")

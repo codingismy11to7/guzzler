@@ -1,7 +1,9 @@
 import * as internal from "./internal/authenticationMiddleware.js";
 
-export const Live = internal.Live;
+export const TryToLoadSession_DoNotUseLive = internal.TryToLoadSession_DoNotUseLive;
 
-export const OptionalLive = internal.OptionalLive;
+export const RequireFullSessionLive = internal.RequireFullSessionLive;
 
-export const NewUserRedirectLive = internal.NewUserRedirectLive;
+export const RequireNewUserSessionLive = internal.RequireNewUserSessionLive;
+
+export const NewUserRedirectLive = internal.AuthRedirectLive;
