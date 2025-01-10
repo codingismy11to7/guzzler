@@ -170,6 +170,13 @@ export default tseslint.config([
       "no-invalid-this": "off",
       "no-multiple-empty-lines": "off",
       "no-new-wrappers": "error",
+      "no-restricted-imports": [
+        "error",
+        {
+          "name": "react-i18next",
+          "message": "Import from ../path/to/root/i18n.ts instead"
+        }
+      ],
       "no-shadow": [
         "off",
         {

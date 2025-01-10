@@ -42,6 +42,7 @@ export const NewUserRedirectLive = Layer.effect(
             "/@fs/",
             "/@react-refresh",
             "/@vite/client",
+            "/locales/",
             "/node_modules/.vite",
             "/node_modules/vite",
             "/src/",
