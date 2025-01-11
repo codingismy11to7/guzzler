@@ -4,6 +4,7 @@ interface Resources {
     common: {
       back: "Back";
       cancel: "Cancel";
+      loading: "Whipping the hamsters";
       next: "Next";
       thereWasAProblem: "There was a problem";
     };
@@ -15,8 +16,9 @@ interface Resources {
       createAccount: "Looks Good";
       createAccountCountdown: "Looks Good ({{timeRemaining}})";
       createAccountQuestion: "Create account?";
+      creatingAccount: "Creating account...";
       notAvailable: "Username isn't available";
-      setUsername: "Set Username";
+      setUsername: "Username for new account";
     };
     login: {
       continue: "Continue with Google";
