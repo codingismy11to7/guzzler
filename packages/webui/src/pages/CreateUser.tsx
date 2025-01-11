@@ -27,7 +27,7 @@ import { onEnterKey } from "../utils/onEnterKey.js";
 type CreateUserCardProps = Pick<Props, "userInfo"> &
   Readonly<{
     subheader: string;
-    cancelButton: ReactElement;
+    cancelButton?: ReactElement | undefined;
     okButton: ReactElement;
   }>;
 
@@ -162,6 +162,8 @@ type ConfirmStepProps = Readonly<{ userInfo: OAuthUserInfo; chosenUsername: stri
 const ConfirmStep = ({ userInfo, chosenUsername, onCancel }: ConfirmStepProps) => {
   const { t } = useTranslation();
 
+  const [creating, setCreating] = useState(false);
+
   const { remainingTime, completed } = useCountdown("5 seconds");
 
   const timeRemaining = Math.ceil(Duration.toSeconds(remainingTime));
@@ -175,8 +177,11 @@ const ConfirmStep = ({ userInfo, chosenUsername, onCancel }: ConfirmStepProps) =
 
     return void pipe(
       Schema.decode(U.Username)(chosenUsername),
+      Effect.tap(() => setCreating(true)),
       Effect.andThen(SignupClient.setUsername),
       Effect.andThen(() => location.replace("/")),
+      // leave the creating spinner going unless there's an error
+      Effect.tapErrorCause(() => Effect.sync(() => setCreating(false))),
       Effect.catchTags({
         // changed the url and bypassed the previous validation step
         ParseError: () => handleTricksy,
@@ -196,14 +201,28 @@ const ConfirmStep = ({ userInfo, chosenUsername, onCancel }: ConfirmStepProps) =
     <CreateUserCard
       userInfo={userInfo}
       subheader={chosenUsername}
-      cancelButton={<Button onClick={onCancel}>{t("createUser.change")}</Button>}
+      cancelButton={creating ? undefined : <Button onClick={onCancel}>{t("createUser.change")}</Button>}
       okButton={
-        <Button disabled={!completed} onClick={createAccount} endIcon={completed && <ThumbUp />}>
-          {completed ? t("createUser.createAccount") : t("createUser.createAccountCountdown", { timeRemaining })}
-        </Button>
+        <LoadingButton
+          fullWidth={creating}
+          {...(creating ? { variant: "outlined" } : {})}
+          disabled={!completed || creating}
+          onClick={createAccount}
+          loading={creating}
+          endIcon={(completed || creating) && <ThumbUp />}
+          loadingPosition="end"
+        >
+          {creating
+            ? t("common.loading")
+            : completed
+              ? t("createUser.createAccount")
+              : t("createUser.createAccountCountdown", { timeRemaining })}
+        </LoadingButton>
       }
     >
-      <Typography variant="body2">{t("createUser.createAccountQuestion")}</Typography>
+      <Typography variant="body2">
+        {t(`createUser.${creating ? "creatingAccount" : "createAccountQuestion"}`)}
+      </Typography>
     </CreateUserCard>
   );
 };
