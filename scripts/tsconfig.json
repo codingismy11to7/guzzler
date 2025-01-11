@@ -1,6 +1,9 @@
 {
   "extends": "../tsconfig.base.json",
   "include": ["*.mts"],
+  "compilerOptions": {
+    "noEmit": true
+  },
   "references": [
   ]
 }

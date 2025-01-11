@@ -1,6 +1,6 @@
 import { HttpApiBuilder, HttpServerResponse } from "@effect/platform";
 import { Unauthorized } from "@effect/platform/HttpApiError";
-import { FullSession, SessionWithoutUser } from "@guzzler/domain/apis/SessionApi";
+import { FullSession, Logout, SessionWithoutUser } from "@guzzler/domain/apis/SessionApi";
 import { AppApi } from "@guzzler/domain/AppApi";
 import { RawCurrentSession_DoNotUse } from "@guzzler/domain/Authentication";
 import { Session } from "@guzzler/domain/Session";
@@ -29,7 +29,7 @@ export const SessionApiLive = HttpApiBuilder.group(AppApi, "session", handlers =
         ),
       )
 
-      .handleRaw("logout", () =>
+      .handleRaw(Logout, () =>
         Effect.gen(function* () {
           const sessOpt = yield* Effect.serviceOption(RawCurrentSession_DoNotUse);
 
@@ -37,9 +37,6 @@ export const SessionApiLive = HttpApiBuilder.group(AppApi, "session", handlers =
 
           return HttpServerResponse.redirect("/", {
             status: 303,
-            /*
-            cookies: removePostLoginCookie,
-  */
           });
         }),
       );

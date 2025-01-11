@@ -1,14 +1,16 @@
-import { HttpApiBuilder, HttpServerResponse } from "@effect/platform";
+import { HttpApiBuilder } from "@effect/platform";
+import { SetUsername } from "@guzzler/domain/apis/SignupApi";
 import { AppApi } from "@guzzler/domain/AppApi";
 import { CurrentUnknownUserSession } from "@guzzler/domain/Authentication";
-import { UserId } from "@guzzler/domain/User";
-import { Effect, pipe } from "effect";
+import { UserSession } from "@guzzler/domain/Session";
+import { User, UserId } from "@guzzler/domain/User";
+import { Effect, pipe, Struct } from "effect";
 import { SessionStorage } from "../../../SessionStorage.js";
 import { Users } from "../../../Users.js";
 
 export const SignupApiLive = HttpApiBuilder.group(AppApi, "signup", handlers =>
   Effect.gen(function* () {
-    const { clearSession } = yield* SessionStorage;
+    const { addSession } = yield* SessionStorage;
     const { addUser, usernameAvailable } = yield* Users;
 
     return handlers
@@ -21,24 +23,25 @@ export const SignupApiLive = HttpApiBuilder.group(AppApi, "signup", handlers =>
         ),
       )
 
-      .handleRaw("setUsername", ({ payload: { username } }) =>
+      .handle(SetUsername, ({ path: { username } }) =>
         pipe(
           CurrentUnknownUserSession,
           Effect.andThen(sess =>
             Effect.gen(function* () {
-              /*
-              const req = yield* HttpServerRequest;
-*/
+              const userId = UserId.make(sess.oAuthUserInfo.id);
+              const user = User.make({ ...sess, id: userId, username });
 
-              yield* addUser({ ...sess, id: UserId.make(sess.oAuthUserInfo.id), username });
-              yield* clearSession(sess.id);
+              yield* Effect.logInfo("Setting username and creating account").pipe(
+                Effect.annotateLogs({ userId, user }),
+              );
 
-              return yield* HttpServerResponse.redirect(/*postLoginUrl(req)*/ "/", {
-                status: 303,
-                /*
-                cookies: removePostLoginCookie,
-*/
-              });
+              yield* addUser(user);
+
+              yield* Effect.logDebug("promoting session to full");
+
+              const fullSess = UserSession.make({ ...Struct.omit(sess, "_tag"), user });
+
+              yield* addSession(fullSess);
             }),
           ),
         ),
