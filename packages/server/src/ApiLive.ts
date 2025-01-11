@@ -61,7 +61,7 @@ export const ApiLive: Layer.Layer<
           host => `http${host.startsWith("localhost") ? "" : "s"}://${host}`,
           pre => `${pre}/auth/google/callback`,
         ),
-      callbackUriParams: { access_type: "offline" },
+      callbackUriParams: { prompt: "select_account consent" },
     }),
   ),
   Layer.provide(NodeHttpClient.layer),

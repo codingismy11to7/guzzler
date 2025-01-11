@@ -249,7 +249,7 @@ export class OAuth2 extends Context.Tag("OAuth2")<
     ) => Effect.Effect<OAuthUserInfo.OAuthUserInfo, ExternalError | HttpClientError.HttpClientError | ParseError>;
     startRedirectHandler: (
       request: HttpServerRequest.HttpServerRequest,
-      initialResponseOptions: Omit<HttpServerResponse.Options.WithContentType, "status"> | undefined,
+      initialResponseOptions?: Omit<HttpServerResponse.Options.WithContentType, "status">,
     ) => Effect.Effect<HttpServerResponse.HttpServerResponse>;
   }>
 >() {}

@@ -2,7 +2,7 @@ import { HttpApiClient } from "@effect/platform";
 import { AppApi } from "@guzzler/domain";
 import { OptionalTodoWithoutId, Todo, TodoId } from "@guzzler/domain/apis/TodosApi";
 import { Effect, Option, pipe } from "effect";
-import { httpClientMethodDieFromFatal as dieFromFatal } from "../internal/utils.js";
+import { dieFromFatal } from "./utils.js";
 
 /**
  * Todos REST client service

@@ -1,5 +1,6 @@
 import { HttpApiBuilder, HttpServerResponse } from "@effect/platform";
 import { HttpServerRequest } from "@effect/platform/HttpServerRequest";
+import { StartGoogleLogin } from "@guzzler/domain/apis/AuthApi";
 import { AppApi } from "@guzzler/domain/AppApi";
 import { SessionCookieName } from "@guzzler/domain/Authentication";
 import { RedactedError } from "@guzzler/domain/Errors";
@@ -16,21 +17,6 @@ import { setSecureCookie } from "./setSecureCookie.js";
 // not real server routes so must treat specially
 export const NewUserRedirectUrl = "/signup";
 export const LoginUrl = "/login";
-/*
-const PostLoginRedirectCookieName = "guzzler-post-login-url";
-export const DefaultCookieOpts = {
-  path: "/",
-  sameSite: "lax",
-  httpOnly: true,
-  secure: true,
-} as const;
-export const removePostLoginCookie = pipe(
-  Cookies.makeCookie(PostLoginRedirectCookieName, "", { ...DefaultCookieOpts, maxAge: 0 }),
-  Either.andThen(newCookie => Cookies.setCookie(Cookies.empty, newCookie)),
-  Either.getOrElse(() => Cookies.empty),
-);
-export const postLoginUrl = (req: HttpServerRequest) => req.cookies[PostLoginRedirectCookieName] ?? "/";
-*/
 
 export const AuthApiLive = HttpApiBuilder.group(AppApi, "auth", handlers =>
   Effect.gen(function* () {
@@ -40,26 +26,7 @@ export const AuthApiLive = HttpApiBuilder.group(AppApi, "auth", handlers =>
     const { startRedirectHandler, getAccessTokenFromAuthorizationCodeFlow, fetchUserInfo } = yield* OAuth2;
 
     return handlers
-      .handleRaw("startRedirect", () =>
-        HttpServerRequest.pipe(
-          Effect.andThen(req =>
-            startRedirectHandler(req, {
-              /*
-              cookies: pipe(
-                // TODO https://github.com/codingismy11to7/guzzler/issues/65
-                Cookies.makeCookie(
-                  PostLoginRedirectCookieName,
-                  (req.headers.referer as string | undefined) ?? "/",
-                  DefaultCookieOpts,
-                ),
-                Either.andThen(newCookie => Cookies.setCookie(Cookies.empty, newCookie)),
-                Either.getOrElse(() => Cookies.empty),
-              ),
-*/
-            }),
-          ),
-        ),
-      )
+      .handleRaw(StartGoogleLogin, () => HttpServerRequest.pipe(Effect.andThen(req => startRedirectHandler(req))))
       .handleRaw("oAuthCallback", () =>
         pipe(
           Effect.gen(function* () {
@@ -90,11 +57,8 @@ export const AuthApiLive = HttpApiBuilder.group(AppApi, "auth", handlers =>
 
             yield* setSecureCookie(SessionCookieName, session.id);
 
-            const baseResp = yield* HttpServerResponse.redirect(/*postLoginUrl(req)*/ "/", {
+            const baseResp = yield* HttpServerResponse.redirect("/", {
               status: 303,
-              /*
-              cookies: removePostLoginCookie,
-*/
             });
 
             return yield* Effect.reduce(modifyReply, baseResp, (acc, m) => m(acc));

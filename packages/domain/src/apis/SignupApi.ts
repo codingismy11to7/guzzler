@@ -1,8 +1,10 @@
-import { HttpApiEndpoint, HttpApiGroup, HttpApiSchema } from "@effect/platform";
+import { HttpApiEndpoint, HttpApiGroup } from "@effect/platform";
 import { Conflict } from "@effect/platform/HttpApiError";
 import { Schema } from "effect";
 import { RequireNewUserSession } from "../Authentication.js";
 import { Username } from "../User.js";
+
+export const SetUsername = "setUsername";
 
 export class SignupApi extends HttpApiGroup.make("signup")
   .add(
@@ -11,9 +13,9 @@ export class SignupApi extends HttpApiGroup.make("signup")
       .addSuccess(Schema.Struct({ available: Schema.Boolean })),
   )
   .add(
-    HttpApiEndpoint.post("setUsername", "/username/set")
-      .setPayload(Schema.Struct({ username: Username }).pipe(HttpApiSchema.withEncoding({ kind: "UrlParams" })))
-      .addSuccess(Schema.Void, { status: 303 })
+    HttpApiEndpoint.post(SetUsername, "/username/set/:username")
+      .setPath(Schema.Struct({ username: Username }))
+      .addSuccess(Schema.Void, { status: 204 })
       .addError(Conflict),
   )
   .middleware(RequireNewUserSession)
