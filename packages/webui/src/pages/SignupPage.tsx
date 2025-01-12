@@ -229,7 +229,7 @@ const ConfirmStep = ({ userInfo, chosenUsername, onCancel }: ConfirmStepProps) =
 
 type Props = Readonly<{ userInfo: OAuthUserInfo; route: SignupRoute }>;
 
-const CreateUser = ({ userInfo, route }: Props) => (
+const SignupPage = ({ userInfo, route }: Props) => (
   <Backdrop open={true}>
     {route.name === "Signup" ? (
       <SetUsernameStep userInfo={userInfo} />
@@ -243,4 +243,4 @@ const CreateUser = ({ userInfo, route }: Props) => (
   </Backdrop>
 );
 
-export default CreateUser;
+export default SignupPage;

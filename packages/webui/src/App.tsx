@@ -12,10 +12,10 @@ import {
   useCurrentSessionInfo,
 } from "./GlobalContext.js";
 import Loading from "./Loading.js";
-import { Login } from "./pages/Login.js";
+import { LoginPage } from "./pages/LoginPage.js";
 import { routes, RoutingGroups, SignupRoute, useRoute } from "./router.js";
 
-const CreateUser = lazy(() => import("./pages/CreateUser.js"));
+const SignupPage = lazy(() => import("./pages/SignupPage.js"));
 const LoggedInApp = lazy(() => import("./pages/LoggedInApp.js"));
 
 const LoggedInAppWrapper = () => {
@@ -24,10 +24,10 @@ const LoggedInAppWrapper = () => {
   return session?._tag === "FullSession" ? <LoggedInApp {...session} /> : <Skeleton variant="rectangular" />;
 };
 
-const CreateUserWrapper = ({ route }: Readonly<{ route: SignupRoute }>) => {
+const SignupPageWrapper = ({ route }: Readonly<{ route: SignupRoute }>) => {
   const sess = useCurrentSessionInfo();
 
-  return sess ? <CreateUser {...sess} route={route} /> : <Skeleton variant="rectangular" />;
+  return sess ? <SignupPage {...sess} route={route} /> : <Skeleton variant="rectangular" />;
 };
 
 const Page = (): ReactElement => {
@@ -41,11 +41,11 @@ const Page = (): ReactElement => {
       </div>
     </>
   ) : RoutingGroups.Signup.has(route) ? (
-    <CreateUserWrapper route={route} />
+    <SignupPageWrapper route={route} />
   ) : (
     Match.value(route).pipe(
       Match.discriminatorsExhaustive("name")({
-        Login: () => <Login />,
+        Login: () => <LoginPage />,
         Home: () => <LoggedInAppWrapper />,
       }),
     )
