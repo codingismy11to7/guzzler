@@ -13,6 +13,9 @@ const config: UserConfigExport = {
       port: 3000
     }
   },
+  build: {
+    minify: true,
+  },
   resolve: {
     alias: {
       "@guzzler/domain": path.resolve(

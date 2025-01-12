@@ -3,6 +3,7 @@
   "references": [
     { "path": "../domain/tsconfig.build.json" }
   ],
+  "exclude": ["vite.config.ts"],
   "compilerOptions": {
     "tsBuildInfoFile": ".tsbuildinfo/build.tsbuildinfo",
     "target": "ES2020",
