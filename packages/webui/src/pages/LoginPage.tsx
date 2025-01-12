@@ -20,7 +20,7 @@ const LoginButton = () => {
   );
 };
 
-export const Login = () => (
+export const LoginPage = () => (
   <Backdrop open={true}>
     <LoginButton />
   </Backdrop>

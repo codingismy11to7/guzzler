@@ -23,6 +23,12 @@ interface Resources {
     login: {
       continue: "Continue with Google";
     };
+    navDrawer: {
+      userMenu: {
+        logout: "Logout";
+        settings: "Settings";
+      };
+    };
     trash: {
       hello: "Hello, {{name}}";
     };

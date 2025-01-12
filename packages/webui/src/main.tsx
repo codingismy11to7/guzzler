@@ -3,7 +3,7 @@ import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
-import { lightGreen } from "@mui/material/colors";
+import { green, orange } from "@mui/material/colors";
 import { StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.js";
@@ -12,7 +12,10 @@ import Loading from "./Loading.js";
 import { RouteProvider } from "./router.js";
 
 const theme = createTheme({
-  colorSchemes: { light: { palette: { primary: lightGreen } }, dark: { palette: { primary: lightGreen } } },
+  colorSchemes: {
+    light: { palette: { primary: { main: green[700] }, secondary: orange } },
+    dark: { palette: { primary: { main: green[700] }, secondary: orange } },
+  },
 });
 
 createRoot(document.getElementById("root")!).render(
