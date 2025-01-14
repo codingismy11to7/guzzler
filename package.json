@@ -35,7 +35,7 @@
     "@effect/build-utils": "^0.7.7",
     "@effect/language-service": "^0.2.0",
     "@effect/vitest": "latest",
-    "@eslint/compat": "1.2.4",
+    "@eslint/compat": "1.2.5",
     "@eslint/eslintrc": "3.2.0",
     "@eslint/js": "9.17.0",
     "@stylistic/eslint-plugin": "^2.13.0",
