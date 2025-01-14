@@ -10,7 +10,6 @@ import "./i18n.js";
 import Loading from "./Loading.js";
 import { RouteProvider } from "./router.js";
 
-// eslint-disable-next-line react-refresh/only-export-components
 const App = lazy(() => import("./App.js"));
 
 const theme = createTheme({
