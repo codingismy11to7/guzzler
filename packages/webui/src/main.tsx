@@ -4,12 +4,14 @@ import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
 import { green, orange } from "@mui/material/colors";
-import { StrictMode, Suspense } from "react";
+import { lazy, StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import App from "./App.js";
 import "./i18n.js";
 import Loading from "./Loading.js";
 import { RouteProvider } from "./router.js";
+
+// eslint-disable-next-line react-refresh/only-export-components
+const App = lazy(() => import("./App.js"));
 
 const theme = createTheme({
   colorSchemes: {
