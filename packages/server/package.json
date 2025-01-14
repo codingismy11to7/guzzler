@@ -52,7 +52,6 @@
   "devDependencies": {
     "@types/npmcli__package-json": "^4.0.4",
     "@types/simple-oauth2": "^5.0.7",
-    "dotenv-vault": "^1.26.2",
     "nodemon": "^3.1.9"
   },
   "nodemonConfig": {
