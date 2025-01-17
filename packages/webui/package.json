@@ -1,26 +1,30 @@
 {
   "name": "@guzzler/webui",
   "version": "0.0.4",
+
+  "license": "MIT",
   "private": true,
   "type": "module",
-  "license": "MIT",
+
   "repository": {
+    "directory": "packages/webui",
     "type": "git",
-    "url": "git+ssh://git@github.com/codingismy11to7/guzzler.git",
-    "directory": "packages/webui"
+    "url": "git+ssh://git@github.com/codingismy11to7/guzzler.git"
   },
+
   "scripts": {
-    "codegen": "i18next-resources-for-ts interface -i ./public/locales/en -o ./src/@types/resources.d.ts",
-    "dev": "vite",
     "build": "tsc -b tsconfig.build.json && vite build",
-    "check": "tsc -b tsconfig.json",
     "bundle-size": "npx --yes vite-bundle-visualizer",
+    "check": "tsc -b tsconfig.json",
+    "codegen": "i18next-resources-for-ts interface -i ./public/locales/en -o ./src/@types/resources.d.ts",
+    "coverage": "vitest run --coverage",
+    "coverage:watch": "vitest --coverage",
+    "dev": "vite",
     "preview": "vite preview",
     "test": "vitest --run",
-    "test:watch": "vitest",
-    "coverage": "vitest run --coverage",
-    "coverage:watch": "vitest --coverage"
+    "test:watch": "vitest"
   },
+
   "dependencies": {
     "@effect/platform-browser": "^0.51.1",
     "@emotion/react": "^11.14.0",
