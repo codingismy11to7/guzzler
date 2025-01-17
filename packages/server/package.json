@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@effect/platform": "^0.72.0",
-    "@effect/platform-node": "^0.68.1",
+    "@effect/platform-node": "^0.69.1",
     "@guzzler/domain": "^0.0.4",
     "@guzzler/mongodb": "^0.0.2",
     "@guzzler/utils": "^0.0.1",
