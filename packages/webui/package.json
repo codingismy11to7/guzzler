@@ -24,7 +24,7 @@
     "coverage:watch": "vitest --coverage"
   },
   "dependencies": {
-    "@effect/platform-browser": "^0.51.1",
+    "@effect/platform-browser": "^0.52.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@fontsource/roboto": "^5.1.1",
