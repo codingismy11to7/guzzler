@@ -15,8 +15,6 @@
     "build": "tsc -b tsconfig.build.json && vite build",
     "check": "tsc -b tsconfig.json",
     "bundle-size": "npx --yes vite-bundle-visualizer",
-    "lint": "eslint \"**/{src,test,examples,scripts,dtslint}/**/*.{ts,tsx,mts}\" --max-warnings=0",
-    "lint:fix": "npm run codegen && eslint \"**/{src,test,examples,scripts,dtslint}/**/*.{ts,tsx,mts}\" --max-warnings=0 --fix",
     "preview": "vite preview",
     "test": "vitest --run",
     "test:watch": "vitest",

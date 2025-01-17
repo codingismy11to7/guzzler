@@ -8,15 +8,101 @@ import react from "eslint-plugin-react";
 import preferArrow from "eslint-plugin-prefer-arrow";
 import prettier from "eslint-plugin-prettier";
 import stylistic from "@stylistic/eslint-plugin";
+import json from "@eslint/json";
+import jsonc from "eslint-plugin-jsonc";
+
+const jsonRules = {
+  "jsonc/array-bracket-newline": ["warn"],
+  "jsonc/array-bracket-spacing": ["warn", "never"],
+  "jsonc/array-element-newline": ["warn", "consistent"],
+  "jsonc/comma-style": ["warn"],
+  "jsonc/indent": ["warn", 2, {}],
+  "jsonc/key-spacing": ["warn"],
+  "jsonc/object-curly-spacing": ["warn"],
+  "jsonc/object-property-newline": [
+    "warn",
+    {
+      allowAllPropertiesOnSameLine: true,
+    }
+  ],
+  "jsonc/sort-array-values": [
+    "warn",
+    {
+      pathPattern: ".*",
+      order: { type: "asc" },
+    },
+  ],
+  "jsonc/sort-keys": [
+    "warn",
+    "asc",
+    {
+      natural: false,
+      allowLineSeparatedGroups: true,
+    }
+  ],
+};
 
 export default tseslint.config([
   {
     ignores: ["**/dist", "**/build", "**/docs", "**/*.md"]
   },
   {
+    plugins: {
+      jsonc,
+      json,
+    },
+  },
+  {
+    rules: {
+      ...jsonc.configs["recommended-with-json"].rules,
+      ...jsonRules,
+    },
+    files: ["**/*.json"],
+    ignores: ["package-lock.json", "**/tsconfig.json", "**/tsconfig.*.json"],
+    language: "json/json",
+  },
+  {
+    rules: {
+      ...jsonc.configs["recommended-with-jsonc"].rules,
+      ...jsonRules,
+    },
+    files: ["**/*.jsonc", ".vscode/*.json", "**/tsconfig.json", "**/tsconfig.*.json"],
+    language: "json/jsonc",
+    languageOptions: {
+      allowTrailingCommas: true,
+    },
+  },
+  {
+    rules: {
+      ...jsonc.configs["recommended-with-json5"].rules,
+      ...jsonRules,
+    },
+    files: ["**/*.json5"],
+    language: "json/json5",
+  },
+  {
+    plugins: {
+      "@stylistic": stylistic,
+      'react-hooks': reactHooks,
+      'react-refresh': reactRefresh,
+      react,
+      "import": importPlugin,
+      "prefer-arrow": preferArrow,
+      prettier,
+      codegen,
+    },
+  },
+  {
     settings: {react: {version: "19.0"}},
 
-    extends: [js.configs.recommended, ...tseslint.configs.strictTypeChecked, ...tseslint.configs.stylisticTypeChecked],
+    files: ["**/*.ts", "**/*.tsx", "**/*.mts"],
+    ignores: ["**/vitest.*.ts", "**/vite.config.ts", "setupTests.ts"],
+
+    extends: [
+      js.configs.recommended,
+      ...tseslint.configs.strictTypeChecked,
+      ...tseslint.configs.stylisticTypeChecked,
+    ],
 
     languageOptions: {
       ecmaVersion: 2020,
@@ -30,17 +116,6 @@ export default tseslint.config([
 
     linterOptions: {
       reportUnusedDisableDirectives: "error"
-    },
-
-    plugins: {
-      "@stylistic": stylistic,
-      'react-hooks': reactHooks,
-      'react-refresh': reactRefresh,
-      react,
-      "import": importPlugin,
-      "prefer-arrow": preferArrow,
-      prettier,
-      codegen,
     },
 
     rules: {
