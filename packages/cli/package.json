@@ -26,7 +26,7 @@
     "coverage:watch": "vitest --coverage"
   },
   "dependencies": {
-    "@effect/cli": "^0.51.1",
+    "@effect/cli": "^0.52.1",
     "@effect/platform": "^0.72.0",
     "@effect/platform-node": "^0.68.1",
     "@guzzler/domain": "^0.0.4",
