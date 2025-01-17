@@ -1,7 +1,6 @@
 import { User as U } from "@guzzler/domain";
 import { OAuthUserInfo } from "@guzzler/domain/OAuthUserInfo";
 import { CheckCircle, ThumbUp } from "@mui/icons-material";
-import { LoadingButton } from "@mui/lab";
 import {
   Avatar,
   Backdrop,
@@ -17,18 +16,21 @@ import { Duration, Effect, Either, Option, ParseResult, pipe, Schema } from "eff
 import { isUndefined } from "effect/Predicate";
 import React, { PropsWithChildren, ReactElement, useCallback, useEffect, useRef, useState } from "react";
 import { SignupClient } from "../apiclients/SignupClient.js";
-import { runP } from "../bootstrap.js";
 import { useCountdown } from "../hooks/useCountdown.js";
 import { useTranslation } from "../i18n.js";
+import { makeRunFunctions } from "../internal/bootstrap.js";
 import { routes, SignupRoute } from "../router.js";
 import { logout } from "../utils/logout.js";
 import { onEnterKey } from "../utils/onEnterKey.js";
+
+const { runP } = makeRunFunctions(SignupClient.Default);
 
 type CreateUserCardProps = Pick<Props, "userInfo"> &
   Readonly<{
     subheader: string;
     cancelButton?: ReactElement | undefined;
     okButton: ReactElement;
+    title?: string;
   }>;
 
 const CreateUserCard = ({
@@ -37,14 +39,20 @@ const CreateUserCard = ({
   subheader,
   cancelButton,
   okButton,
+  title,
 }: PropsWithChildren<CreateUserCardProps>) => (
-  <Card elevation={1} sx={{ padding: 2, minWidth: 300 }}>
+  <Card elevation={1} sx={{ padding: 2, minWidth: 350 }}>
+    {title && (
+      <CardContent>
+        <Typography variant="h6">{title}</Typography>
+      </CardContent>
+    )}
     <CardHeader
       avatar={<Avatar alt={userInfo.name} src={userInfo.picture} />}
       title={userInfo.name}
       subheader={subheader}
     />
-    <CardContent>{children}</CardContent>
+    {children && <CardContent>{children}</CardContent>}
     <CardActions sx={{ justifyContent: "space-between" }}>
       {cancelButton}
       {okButton}
@@ -125,21 +133,28 @@ const SetUsernameStep = ({ userInfo }: SetUsernameStepProps) => {
     if (username && !checkingForConflict && available) routes.SignupConfirm({ username }).push();
   }, [available, checkingForConflict, username]);
 
+  const loading = checkingForConflict && !!username;
+
   return (
     <CreateUserCard
       userInfo={userInfo}
       subheader={userInfo.email}
-      cancelButton={<Button onClick={logout}>{t("common.cancel")}</Button>}
+      cancelButton={
+        <Button variant="outlined" onClick={logout}>
+          {t("common.cancel")}
+        </Button>
+      }
       okButton={
-        <LoadingButton
+        <Button
           onClick={handleConfirm}
           disabled={!available || !username}
-          loading={checkingForConflict && !!username}
+          loading={loading}
           loadingPosition="end"
           endIcon={<CheckCircle />}
+          variant="contained"
         >
-          {t(checkingForConflict && !!username ? "createUser.checkingForConflictButton" : "createUser.confirm")}
-        </LoadingButton>
+          {t(loading ? "createUser.checkingForConflictButton" : "createUser.confirm")}
+        </Button>
       }
     >
       <TextField
@@ -164,7 +179,7 @@ const ConfirmStep = ({ userInfo, chosenUsername, onCancel }: ConfirmStepProps) =
 
   const [creating, setCreating] = useState(false);
 
-  const { remainingTime, completed } = useCountdown("5 seconds");
+  const { remainingTime, completed } = useCountdown("3 seconds");
 
   const timeRemaining = Math.ceil(Duration.toSeconds(remainingTime));
 
@@ -199,31 +214,34 @@ const ConfirmStep = ({ userInfo, chosenUsername, onCancel }: ConfirmStepProps) =
 
   return (
     <CreateUserCard
+      title={t(`createUser.${creating ? "creatingAccount" : "createAccountQuestion"}`)}
       userInfo={userInfo}
       subheader={chosenUsername}
-      cancelButton={creating ? undefined : <Button onClick={onCancel}>{t("createUser.change")}</Button>}
+      cancelButton={
+        creating ? undefined : (
+          <Button variant="outlined" onClick={onCancel}>
+            {t("createUser.change")}
+          </Button>
+        )
+      }
       okButton={
-        <LoadingButton
+        <Button
           fullWidth={creating}
-          {...(creating ? { variant: "outlined" } : {})}
+          variant={creating ? "outlined" : "contained"}
           disabled={!completed || creating}
           onClick={createAccount}
           loading={creating}
-          endIcon={(completed || creating) && <ThumbUp />}
-          loadingPosition="end"
+          endIcon={completed && !creating && <ThumbUp />}
+          loadingPosition="start"
         >
           {creating
             ? t("common.loading")
             : completed
               ? t("createUser.createAccount")
               : t("createUser.createAccountCountdown", { timeRemaining })}
-        </LoadingButton>
+        </Button>
       }
-    >
-      <Typography variant="body2">
-        {t(`createUser.${creating ? "creatingAccount" : "createAccountQuestion"}`)}
-      </Typography>
-    </CreateUserCard>
+    />
   );
 };
 

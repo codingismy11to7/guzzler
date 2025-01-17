@@ -1,3 +1,5 @@
+export * as GridFS from "./GridFS.js";
+
 export * as Model from "./Model.js";
 
 export * as Mongo from "./Mongo.js";
@@ -12,6 +14,8 @@ export * as MongoCollection from "./MongoCollection.js";
 export * as MongoDatabaseLayer from "./MongoDatabaseLayer.js";
 
 /**
- * To be used for removed migrations
+ * Optional code for dealing with migrations
  */
 export * as MongoMigrations from "./MongoMigrations.js";
+
+export * as MongoTransactions from "./MongoTransactions.js";

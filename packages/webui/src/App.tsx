@@ -2,7 +2,6 @@ import { Skeleton } from "@mui/material";
 import { Effect, Match, pipe } from "effect";
 import React, { lazy, ReactElement, useEffect, useState } from "react";
 import { SessionClient } from "./apiclients/SessionClient.js";
-import { runP } from "./bootstrap.js";
 import {
   defaultGlobalContext,
   Errored,
@@ -11,17 +10,24 @@ import {
   Unauthenticated,
   useCurrentSessionInfo,
 } from "./GlobalContext.js";
+import { makeRunFunctions } from "./internal/bootstrap.js";
 import Loading from "./Loading.js";
 import { LoginPage } from "./pages/LoginPage.js";
-import { routes, RoutingGroups, SignupRoute, useRoute } from "./router.js";
+import { PagesRoute, routes, RoutingGroups, SignupRoute, useRoute } from "./router.js";
 
 const SignupPage = lazy(() => import("./pages/SignupPage.js"));
 const LoggedInApp = lazy(() => import("./pages/LoggedInApp.js"));
 
-const LoggedInAppWrapper = () => {
+const { runP } = makeRunFunctions(SessionClient.Default);
+
+const LoggedInAppWrapper = ({ route }: { route: PagesRoute }) => {
   const session = useCurrentSessionInfo();
 
-  return session?._tag === "FullSession" ? <LoggedInApp {...session} /> : <Skeleton variant="rectangular" />;
+  return session?._tag === "FullSession" ? (
+    <LoggedInApp route={route} session={session} />
+  ) : (
+    <Skeleton variant="rectangular" />
+  );
 };
 
 const SignupPageWrapper = ({ route }: Readonly<{ route: SignupRoute }>) => {
@@ -42,11 +48,12 @@ const Page = (): ReactElement => {
     </>
   ) : RoutingGroups.Signup.has(route) ? (
     <SignupPageWrapper route={route} />
+  ) : RoutingGroups.Pages.has(route) ? (
+    <LoggedInAppWrapper route={route} />
   ) : (
     Match.value(route).pipe(
       Match.discriminatorsExhaustive("name")({
         Login: () => <LoginPage />,
-        Home: () => <LoggedInAppWrapper />,
       }),
     )
   );

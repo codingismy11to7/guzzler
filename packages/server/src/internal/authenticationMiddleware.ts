@@ -51,7 +51,9 @@ export const RequireFullSessionLive = Layer.effect(
 
     return {
       SessionCookie: filterLoadSession(ss, s =>
-        s._tag === "UnknownUserSession" ? new Forbidden() : Effect.succeed(s),
+        s._tag === "UnknownUserSession"
+          ? new Forbidden()
+          : Effect.succeed(s).pipe(Effect.tap(s => Effect.logInfo(`authenticated user ${s.user.username}`))),
       ),
     };
   }),

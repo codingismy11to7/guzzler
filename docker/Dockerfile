@@ -4,11 +4,15 @@ WORKDIR /app
 
 FROM base AS build
 
+RUN apt-get update
+RUN apt-get install -y python3 build-essential
+
 COPY ../.prettierrc.json eslint.* package.json package-lock.json setupTests.ts tsconfig.* vitest.* ./
 COPY ../packages ./packages/
 COPY ../patches ./patches/
 COPY ../scripts ./scripts/
 RUN npm i
+RUN npm run codegen --workspaces --if-present
 RUN npm run build
 RUN NODE_OPTIONS=--max_old_space_size=8192 npm run test
 

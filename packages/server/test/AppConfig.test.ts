@@ -5,8 +5,8 @@ import { AppConfig, AppConfigLive } from "../src/AppConfig.js";
 describe("AppConfig", () => {
   it.effect.each([
     ["negative", "-42", "port cannot be negative"],
-    ["string", "blah", "xpected NumberFromString"],
-    ["empty", "", "xpected NumberFromString"],
+    ["string", "blah", "NumberFromString"],
+    ["empty", "", "NumberFromString"],
   ])("should error on invalid port (%s)", ([_, value, errMsg]) =>
     Effect.gen(function* () {
       const err = yield* AppConfig.pipe(

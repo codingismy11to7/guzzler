@@ -5,6 +5,10 @@ import { AppState, AppStateDocId, SortParam, SortParams } from "./Model.js";
 import { AnySchema } from "./MongoCollection.js";
 import { MongoCollection, MongoDatabaseLayer } from "./index.js";
 
+/**
+ * Optional code for dealing with migrations
+ */
+
 const AppStateDbName = "appState";
 
 type BaseMigration<CollName extends string, SchemaT extends MongoCollection.AnySchema> = Readonly<{
@@ -50,9 +54,7 @@ export class MongoMigrationHandler extends Effect.Service<MongoMigrationHandler>
             .join(", ")}`,
         );
 
-        const coll = yield* collection.connection;
-
-        yield* mongoEff(() => coll.createIndex(indexSpec, options));
+        yield* mongoEff(() => collection.connection.createIndex(indexSpec, options));
       });
 
     const dropCollection = ({ collectionName, options }: DropCollection) =>
@@ -105,6 +107,8 @@ export class MongoMigrationHandler extends Effect.Service<MongoMigrationHandler>
         }
 
         yield* Effect.logInfo("Complete");
+
+        return migrations.length;
       });
 
     return { handleMigrations };

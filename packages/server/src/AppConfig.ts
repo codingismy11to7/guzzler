@@ -60,8 +60,9 @@ const MongoConfig = Config.all({
 const ConfigSchema = {
   port: Schema.Config("PORT", Schema.NumberFromString.pipe(Schema.filter(i => i >= 0 || "port cannot be negative"))),
   logLevel: Config.logLevel("LOG_LEVEL"),
-  serveSwaggerUiAt: Config.option(Schema.Config("SERVE_SWAGGER_UI_AT", Schema.TemplateLiteral("/", Schema.String))),
   serveOpenapiAt: Config.option(Schema.Config("SERVE_OPENAPI_AT", Schema.TemplateLiteral("/", Schema.String))),
+  serveScalarUiAt: Config.option(Schema.Config("SERVE_SCALAR_UI_AT", Schema.TemplateLiteral("/", Schema.String))),
+  serveSwaggerUiAt: Config.option(Schema.Config("SERVE_SWAGGER_UI_AT", Schema.TemplateLiteral("/", Schema.String))),
   webuiRoot: Schema.Config("WEBUI_DIR", Schema.NonEmptyTrimmedString).pipe(c =>
     Effect.runSync(prodModeConf) ? c : Config.withDefault(c, ""),
   ),

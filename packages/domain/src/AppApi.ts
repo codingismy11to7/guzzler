@@ -2,6 +2,7 @@ import { HttpApi, HttpApiEndpoint, HttpApiGroup, OpenApi } from "@effect/platfor
 import { NotFound } from "@effect/platform/HttpApiError";
 import { AccountApi } from "./apis/AccountApi.js";
 import { AuthApi } from "./apis/AuthApi.js";
+import { AutosApi } from "./apis/AutosApi.js";
 import { SessionApi } from "./apis/SessionApi.js";
 import { SignupApi } from "./apis/SignupApi.js";
 import { TodosApiGroup } from "./apis/TodosApi.js";
@@ -17,6 +18,7 @@ class UI extends HttpApiGroup.make("ui")
 export class AppApi extends HttpApi.make("Guzzler")
   .add(AccountApi)
   .add(AuthApi)
+  .add(AutosApi)
   .add(SessionApi)
   .add(SignupApi)
   .add(TodosApiGroup)

@@ -63,15 +63,7 @@ export const AuthApiLive = HttpApiBuilder.group(AppApi, "auth", handlers =>
 
             return yield* Effect.reduce(modifyReply, baseResp, (acc, m) => m(acc));
           }),
-          Effect.catchAll(cause =>
-            Effect.gen(function* () {
-              const id = nanoid();
-
-              yield* Effect.logError(cause.message, cause).pipe(Effect.annotateLogs({ id }));
-
-              return yield* new RedactedError({ id });
-            }),
-          ),
+          Effect.catchAll(cause => RedactedError.logged(cause.message, cause)),
         ),
       );
   }),
