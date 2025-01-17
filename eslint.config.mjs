@@ -167,6 +167,7 @@ export default tseslint.config([
       "@typescript-eslint/no-namespace": "error",
       "@typescript-eslint/no-non-null-assertion": "off",
       "@typescript-eslint/no-parameter-properties": "off",
+      "@typescript-eslint/no-unnecessary-condition": "warn",
       "@typescript-eslint/no-unnecessary-type-arguments": "warn",
       "@typescript-eslint/no-unnecessary-type-assertion": "warn",
       "@typescript-eslint/no-unnecessary-type-parameters": "warn",
@@ -176,7 +177,7 @@ export default tseslint.config([
         {
           "args": "all",
           "argsIgnorePattern": "^_",
-          "ignoreRestSiblings": true
+          "ignoreRestSiblings": false
         }
       ],
       "@typescript-eslint/no-unsafe-assignment": "off",
@@ -238,6 +239,7 @@ export default tseslint.config([
       "no-caller": "error",
       "no-cond-assign": "error",
       "no-console": "warn",
+      "no-constant-condition":"warn",
       "no-debugger": "error",
       "no-empty": "warn",
       "no-eval": "error",

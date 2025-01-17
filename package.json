@@ -6,7 +6,6 @@
   "workspaces": ["packages/*"],
 
   "scripts": {
-    "beDev": "npm run dev -w @guzzler/server",
     "build": "tsc -b tsconfig.build.json && npm run build --workspaces --if-present",
     "changeset-publish": "npm run build && TEST_DIST= npm run test && changeset publish",
     "changeset-version": "changeset version && tsx scripts/version.mts",
@@ -14,12 +13,14 @@
     "check-recursive": "npm run check --workspaces",
     "check:watch": "tsc -b tsconfig.json -w",
     "clean": "tsx scripts/clean.mts",
+    "codegen": "npm run codegen --workspaces --if-present",
     "coverage": "vitest run --coverage",
     "coverage:watch": "vitest --coverage",
-    "feDev": "npm run dev -w @guzzler/webui",
     "lint": "eslint --max-warnings=0",
-    "lint:fix": "npm run codegen --workspaces --if-present && eslint --max-warnings=0 --fix",
+    "lint:fix": "npm run codegen && eslint --max-warnings=0 --fix",
     "postinstall": "patch-package",
+    "runBackend": "npm run dev -w @guzzler/server",
+    "runFrontend": "npm run dev -w @guzzler/webui",
     "test": "vitest --run",
     "test:ui": "vitest --ui",
     "test:watch": "vitest"
@@ -51,7 +52,7 @@
     "@vitest/ui": "^2.1.8",
     "babel-plugin-annotate-pure-calls": "^0.5.0",
     "cross-env": "^7.0.3",
-    "effect": "^3.12.1",
+    "effect": "^3.12.4",
     "eslint": "^9.18.0",
     "eslint-import-resolver-typescript": "^3.6.3",
     "eslint-plugin-codegen": "^0.29.0",

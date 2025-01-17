@@ -1,5 +1,6 @@
 import { HttpApiSchema } from "@effect/platform";
-import { Schema } from "effect";
+import { Effect, Schema } from "effect";
+import { gen } from "effect/Effect";
 import { nanoid } from "nanoid";
 
 export class ServerError extends Schema.TaggedError<ServerError>()(
@@ -13,5 +14,18 @@ export class RedactedError extends Schema.TaggedError<RedactedError>()(
   {
     id: Schema.String.pipe(Schema.optionalWith({ default: () => nanoid() })),
   },
-  HttpApiSchema.annotations({ status: 500 }),
-) {}
+  HttpApiSchema.annotations({
+    status: 500,
+    description:
+      "This is some problem that happened on the server. To report one of these errors, a unique id is provided for administrator analysis.",
+  }),
+) {
+  static readonly logged = (...message: readonly unknown[]): Effect.Effect<never, RedactedError> =>
+    gen(function* () {
+      const id = nanoid();
+
+      yield* Effect.logError(...message).pipe(Effect.annotateLogs({ id }));
+
+      return yield* new RedactedError({ id });
+    });
+}

@@ -6,15 +6,23 @@ const SignupRoutes = {
   SignupConfirm: Signup.extend({ username: param.path.string }, p => `/confirm/${p.username}`),
 } as const;
 
+const Home = defineRoute("/");
+const Pages = {
+  Home,
+  ImportExport: Home.extend("/manageData"),
+};
+
 export const { RouteProvider, useRoute, routes } = createRouter({
   Login: defineRoute("/login"),
-  Home: defineRoute("/"),
+  ...Pages,
   ...SignupRoutes,
 });
 
 export const RoutingGroups = {
   Signup: createGroup([routes.Signup, routes.SignupConfirm]),
+  Pages: createGroup([routes.Home, routes.ImportExport]),
 } as const;
 
 export type AppRoute = Route<typeof routes>;
 export type SignupRoute = Route<typeof RoutingGroups.Signup>;
+export type PagesRoute = Route<typeof RoutingGroups.Pages>;

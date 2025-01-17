@@ -1,4 +1,5 @@
 import { Todo } from "@guzzler/domain/apis/TodosApi";
+import { UserTypes, UserVehicles, VehicleEventRecord, VehicleFillupRecord } from "@guzzler/domain/Autos";
 import { Session } from "@guzzler/domain/Session";
 import { User } from "@guzzler/domain/User";
 import { MongoCollectionLayer } from "@guzzler/mongodb/MongoCollection";
@@ -11,6 +12,10 @@ const collections = pipe(
       sessions: c.collection("sessions", Session),
       todos: c.collection("todos", Todo),
       users: c.collection("users", User),
+      userTypes: c.collection("userTypes", UserTypes),
+      vehicles: c.collection("vehicles", UserVehicles),
+      fillupRecords: c.collection("fillupRecords", VehicleFillupRecord),
+      eventRecords: c.collection("eventRecords", VehicleEventRecord),
     })),
   ),
 );

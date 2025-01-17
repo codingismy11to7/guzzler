@@ -10,7 +10,15 @@ type AsSortEntries<T> = { [K in keyof T]: -1 | 1 };
 export type SortParam<SchemaT extends AnySchema> = FancyTypes.ExactlyOne<AsSortEntries<Schema.Schema.Type<SchemaT>>>;
 export type SortParams<SchemaT extends AnySchema> = ReadonlyArray<SortParam<SchemaT>>;
 
-export class NotFound extends Data.TaggedError("NotFound") {}
+export class NotFound extends Schema.TaggedError<NotFound>()(
+  "NotFound",
+  { method: Schema.String, filter: Schema.Object.pipe(Schema.optional) },
+  HttpApiSchema.annotations({ status: 404 }),
+) {
+  get message() {
+    return `NotFound: ${this.method}${this.filter ? ` (filter=${JSON.stringify(this.filter)})` : ""}`;
+  }
+}
 export class Conflict extends Schema.TaggedError<Conflict>()(
   "Conflict",
   {},

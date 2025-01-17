@@ -18,7 +18,8 @@ import {
 } from "mongodb";
 import * as internal from "./internal/collection.js";
 import { Conflict, MongoError, NotFound, SchemaMismatch } from "./Model.js";
-import { Model, MongoDatabaseLayer } from "./index.js";
+import { MongoDatabaseLayer } from "./MongoDatabaseLayer.js";
+import { Model } from "./index.js";
 
 /*
 Ok so the type parameters and types get hairy, so let's document.
@@ -55,7 +56,7 @@ type MemSchema<SchemaT extends AnySchema> = Schema.Schema.Type<SchemaT>;
 export type MongoCollection<CName extends string, SchemaT extends AnySchema> = Readonly<{
   name: CName;
   schema: SchemaT;
-  connection: Effect.Effect<Collection<DbSchema<SchemaT>>>;
+  connection: Collection<DbSchema<SchemaT>>;
   sortBy: (field: keyof DbSchema<SchemaT>, order: "asc" | "desc") => Model.SortParam<SchemaT>;
 
   countRaw: (
@@ -161,7 +162,7 @@ export type FindResult<MemSchema, DbSchema> = Readonly<{
 export class MongoCollectionLayer extends Effect.Service<MongoCollectionLayer>()("MongoCollectionLayer", {
   accessors: true,
   effect: Effect.gen(function* () {
-    const db = yield* MongoDatabaseLayer.MongoDatabaseLayer;
+    const db = yield* MongoDatabaseLayer;
 
     const RegistryCreator = {
       collection: <CName extends string, SchemaT extends AnySchema>(

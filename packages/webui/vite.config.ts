@@ -2,6 +2,7 @@ import react from "@vitejs/plugin-react-swc";
 import { mergeConfig, type UserConfigExport } from "vitest/config";
 import shared from "../../vitest.shared.js";
 import * as path from "path";
+import svgr from "vite-plugin-svgr";
 
 const config: UserConfigExport = {
   server: {
@@ -25,7 +26,7 @@ const config: UserConfigExport = {
       )
     }
   },
-  plugins: [...react()]
+  plugins: [...react(), svgr()]
 };
 
 export default mergeConfig(shared, config);

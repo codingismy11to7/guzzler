@@ -1,4 +1,5 @@
 import { Mongo } from "@guzzler/mongodb";
+import { GridFS } from "@guzzler/mongodb/GridFS";
 import {
   addIndex,
   clearCollection,
@@ -6,6 +7,7 @@ import {
   MongoMigrationHandler,
   noOp,
 } from "@guzzler/mongodb/MongoMigrations";
+import { MongoTransactions } from "@guzzler/mongodb/MongoTransactions";
 import { Effect, Layer, Redacted } from "effect";
 import { AppConfig, ProdMode } from "../../AppConfig.js";
 import { CollectionRegistry, CollectionRegistryLive } from "./CollectionRegistry.js";
@@ -13,10 +15,10 @@ import { CollectionRegistry, CollectionRegistryLive } from "./CollectionRegistry
 export const runMigrations = Effect.gen(function* () {
   yield* Effect.logInfo("Running migrations...");
 
-  const { sessions, users } = yield* CollectionRegistry;
+  const { sessions, users, userTypes, vehicles, fillupRecords, eventRecords } = yield* CollectionRegistry;
   const mmh = yield* MongoMigrationHandler;
 
-  yield* mmh.handleMigrations(
+  return yield* mmh.handleMigrations(
     noOp(),
     noOp(),
     clearCollection(sessions),
@@ -24,6 +26,20 @@ export const runMigrations = Effect.gen(function* () {
     dropCollection("abc"),
     dropCollection("def"),
     clearCollection(sessions),
+    addIndex(userTypes, { unique: true, name: "username" }, userTypes.sortBy("username", "asc")),
+    addIndex(vehicles, { unique: true, name: "username" }, vehicles.sortBy("username", "asc")),
+    addIndex(
+      fillupRecords,
+      { unique: true, name: "pk" },
+      fillupRecords.sortBy("username", "asc"),
+      fillupRecords.sortBy("vehicleId", "asc"),
+    ),
+    addIndex(
+      eventRecords,
+      { unique: true, name: "pk" },
+      eventRecords.sortBy("username", "asc"),
+      eventRecords.sortBy("vehicleId", "asc"),
+    ),
   );
 }).pipe(Effect.withLogSpan("migrations"));
 
@@ -33,6 +49,8 @@ export const mongoLiveLayers = Layer.unwrapEffect(
     const { isDevMode } = yield* ProdMode;
 
     return CollectionRegistryLive.pipe(
+      Layer.provideMerge(GridFS.Default),
+      Layer.provideMerge(MongoTransactions.Default),
       Layer.provideMerge(
         Mongo.liveLayers(dbName, url, {
           auth: { username: Redacted.value(username), password: Redacted.value(password) },

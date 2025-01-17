@@ -1,38 +1,30 @@
-import { HttpApiBuilder, HttpApiSwagger, HttpMiddleware } from "@effect/platform";
+import { HttpApiBuilder, HttpApiScalar, HttpApiSwagger, HttpMiddleware } from "@effect/platform";
 import { NodeHttpServer } from "@effect/platform-node";
 import { Effect, flow, Layer, pipe } from "effect";
+import { NoSuchElementException } from "effect/Cause";
 import { createServer } from "node:http";
 import { ApiLive } from "./ApiLive.js";
 import { AppConfig } from "./AppConfig.js";
 
-export const HttpLive = HttpApiBuilder.serve(
-  flow(
-    HttpMiddleware.logger,
-    HttpMiddleware.cors(),
-    HttpMiddleware.xForwardedHeaders,
-    HttpMiddleware.make(app =>
-      app.pipe(a => {
-        const y = a;
+const ifConfiguredPath =
+  <ER, LR>(
+    setting: Effect.Effect<`/${string}`, NoSuchElementException, ER>,
+    f: (path: `/${string}`) => Layer.Layer<never, never, LR>,
+  ) =>
+  <A2, E2, R2>(layer: Layer.Layer<A2, E2, R2>) =>
+    pipe(
+      setting,
+      Effect.andThen(path => Layer.provide(layer, f(path))),
+      Effect.catchTag("NoSuchElementException", () => Effect.succeed(layer)),
+      Layer.unwrapEffect,
+    );
 
-        return y;
-      }),
-    ),
-  ),
+export const HttpLive = HttpApiBuilder.serve(
+  flow(HttpMiddleware.logger, HttpMiddleware.cors(), HttpMiddleware.xForwardedHeaders),
 ).pipe(
-  layer =>
-    pipe(
-      AppConfig.serveSwaggerUiAt,
-      Effect.andThen(path => Layer.provide(layer, HttpApiSwagger.layer({ path }))),
-      Effect.catchTag("NoSuchElementException", () => Effect.succeed(layer)),
-      Layer.unwrapEffect,
-    ),
-  layer =>
-    pipe(
-      AppConfig.serveOpenapiAt,
-      Effect.andThen(path => Layer.provide(layer, HttpApiBuilder.middlewareOpenApi({ path }))),
-      Effect.catchTag("NoSuchElementException", () => Effect.succeed(layer)),
-      Layer.unwrapEffect,
-    ),
+  ifConfiguredPath(AppConfig.serveSwaggerUiAt, path => HttpApiSwagger.layer({ path })),
+  ifConfiguredPath(AppConfig.serveOpenapiAt, path => HttpApiBuilder.middlewareOpenApi({ path })),
+  ifConfiguredPath(AppConfig.serveScalarUiAt, path => HttpApiScalar.layer({ path })),
   Layer.provide(ApiLive),
   Layer.provide(
     Layer.unwrapEffect(

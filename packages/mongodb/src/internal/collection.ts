@@ -1,5 +1,6 @@
 import { Document } from "bson";
-import { Effect, flow, Schema } from "effect";
+import { Effect, flow, Option, pipe, Schema } from "effect";
+import { andThen, gen } from "effect/Effect";
 import { ParseError } from "effect/ParseResult";
 import {
   CountDocumentsOptions,
@@ -22,6 +23,7 @@ import {
 import { Model } from "../index.js";
 import { Conflict, MongoError, NotFound, SchemaMismatch } from "../Model.js";
 import { AnySchema, FindResult, MongoCollection } from "../MongoCollection.js";
+import { MongoTxnCtx } from "./createInTransaction.js";
 import { mongoEff } from "./utils.js";
 
 export const make = <CName extends string, SchemaT extends AnySchema>(
@@ -32,14 +34,16 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
   type DbSchema = Schema.Schema.Encoded<SchemaT>;
   type MemSchema = Schema.Schema.Type<SchemaT>;
 
-  const toMismatch = Effect.catchTags({ ParseError: (p: ParseError) => new SchemaMismatch({ underlying: p }) });
+  const toMismatch = Effect.catchTags({
+    ParseError: (p: ParseError) => new SchemaMismatch({ underlying: p }),
+  });
   const encode = (d: MemSchema) => Schema.encode(schema)(d).pipe(toMismatch) as Effect.Effect<DbSchema, SchemaMismatch>;
   const decode = (d: unknown) =>
     Schema.decodeUnknown(schema)(d).pipe(toMismatch) as Effect.Effect<MemSchema, SchemaMismatch>;
   const encodePartial = (fields: Partial<MemSchema>) =>
     Schema.encode(Schema.partial(schema))(fields).pipe(toMismatch) as Effect.Effect<Partial<DbSchema>, SchemaMismatch>;
 
-  const connection = Effect.sync(() => db.collection<DbSchema>(collectionName));
+  const coll = db.collection<DbSchema>(collectionName);
 
   const sortBy = (field: keyof DbSchema, order: "asc" | "desc") =>
     ({ [field]: order === "asc" ? 1 : -1 }) as Model.SortParam<MemSchema>;
@@ -50,14 +54,18 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
 
   const encodeFilter = (filter?: Filter<MemSchema>) => (filter ? encodePartial(filter) : Effect.succeed(undefined));
 
+  const txnSession = Effect.serviceOption(MongoTxnCtx).pipe(
+    andThen(Option.match({ onNone: () => ({}), onSome: s => ({ session: s }) })),
+  );
+
   const countRaw = (
     filter?: Filter<MemSchema>,
     options?: CountDocumentsOptions,
   ): Effect.Effect<number, MongoError | SchemaMismatch> =>
     Effect.gen(function* () {
-      const coll = yield* connection;
       const filt = yield* encodeFilter(filter);
-      return yield* mongoEff(() => coll.countDocuments(filt, options));
+      const session = yield* txnSession;
+      return yield* mongoEff(() => coll.countDocuments(filt, { ...options, ...session }));
     });
   const count = flow(countRaw, Effect.catchTags(dieFromFatal));
 
@@ -66,18 +74,20 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
     options?: Omit<FindOptions, "timeoutMode">,
   ): Effect.Effect<MemSchema | null, MongoError | SchemaMismatch> =>
     Effect.gen(function* () {
-      const coll = yield* connection;
       const filt = yield* encodeFilter(filter);
-      const res = yield* mongoEff(() =>
-        filt && options ? coll.findOne(filt, options) : filt ? coll.findOne(filt) : coll.findOne(),
-      );
+      const session = yield* txnSession;
+      const res = yield* mongoEff(() => coll.findOne(filt ?? {}, { ...options, ...session }));
       return yield* res ? decode(res) : Effect.succeed(null);
     });
-  const findOne = flow(
-    findOneRaw,
-    Effect.andThen(Effect.fromNullable),
-    Effect.catchTags({ ...dieFromFatal, NoSuchElementException: () => new NotFound() }),
-  );
+  const findOne = (
+    filter?: Filter<MemSchema>,
+    options?: Omit<FindOptions, "timeoutMode">,
+  ): Effect.Effect<MemSchema, NotFound> =>
+    pipe(
+      findOneRaw(filter, options),
+      Effect.andThen(Effect.fromNullable),
+      Effect.catchTags({ ...dieFromFatal, NoSuchElementException: () => new NotFound({ method: "findOne", filter }) }),
+    );
 
   const toFindResult = (c: FindCursor<WithId<DbSchema>>): FindResult<MemSchema, DbSchema> => {
     const toArrayRaw = mongoEff(() => c.toArray()).pipe(
@@ -92,9 +102,9 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
     options?: FindOptions,
   ): Effect.Effect<FindResult<MemSchema, DbSchema>, SchemaMismatch> =>
     Effect.gen(function* () {
-      const coll = yield* connection;
       const filt = yield* encodeFilter(filter);
-      return toFindResult(filt ? coll.find(filt, options) : coll.find());
+      const session = yield* txnSession;
+      return toFindResult(coll.find(filt ?? {}, { ...options, ...session }));
     });
   const find = flow(findRaw, Effect.catchTags(dieSchema));
 
@@ -103,9 +113,11 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
     options?: InsertOneOptions,
   ): Effect.Effect<InsertOneResult<DbSchema>, MongoError | SchemaMismatch> =>
     Effect.gen(function* () {
-      const coll = yield* connection;
       const toIns = yield* encode(doc);
-      return yield* mongoEff(() => coll.insertOne(toIns as OptionalUnlessRequiredId<DbSchema>, options));
+      const session = yield* txnSession;
+      return yield* mongoEff(() =>
+        coll.insertOne(toIns as OptionalUnlessRequiredId<DbSchema>, { ...options, ...session }),
+      );
     });
   // noinspection SuspiciousTypeOfGuard
   const insertOne = flow(
@@ -122,10 +134,10 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
     options?: ReplaceOptions,
   ): Effect.Effect<UpdateResult<DbSchema> | Document, MongoError | SchemaMismatch> =>
     Effect.gen(function* () {
-      const coll = yield* connection;
       const filt = yield* encodePartial(filter);
       const toIns = yield* encode(replacement);
-      return yield* mongoEff(() => coll.replaceOne(filt, toIns, options));
+      const session = yield* txnSession;
+      return yield* mongoEff(() => coll.replaceOne(filt, toIns, { ...options, ...session }));
     });
   const replaceOne = flow(replaceOneRaw, Effect.catchTags(dieFromFatal));
 
@@ -134,10 +146,9 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
     update: UpdateFilter<DbSchema> | Document[],
     options?: UpdateOptions,
   ): Effect.Effect<UpdateResult<DbSchema>, MongoError> =>
-    Effect.gen(function* () {
-      const coll = yield* connection;
-
-      return yield* mongoEff(() => coll.updateOne(filter, update, options));
+    gen(function* () {
+      const session = yield* txnSession;
+      return yield* mongoEff(() => coll.updateOne(filter, update, { ...options, ...session }));
     });
   const updateOne = flow(updateOneRaw, Effect.catchTags(dieMongo));
 
@@ -166,9 +177,9 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
     options?: DeleteOptions,
   ): Effect.Effect<DeleteResult, MongoError | SchemaMismatch> =>
     Effect.gen(function* () {
-      const coll = yield* connection;
       const filt = yield* encodeFilter(filter);
-      return yield* mongoEff(() => coll.deleteOne(filt, options));
+      const session = yield* txnSession;
+      return yield* mongoEff(() => coll.deleteOne(filt, { ...options, ...session }));
     });
   const deleteOne = flow(deleteOneRaw, Effect.catchTags(dieFromFatal));
 
@@ -177,16 +188,16 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
     options?: DeleteOptions,
   ): Effect.Effect<DeleteResult, MongoError | SchemaMismatch> =>
     Effect.gen(function* () {
-      const coll = yield* connection;
       const filt = yield* encodeFilter(filter);
-      return yield* mongoEff(() => coll.deleteMany(filt, options));
+      const session = yield* txnSession;
+      return yield* mongoEff(() => coll.deleteMany(filt, { ...options, ...session }));
     });
   const deleteMany = flow(deleteManyRaw, Effect.catchTags(dieFromFatal));
 
   return {
     name: collectionName,
     schema,
-    connection,
+    connection: coll,
     sortBy,
     countRaw,
     count,
