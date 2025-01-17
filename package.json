@@ -2,27 +2,31 @@
   "name": "guzzler",
   "private": true,
   "type": "module",
-  "workspaces": [
-    "packages/*"
-  ],
+
+  "workspaces": ["packages/*"],
+
   "scripts": {
-    "clean": "tsx scripts/clean.mts",
-    "build": "tsc -b tsconfig.build.json && npm run build --workspaces --if-present",
-    "check": "tsc -b tsconfig.json",
-    "check:watch": "tsc -b tsconfig.json -w",
-    "check-recursive": "npm run check --workspaces",
-    "lint": "eslint --max-warnings=0",
-    "lint:fix": "npm run codegen --workspaces --if-present && eslint --max-warnings=0 --fix",
-    "test": "vitest --run",
-    "test:ui": "vitest --ui",
-    "test:watch": "vitest",
-    "feDev": "npm run dev -w @guzzler/webui",
     "beDev": "npm run dev -w @guzzler/server",
+    "build": "tsc -b tsconfig.build.json && npm run build --workspaces --if-present",
+    "changeset-publish": "npm run build && TEST_DIST= npm run test && changeset publish",
+    "changeset-version": "changeset version && tsx scripts/version.mts",
+    "check": "tsc -b tsconfig.json",
+    "check-recursive": "npm run check --workspaces",
+    "check:watch": "tsc -b tsconfig.json -w",
+    "clean": "tsx scripts/clean.mts",
     "coverage": "vitest run --coverage",
     "coverage:watch": "vitest --coverage",
-    "changeset-version": "changeset version && tsx scripts/version.mts",
-    "changeset-publish": "npm run build && TEST_DIST= npm run test && changeset publish",
-    "postinstall": "patch-package"
+    "feDev": "npm run dev -w @guzzler/webui",
+    "lint": "eslint --max-warnings=0",
+    "lint:fix": "npm run codegen --workspaces --if-present && eslint --max-warnings=0 --fix",
+    "postinstall": "patch-package",
+    "test": "vitest --run",
+    "test:ui": "vitest --ui",
+    "test:watch": "vitest"
+  },
+
+  "dependencies": {
+    "patch-package": "^8.0.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.25.9",
@@ -63,8 +67,5 @@
     "typescript": "^5.6.3",
     "typescript-eslint": "^8.19.0",
     "vitest": "^2.1.4"
-  },
-  "dependencies": {
-    "patch-package": "^8.0.0"
   }
 }

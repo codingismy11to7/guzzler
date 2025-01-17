@@ -1,10 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
   "include": ["src"],
+
   "compilerOptions": {
-    "types": ["node", "vitest/importMeta"],
     "outDir": "build/src",
+    "rootDir": "src",
     "tsBuildInfoFile": ".tsbuildinfo/src.tsbuildinfo",
-    "rootDir": "src"
+    "types": ["node", "vitest/importMeta"]
   }
 }

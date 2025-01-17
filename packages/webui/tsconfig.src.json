@@ -1,14 +1,14 @@
 {
   "extends": "../../tsconfig.base.json",
   "include": ["src"],
-  "references": [
-    { "path": "../domain" }
-  ],
+
+  "references": [{"path": "../domain"}],
+
   "compilerOptions": {
-    "types": [],
-    "outDir": "build/src",
     "jsx": "react-jsx",
+    "outDir": "build/src",
+    "rootDir": "src",
     "tsBuildInfoFile": ".tsbuildinfo/src.tsbuildinfo",
-    "rootDir": "src"
+    "types": []
   }
 }

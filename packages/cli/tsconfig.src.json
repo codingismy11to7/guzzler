@@ -1,13 +1,13 @@
 {
   "extends": "../../tsconfig.base.json",
   "include": ["src"],
-  "references": [
-    { "path": "../domain" } 
-  ],
+
+  "references": [{"path": "../domain"}],
+
   "compilerOptions": {
-    "types": ["node"],
     "outDir": "build/src",
+    "rootDir": "src",
     "tsBuildInfoFile": ".tsbuildinfo/src.tsbuildinfo",
-    "rootDir": "src"
+    "types": ["node"]
   }
 }
