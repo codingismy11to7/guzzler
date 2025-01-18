@@ -1,11 +1,9 @@
 {
   "name": "@guzzler/cli",
   "type": "module",
-  "version": "0.0.4",
-
+  "version": "0.0.5",
   "description": "The CLI template",
   "license": "MIT",
-
   "publishConfig": {
     "access": "public",
     "directory": "dist"
@@ -15,7 +13,6 @@
     "type": "git",
     "url": "git+ssh://git@github.com/codingismy11to7/guzzler.git"
   },
-
   "scripts": {
     "build": "npm run build-esm && npm run build-annotate && npm run build-cjs && build-utils pack-v2",
     "build-annotate": "babel build/esm --plugins annotate-pure-calls --out-dir build/esm --source-maps",
@@ -28,20 +25,23 @@
     "test": "vitest --run",
     "test:watch": "vitest"
   },
-
   "dependencies": {
     "@effect/cli": "^0.53.0",
     "@effect/platform": "^0.72.0",
     "@effect/platform-node": "^0.68.1",
-    "@guzzler/domain": "^0.0.4",
+    "@guzzler/domain": "^0.0.5",
     "effect": "^3.12.1"
   },
   "effect": {
     "generateExports": {
-      "include": ["**/*.ts"]
+      "include": [
+        "**/*.ts"
+      ]
     },
     "generateIndex": {
-      "include": ["**/*.ts"]
+      "include": [
+        "**/*.ts"
+      ]
     }
   }
 }

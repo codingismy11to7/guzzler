@@ -1,11 +1,9 @@
 {
   "name": "@guzzler/domain",
-  "version": "0.0.4",
-
+  "version": "0.0.5",
   "description": "The domain template",
   "license": "MIT",
   "type": "module",
-
   "publishConfig": {
     "access": "public",
     "directory": "dist"
@@ -27,7 +25,6 @@
     "test": "vitest --run",
     "test:watch": "vitest"
   },
-
   "dependencies": {
     "@effect/platform": "^0.72.0",
     "effect": "^3.12.1",
@@ -35,10 +32,14 @@
   },
   "effect": {
     "generateExports": {
-      "include": ["**/*.ts"]
+      "include": [
+        "**/*.ts"
+      ]
     },
     "generateIndex": {
-      "include": ["**/*.ts"]
+      "include": [
+        "**/*.ts"
+      ]
     }
   }
 }
