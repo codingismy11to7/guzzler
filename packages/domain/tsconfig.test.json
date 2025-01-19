@@ -2,7 +2,10 @@
   "extends": "../../tsconfig.base.json",
   "include": ["test"],
 
-  "references": [{"path": "tsconfig.src.json"}],
+  "references": [
+    {"path": "tsconfig.src.json"},
+    {"path": "../utils"}
+  ],
 
   "compilerOptions": {
     "noEmit": true,

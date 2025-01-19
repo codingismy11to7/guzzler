@@ -17,6 +17,7 @@ import {
 } from "@guzzler/domain/Authentication";
 import { GridFS } from "@guzzler/mongodb/GridFS";
 import { MongoTransactions } from "@guzzler/mongodb/MongoTransactions";
+import { RandomId } from "@guzzler/utils/RandomId";
 import { Effect, Layer, Option, pipe } from "effect";
 import { ParseError } from "effect/ParseResult";
 import { AppConfig, ProdMode } from "./AppConfig.js";
@@ -71,13 +72,14 @@ export const ApiLive: Layer.Layer<
   HttpApi.Api,
   ExternalError | InvalidOptions | HttpClientError.HttpClientError | ParseError,
   | AppConfig
-  | ProdMode
   | CollectionRegistry
-  | GridFS
-  | MongoTransactions
-  | HttpPlatform
   | FileSystem
+  | GridFS
+  | HttpPlatform
+  | MongoTransactions
   | Path
+  | ProdMode
+  | RandomId
 > = HttpApiBuilder.api(AppApi).pipe(
   Layer.provide(AccountApiLive),
   Layer.provide(AuthApiLive),

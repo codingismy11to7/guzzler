@@ -1,6 +1,8 @@
 {
   "extends": "./tsconfig.src.json",
 
+  "references": [{"path": "../utils/tsconfig.build.json"}],
+
   "compilerOptions": {
     "declarationDir": "build/dts",
     "outDir": "build/esm",

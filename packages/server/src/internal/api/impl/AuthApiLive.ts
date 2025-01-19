@@ -10,8 +10,8 @@ import {
   UserSession,
 } from "@guzzler/domain/Session";
 import { UserId } from "@guzzler/domain/User";
+import { RandomId } from "@guzzler/utils/RandomId";
 import { Effect, pipe, Redacted, Struct } from "effect";
-import { nanoid } from "nanoid";
 import { AppConfig } from "../../../AppConfig.js";
 import { OAuth2 } from "../../../OAuth2.js";
 import { SessionStorage } from "../../../SessionStorage.js";
@@ -56,7 +56,11 @@ export const AuthApiLive = HttpApiBuilder.group(AppApi, "auth", handlers =>
 
             const session = yield* addSession(
               UnknownUserSession.make({
-                id: pipe(nanoid(), Redacted.make, SessionId.make),
+                id: pipe(
+                  yield* RandomId.randomId(),
+                  Redacted.make,
+                  SessionId.make,
+                ),
                 token,
                 oAuthUserInfo: ui,
               }),

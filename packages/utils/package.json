@@ -28,6 +28,9 @@
     "test:watch": "vitest"
   },
 
+  "dependencies": {
+    "ulid": "^2.3.0"
+  },
   "peerDependencies": {
     "effect": "^3.12.1"
   },

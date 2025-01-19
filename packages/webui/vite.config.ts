@@ -22,9 +22,14 @@ const config: UserConfigExport = {
       "@guzzler/domain": path.resolve(
         // @ts-ignore
         import.meta.dirname,
-        "../domain/src/index.ts"
+        "..", "domain", "src", "index.ts",
+      ),
+      "@guzzler/utils": path.resolve(
+        // @ts-ignore
+        import.meta.dirname,
+        "..", "utils", "src", "index.ts",
       )
-    }
+    },
   },
   plugins: [...react(), svgr()]
 };

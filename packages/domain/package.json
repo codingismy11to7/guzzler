@@ -28,10 +28,12 @@
     "test:watch": "vitest"
   },
 
+  "dependencies": {
+    "@guzzler/utils": "^0.0.2"
+  },
   "peerDependencies": {
     "@effect/platform": "^0.74.0",
-    "effect": "^3.12.5",
-    "nanoid": "^5.0.9"
+    "effect": "^3.12.5"
   },
 
   "effect": {

@@ -1,13 +1,11 @@
 import type * as HttpClient from "@effect/platform/HttpClient";
 import { BrowserHttpClient } from "@effect/platform-browser";
+import { RandomId } from "@guzzler/utils";
 import { format } from "date-fns/fp";
-import { Effect, Layer, Logger, ManagedRuntime } from "effect";
+import { Effect, flow, Layer, Logger, ManagedRuntime } from "effect";
 
 export const makeRunFunctions = <
-  Layers extends [
-    Layer.Layer<never, never, HttpClient.HttpClient>,
-    ...Array<Layer.Layer<never, never, HttpClient.HttpClient>>,
-  ],
+  Layers extends Array<Layer.Layer<never, never, HttpClient.HttpClient>>,
 >(
   ...layers: Layers
 ) => {
@@ -17,8 +15,9 @@ export const makeRunFunctions = <
   // can't error)...so this type should be right? try to figure out later
   // @ts-expect-error
   const layer: Layer.Layer<
-    { [k in keyof Layers]: Layer.Layer.Success<Layers[k]> }[number]
-  > = Layer.mergeAll(...layers).pipe(
+    | { [k in keyof Layers]: Layer.Layer.Success<Layers[k]> }[number]
+    | RandomId.RandomId
+  > = Layer.mergeAll(RandomId.RandomId.Default, ...layers).pipe(
     Layer.provide(BrowserHttpClient.layerXMLHttpRequest),
     Layer.provide(
       Logger.replace(
@@ -41,5 +40,9 @@ export const makeRunFunctions = <
   const runSync = runtime.runSync;
   const runFork = runtime.runFork;
 
-  return { runPromise, runP, runSync, runFork };
+  const randomId = flow(RandomId.RandomId.randomId, runSync);
+
+  return { runPromise, runP, runSync, runFork, randomId };
 };
+
+export const { randomId } = makeRunFunctions();
