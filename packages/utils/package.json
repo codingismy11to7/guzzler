@@ -28,9 +28,10 @@
     "test:watch": "vitest"
   },
 
-  "dependencies": {
+  "peerDependencies": {
     "effect": "^3.12.1"
   },
+
   "effect": {
     "generateExports": {
       "include": ["**/*.ts"]

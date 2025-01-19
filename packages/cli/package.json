@@ -30,10 +30,10 @@
 
   "dependencies": {
     "@effect/cli": "^0.53.0",
-    "@effect/platform": "^0.72.0",
-    "@effect/platform-node": "^0.68.1",
+    "@effect/platform": "^0.74.0",
+    "@effect/platform-node": "^0.70.0",
     "@guzzler/domain": "^0.0.5",
-    "effect": "^3.12.1"
+    "effect": "^3.12.5"
   },
   "effect": {
     "generateExports": {
