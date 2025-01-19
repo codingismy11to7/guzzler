@@ -28,7 +28,7 @@ export class WrongFormatError extends Schema.TaggedError<WrongFormatError>(
 ) {}
 
 export const FileCorruptedErrorType = Schema.Literal(
-  "ZipError",
+  "UnzipError",
   "XmlParsingError",
 );
 export class FileCorruptedError extends Schema.TaggedError<FileCorruptedError>(
@@ -42,9 +42,33 @@ export class FileCorruptedError extends Schema.TaggedError<FileCorruptedError>(
   }),
 ) {}
 
+export class ZipError extends Schema.TaggedError<ZipError>("AutosApiZipError")(
+  "AutosApiZipError",
+  {},
+  HttpApiSchema.annotations({
+    status: 500,
+    description: "There was some issue compressing the backup.",
+  }),
+) {}
+
 export type ImportError = WrongFormatError | FileCorruptedError;
 
 export class AutosApi extends HttpApiGroup.make("autos")
+  .add(
+    HttpApiEndpoint.get("exportBackup", "/export/:backupName")
+      .setPath(Schema.Struct({ backupName: Schema.Trim }))
+      .addSuccess(
+        Schema.String.pipe(
+          HttpApiSchema.withEncoding({
+            kind: "Text",
+            contentType: "application/octet-stream",
+          }),
+          Schema.annotations({ description: "The backup file data" }),
+        ),
+      )
+      .addError(ZipError)
+      .addError(RedactedError),
+  )
   .add(
     HttpApiEndpoint.post("importACarBackup", "/aCarBackup")
       .setPayload(

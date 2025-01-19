@@ -2,8 +2,8 @@ import { Todo } from "@guzzler/domain/apis/TodosApi";
 import {
   UserTypes,
   UserVehicles,
-  VehicleEventRecord,
-  VehicleFillupRecord,
+  VehicleEventRecords,
+  VehicleFillupRecords,
 } from "@guzzler/domain/Autos";
 import { Session } from "@guzzler/domain/Session";
 import { User } from "@guzzler/domain/User";
@@ -19,8 +19,8 @@ const collections = pipe(
       users: c.collection("users", User),
       userTypes: c.collection("userTypes", UserTypes),
       vehicles: c.collection("vehicles", UserVehicles),
-      fillupRecords: c.collection("fillupRecords", VehicleFillupRecord),
-      eventRecords: c.collection("eventRecords", VehicleEventRecord),
+      fillupRecords: c.collection("fillupRecords", VehicleFillupRecords),
+      eventRecords: c.collection("eventRecords", VehicleEventRecords),
     })),
   ),
 );
