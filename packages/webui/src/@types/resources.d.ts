@@ -47,6 +47,11 @@ interface Resources {
     login: {
       continue: "Continue with Google";
     };
+    nameBackupDialog: {
+      defaultBackupName: "$t(appName) Backup";
+      export: "Export";
+      nameLabel: "Give your backup a name:";
+    };
     navDrawer: {
       userMenu: {
         logout: "Logout";

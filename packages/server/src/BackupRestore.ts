@@ -12,6 +12,7 @@ import { ContentType } from "@guzzler/domain/ContentType";
 import { RedactedError } from "@guzzler/domain/Errors";
 import { Username } from "@guzzler/domain/User";
 import { MongoError, NotFound } from "@guzzler/mongodb/Model";
+import { RandomId } from "@guzzler/utils/RandomId";
 import { Effect, flow, Option, pipe, Schema, Stream, Struct } from "effect";
 import { andThen, gen } from "effect/Effect";
 import { stringifyCircular } from "effect/Inspectable";
@@ -26,6 +27,7 @@ export class BackupRestore extends Effect.Service<BackupRestore>()(
     effect: gen(function* () {
       const autos = yield* AutosStorage;
       const { streamToZip } = yield* Zip;
+      const rand = yield* RandomId;
 
       const _getBackupStream = (
         username: Username,
@@ -46,6 +48,7 @@ export class BackupRestore extends Effect.Service<BackupRestore>()(
                 pInfo: {
                   mimeType: ContentType;
                   stream: Stream.Stream<Uint8Array, MongoError>;
+                  fileName: string;
                 };
               },
               MongoError | NotFound
@@ -118,10 +121,13 @@ export class BackupRestore extends Effect.Service<BackupRestore>()(
                       const photoTypeMap = yield* pipe(
                         photos,
                         Stream.runFold(
-                          {} as Record<PhotoId, ContentType>,
+                          {} as Record<PhotoId, BackupMetadata.PhotoMetadata>,
                           (acc, { pId, pInfo }) => ({
                             ...acc,
-                            [pId]: pInfo.mimeType,
+                            [pId]: {
+                              contentType: pInfo.mimeType,
+                              fileName: pInfo.fileName,
+                            },
                           }),
                         ),
                       );
@@ -159,8 +165,8 @@ export class BackupRestore extends Effect.Service<BackupRestore>()(
       const getBackupStream = flow(
         _getBackupStream,
         catchTags({
-          NotFound: e => RedactedError.logged(e.message),
-          MongoError: e => RedactedError.logged(e.underlying),
+          NotFound: e => RedactedError.provideLogged(rand)(e.message),
+          MongoError: e => RedactedError.provideLogged(rand)(e.underlying),
           ZipError: e =>
             Effect.logError(
               "Error creating backup from archiver",
