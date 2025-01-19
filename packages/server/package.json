@@ -17,6 +17,7 @@
     "build-cjs": "babel build/esm --plugins @babel/transform-export-namespace-from --plugins @babel/transform-modules-commonjs --out-dir build/cjs --source-maps",
     "build-esm": "tsc -b tsconfig.build.json",
     "check": "tsc -b tsconfig.json",
+    "check:watch": "tsc -b tsconfig.json -w",
     "codegen": "build-utils prepare-v2",
     "coverage": "vitest run --coverage",
     "coverage:watch": "vitest --coverage",
@@ -29,8 +30,8 @@
 
   "dependencies": {
     "@date-fns/tz": "^1.2.0",
-    "@effect/platform": "^0.72.0",
-    "@effect/platform-node": "^0.68.1",
+    "@effect/platform": "^0.74.0",
+    "@effect/platform-node": "^0.70.0",
     "@guzzler/domain": "^0.0.5",
     "@guzzler/mongodb": "^0.0.3",
     "@guzzler/utils": "^0.0.2",

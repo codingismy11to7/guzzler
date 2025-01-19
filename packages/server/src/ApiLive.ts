@@ -2,14 +2,19 @@ import {
   Headers,
   HttpApi,
   HttpApiBuilder,
+  HttpClient,
   HttpClientError,
 } from "@effect/platform";
-import {
-  NodeFileSystem,
-  NodeHttpClient,
-  NodePath,
-} from "@effect/platform-node";
+import { FileSystem } from "@effect/platform/FileSystem";
+import { ApiGroup } from "@effect/platform/HttpApiGroup";
+import { HttpPlatform } from "@effect/platform/HttpPlatform";
+import { Path } from "@effect/platform/Path";
+import { NodeHttpClient } from "@effect/platform-node";
 import { AppApi } from "@guzzler/domain/AppApi";
+import {
+  AuthRedirectMiddleware,
+  RawSessionAccess_DoNotUse,
+} from "@guzzler/domain/Authentication";
 import { GridFS } from "@guzzler/mongodb/GridFS";
 import { MongoTransactions } from "@guzzler/mongodb/MongoTransactions";
 import { Effect, Layer, Option, pipe } from "effect";
@@ -38,8 +43,17 @@ import { AuthenticationMiddleware } from "./index.js";
 const UILayer = Layer.unwrapEffect(
   pipe(
     ProdMode.isProdMode,
-    Effect.andThen(prodMode =>
-      prodMode ? UILive : UIDev.pipe(Layer.provide(NodeHttpClient.layerUndici)),
+    Effect.andThen(
+      (
+        prodMode,
+      ): Layer.Layer<
+        ApiGroup<"Guzzler", "ui">,
+        never,
+        | AppConfig
+        | AuthRedirectMiddleware
+        | RawSessionAccess_DoNotUse
+        | HttpClient.HttpClient
+      > => (prodMode ? UILive : UIDev),
     ),
   ),
 );
@@ -56,7 +70,14 @@ const AuthLayers = Layer.suspend(() =>
 export const ApiLive: Layer.Layer<
   HttpApi.Api,
   ExternalError | InvalidOptions | HttpClientError.HttpClientError | ParseError,
-  AppConfig | ProdMode | CollectionRegistry | GridFS | MongoTransactions
+  | AppConfig
+  | ProdMode
+  | CollectionRegistry
+  | GridFS
+  | MongoTransactions
+  | HttpPlatform
+  | FileSystem
+  | Path
 > = HttpApiBuilder.api(AppApi).pipe(
   Layer.provide(AccountApiLive),
   Layer.provide(AuthApiLive),
@@ -87,7 +108,5 @@ export const ApiLive: Layer.Layer<
       callbackUriParams: { prompt: "select_account consent" },
     }),
   ),
-  Layer.provide(NodePath.layer),
-  Layer.provide(NodeFileSystem.layer),
-  Layer.provide(NodeHttpClient.layer),
+  Layer.provide(NodeHttpClient.layerUndici),
 );

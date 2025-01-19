@@ -25,7 +25,6 @@ COPY --from=build /app/packages/server/dist /app/dist
 COPY --from=build /app/packages/server/package.json /app
 COPY --from=build /app/packages/server/node_modules /app/dist/node_modules
 COPY --from=build /app/packages/domain/dist /app/packages/domain
-COPY --from=build /app/packages/domain/node_modules /app/packages/domain/node_modules
 COPY --from=build /app/packages/mongodb/dist /app/packages/mongodb
 COPY --from=build /app/packages/utils/dist /app/packages/utils
 COPY --from=build /app/packages/webui/dist /app/webui

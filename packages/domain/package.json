@@ -28,11 +28,12 @@
     "test:watch": "vitest"
   },
 
-  "dependencies": {
-    "@effect/platform": "^0.72.0",
-    "effect": "^3.12.1",
+  "peerDependencies": {
+    "@effect/platform": "^0.74.0",
+    "effect": "^3.12.5",
     "nanoid": "^5.0.9"
   },
+
   "effect": {
     "generateExports": {
       "include": ["**/*.ts"]

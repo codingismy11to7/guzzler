@@ -1,6 +1,9 @@
-import { HttpApp } from "@effect/platform";
+import {
+  HttpApiMiddleware,
+  HttpApp,
+  HttpServerRequest,
+} from "@effect/platform";
 import { Forbidden, Unauthorized } from "@effect/platform/HttpApiError";
-import { HttpServerRequest } from "@effect/platform/HttpServerRequest";
 import { redirect } from "@effect/platform/HttpServerResponse";
 import {
   AuthRedirectMiddleware,
@@ -79,6 +82,40 @@ export const RequireNewUserSessionLive = Layer.effect(
   }),
 );
 
+const makeRedirectMiddleware = (
+  ignoreList: HashSet.HashSet<string>,
+): HttpApiMiddleware.HttpApiMiddleware<void, never> =>
+  Effect.gen(function* () {
+    const req = yield* HttpServerRequest.HttpServerRequest;
+    const session = yield* Effect.serviceOption(RawCurrentSession_DoNotUse);
+
+    yield* Effect.logTrace("checking session").pipe(
+      Effect.annotateLogs({ url: req.url }),
+    );
+
+    // if we have a non-user session (and we're not already there), we need to
+    // redirect (if we're not going to an ignored url)
+    if (
+      Option.getOrUndefined(session)?._tag === "UnknownUserSession" &&
+      HashSet.every(ignoreList, pre => !req.url.startsWith(pre))
+    ) {
+      yield* Effect.logInfo("Redirecting to new user setup");
+      yield* HttpApp.appendPreResponseHandler(() =>
+        redirect(NewUserRedirectUrl, { status: 303 }),
+      );
+    } else if (
+      Option.getOrUndefined(session)?._tag === "UserSession" &&
+      req.url === NewUserRedirectUrl
+    ) {
+      yield* Effect.log(
+        "At new user setup but we have a user, redirecting to home",
+      );
+      yield* HttpApp.appendPreResponseHandler(() =>
+        Effect.succeed(redirect("/", { status: 303 })),
+      );
+    }
+  }).pipe(Effect.annotateLogs({ layer: "AuthRedirectLive" }));
+
 export const AuthRedirectLive = Layer.effect(
   AuthRedirectMiddleware,
   Effect.gen(function* () {
@@ -104,35 +141,6 @@ export const AuthRedirectLive = Layer.effect(
           ]),
     );
 
-    return Effect.gen(function* () {
-      const req = yield* HttpServerRequest;
-      const session = yield* Effect.serviceOption(RawCurrentSession_DoNotUse);
-
-      yield* Effect.logTrace("checking session").pipe(
-        Effect.annotateLogs({ url: req.url }),
-      );
-
-      // if we have a non-user session (and we're not already there), we need to redirect (if we're not going to an
-      // ignored url)
-      if (
-        Option.getOrUndefined(session)?._tag === "UnknownUserSession" &&
-        HashSet.every(ignoreList, pre => !req.url.startsWith(pre))
-      ) {
-        yield* Effect.logInfo("Redirecting to new user setup");
-        yield* HttpApp.appendPreResponseHandler(() =>
-          redirect(NewUserRedirectUrl, { status: 303 }),
-        );
-      } else if (
-        Option.getOrUndefined(session)?._tag === "UserSession" &&
-        req.url === NewUserRedirectUrl
-      ) {
-        yield* Effect.log(
-          "At new user setup but we have a user, redirecting to home",
-        );
-        yield* HttpApp.appendPreResponseHandler(() =>
-          Effect.succeed(redirect("/", { status: 303 })),
-        );
-      }
-    }).pipe(Effect.annotateLogs({ layer: "AuthRedirectLive" }));
+    return makeRedirectMiddleware(ignoreList);
   }),
 );
