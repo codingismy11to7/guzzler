@@ -31,6 +31,7 @@ import { TimeZone } from "@guzzler/domain/TimeZone";
 import { Username } from "@guzzler/domain/User";
 import { MongoError, NotFound } from "@guzzler/mongodb/Model";
 import { MongoTransactions } from "@guzzler/mongodb/MongoTransactions";
+import { RandomId } from "@guzzler/utils/RandomId";
 import { parse as parseDate } from "date-fns";
 import {
   BigDecimal,
@@ -283,7 +284,8 @@ const importFromACarFullBackup =
     zipPath: string,
   ): Effect.Effect<
     void,
-    AutosApi.FileCorruptedError | AutosApi.WrongFormatError | RedactedError
+    AutosApi.FileCorruptedError | AutosApi.WrongFormatError | RedactedError,
+    RandomId
   > =>
     gen(function* () {
       const parseEventSubtypes = <E>(

@@ -1,6 +1,6 @@
 import { TodosApi as T } from "@guzzler/domain";
+import { RandomId } from "@guzzler/utils/RandomId";
 import { Effect, pipe } from "effect";
-import { nanoid } from "nanoid";
 import { CollectionRegistry } from "./internal/database/CollectionRegistry.js";
 
 /**
@@ -11,6 +11,7 @@ export class TodosRepository extends Effect.Service<TodosRepository>()(
   "api/TodosRepository",
   {
     effect: Effect.gen(function* () {
+      const { randomIdSync } = yield* RandomId;
       const { todos } = yield* CollectionRegistry;
 
       const getAll = todos.find().pipe(Effect.andThen(f => f.toArray));
@@ -24,7 +25,11 @@ export class TodosRepository extends Effect.Service<TodosRepository>()(
       const create = (text: string): Effect.Effect<T.Todo> =>
         pipe(
           Effect.succeed(
-            T.Todo.make({ id: T.TodoId.make(nanoid()), done: false, text }),
+            T.Todo.make({
+              id: T.TodoId.make(randomIdSync()),
+              done: false,
+              text,
+            }),
           ),
           Effect.tap(t => todos.upsert({ id: t.id }, t)),
         );

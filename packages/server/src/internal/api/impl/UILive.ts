@@ -9,7 +9,7 @@ import { NotFound } from "@effect/platform/HttpApiError";
 import { AppApi } from "@guzzler/domain/AppApi";
 import { ServerError } from "@guzzler/domain/Errors";
 import { Effect, pipe } from "effect";
-import { nanoid } from "nanoid";
+import { ulid } from "ulid";
 import { AppConfig } from "../../../AppConfig.js";
 
 export const UILive = HttpApiBuilder.group(AppApi, "ui", handlers =>
@@ -32,7 +32,7 @@ export const UILive = HttpApiBuilder.group(AppApi, "ui", handlers =>
 
       const hiddenError = (e: unknown) =>
         pipe(
-          Effect.sync(() => nanoid()),
+          Effect.sync(() => ulid()),
           Effect.tap(id =>
             Effect.logError(
               `Error serving url '${req.url}', error id: ${id}`,

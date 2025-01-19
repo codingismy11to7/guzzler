@@ -2,7 +2,10 @@
   "exclude": ["vite.config.ts"],
   "extends": "./tsconfig.src.json",
 
-  "references": [{"path": "../domain/tsconfig.build.json"}],
+  "references": [
+    {"path": "../domain/tsconfig.build.json"},
+    {"path": "../utils/tsconfig.build.json"}
+  ],
 
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable","ES2022"],

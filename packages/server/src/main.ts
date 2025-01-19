@@ -1,4 +1,5 @@
 import { NodeRuntime } from "@effect/platform-node";
+import { RandomId } from "@guzzler/utils/RandomId";
 import { Effect, Layer, pipe } from "effect";
 import { AppConfig, AppConfigLive } from "./AppConfig.js";
 import { HttpLive } from "./HttpLive.js";
@@ -26,6 +27,7 @@ pipe(
   AppConfig.withMinimumLogLevel,
   Effect.andThen(AppConfig.withMinimumLogLevel(Layer.launch(HttpLive))),
   Effect.provide(mongoLiveLayers),
+  Effect.provide(RandomId.Default),
   Effect.provide(AppConfigLive),
   NodeRuntime.runMain,
 );

@@ -7,8 +7,8 @@ import {
 } from "@mui/material";
 import { isFunction } from "effect/Function";
 import { isNotNull } from "effect/Predicate";
-import { nanoid } from "nanoid";
 import React, { ReactNode, useRef, useState } from "react";
+import { randomId } from "../internal/bootstrap.js";
 
 type Props<
   D extends React.ElementType = IconButtonTypeMap["defaultComponent"],
@@ -31,8 +31,8 @@ export const PopupMenuButton = <
   buttonIcon,
   menuItems,
 }: Props<D, P>) => {
-  const menuButtonId = useRef(nanoid());
-  const menuId = useRef(nanoid());
+  const menuButtonId = useRef(randomId());
+  const menuId = useRef(randomId());
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const menuOpen = isNotNull(anchorEl);
   const onMenuClose = () => setAnchorEl(null);
