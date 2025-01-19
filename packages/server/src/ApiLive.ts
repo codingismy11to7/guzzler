@@ -32,13 +32,13 @@ import { TodosApiLive } from "./internal/api/impl/TodosApiLive.js";
 import { UIDev } from "./internal/api/impl/UIDev.js";
 import { UILive } from "./internal/api/impl/UILive.js";
 import { CollectionRegistry } from "./internal/database/CollectionRegistry.js";
-import { Zip } from "./internal/util/zip.js";
 import { XmlParser } from "./internal/xml/XmlParser.js";
 import * as OAuth2 from "./OAuth2.js";
 import { ExternalError, InvalidOptions } from "./OAuth2.js";
 import { SessionStorage } from "./SessionStorage.js";
 import { TodosRepository } from "./TodosRepository.js";
 import { Users } from "./Users.js";
+import { Zip } from "./Zip.js";
 import { AuthenticationMiddleware } from "./index.js";
 
 const UILayer = Layer.unwrapEffect(

@@ -15,6 +15,7 @@
     "type": "git",
     "url": "git+ssh://git@github.com/codingismy11to7/guzzler.git"
   },
+
   "scripts": {
     "build": "npm run build-esm && npm run build-annotate && npm run build-cjs && build-utils pack-v2",
     "build-annotate": "babel build/esm --plugins annotate-pure-calls --out-dir build/esm --source-maps",

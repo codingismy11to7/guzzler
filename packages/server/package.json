@@ -1,11 +1,9 @@
 {
   "name": "@guzzler/server",
   "version": "0.0.6",
-
   "description": "The server template",
   "license": "MIT",
   "type": "module",
-
   "repository": {
     "directory": "packages/server",
     "type": "git",
@@ -27,7 +25,6 @@
     "test": "vitest --run",
     "test:watch": "vitest"
   },
-
   "dependencies": {
     "@date-fns/tz": "^1.2.0",
     "@effect/platform": "^0.74.0",
@@ -36,6 +33,7 @@
     "@guzzler/mongodb": "^0.0.3",
     "@guzzler/utils": "^0.0.2",
     "@npmcli/package-json": "^6.1.0",
+    "archiver": "^7.0.1",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
     "effect": "^3.12.1",
@@ -46,6 +44,7 @@
     "yauzl": "^3.2.0"
   },
   "devDependencies": {
+    "@types/archiver": "^6.0.3",
     "@types/node-expat": "^2.3.5",
     "@types/npmcli__package-json": "^4.0.4",
     "@types/simple-oauth2": "^5.0.7",
@@ -54,10 +53,14 @@
   },
   "effect": {
     "generateExports": {
-      "include": ["**/*.ts"]
+      "include": [
+        "**/*.ts"
+      ]
     },
     "generateIndex": {
-      "include": ["**/*.ts"]
+      "include": [
+        "**/*.ts"
+      ]
     }
   },
   "nodemonConfig": {

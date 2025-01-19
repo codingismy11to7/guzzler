@@ -50,10 +50,10 @@ import { isNotUndefined, isUndefined } from "effect/Predicate";
 import { fileTypeFromBuffer } from "file-type";
 import { AutosStorage } from "../AutosStorage.js";
 import { singleStreamPuller } from "../internal/util/singleStreamPuller.js";
-import { Zip } from "../internal/util/zip.js";
 import { Xml2JsNode } from "../internal/xml/Xml2JsNode.js";
 import type { XmlParsingError } from "../internal/xml/XmlParser.js";
 import { ParseEvent, XmlParser } from "../internal/xml/XmlParser.js";
+import { Zip } from "../Zip.js";
 
 const String = Schema.Trimmed;
 
@@ -729,7 +729,7 @@ const importFromACarFullBackup =
         MissingBackupFile: () =>
           new AutosApi.WrongFormatError({ type: "MissingBackupFile" }),
         ParseError: () => new AutosApi.WrongFormatError({ type: "ParseError" }),
-        ZipError: () => new AutosApi.FileCorruptedError({ type: "ZipError" }),
+        UnzipError: () => new AutosApi.FileCorruptedError({ type: "ZipError" }),
         XmlParsingError: () =>
           new AutosApi.FileCorruptedError({ type: "XmlParsingError" }),
         SystemError: RedactedError.logged,
