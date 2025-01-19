@@ -2,7 +2,7 @@ import type * as HttpClient from "@effect/platform/HttpClient";
 import { BrowserHttpClient } from "@effect/platform-browser";
 import { RandomId } from "@guzzler/utils";
 import { format } from "date-fns/fp";
-import { Effect, flow, Layer, Logger, ManagedRuntime } from "effect";
+import { Effect, Layer, Logger, ManagedRuntime } from "effect";
 
 export const makeRunFunctions = <
   Layers extends Array<Layer.Layer<never, never, HttpClient.HttpClient>>,
@@ -40,7 +40,8 @@ export const makeRunFunctions = <
   const runSync = runtime.runSync;
   const runFork = runtime.runFork;
 
-  const randomId = flow(RandomId.RandomId.randomId, runSync);
+  const randomId = (seedTime?: number) =>
+    runSync(RandomId.RandomId.randomIdSync(seedTime));
 
   return { runPromise, runP, runSync, runFork, randomId };
 };
