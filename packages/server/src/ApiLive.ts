@@ -22,6 +22,7 @@ import { Effect, Layer, Option, pipe } from "effect";
 import { ParseError } from "effect/ParseResult";
 import { AppConfig, ProdMode } from "./AppConfig.js";
 import { AutosStorage } from "./AutosStorage.js";
+import { BackupRestore } from "./BackupRestore.js";
 import { ACarFullBackup } from "./importers/ACarFullBackup.js";
 import { AccountApiLive } from "./internal/api/impl/AccountApiLive.js";
 import { AuthApiLive } from "./internal/api/impl/AuthApiLive.js";
@@ -88,6 +89,7 @@ export const ApiLive: Layer.Layer<
   Layer.provide(SignupApiLive),
   Layer.provide(TodosApiLive),
   Layer.provide(ACarFullBackup.Default),
+  Layer.provide(BackupRestore.Default),
   Layer.provide(AutosStorage.Default),
   Layer.provide(Users.Default),
   Layer.provide(UILayer),

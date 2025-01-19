@@ -1,5 +1,5 @@
 import { Document } from "bson";
-import { Effect, Schema } from "effect";
+import { Effect, Schema, Stream } from "effect";
 import {
   Collection,
   CountDocumentsOptions,
@@ -187,6 +187,8 @@ export type FindResult<MemSchema, DbSchema> = Readonly<{
   raw: FindCursor<WithId<DbSchema>>;
   toArrayRaw: Effect.Effect<readonly MemSchema[], MongoError | SchemaMismatch>;
   toArray: Effect.Effect<readonly MemSchema[]>;
+  streamRaw: Stream.Stream<MemSchema, MongoError | SchemaMismatch>;
+  stream: Stream.Stream<MemSchema>;
 }>;
 
 export class MongoCollectionLayer extends Effect.Service<MongoCollectionLayer>()(

@@ -9,6 +9,7 @@ import {
   Vehicle,
   VehicleId,
 } from "@guzzler/domain/Autos";
+import { ContentType } from "@guzzler/domain/ContentType";
 import { Username } from "@guzzler/domain/User";
 import { GridFS } from "@guzzler/mongodb/GridFS";
 import { MongoError, NotFound } from "@guzzler/mongodb/Model";
@@ -18,7 +19,7 @@ import {
 } from "@guzzler/mongodb/Mongo";
 import { MongoTransactions } from "@guzzler/mongodb/MongoTransactions";
 import { Array, Effect, Exit, Option, pipe, Stream, Struct } from "effect";
-import { catchTag, gen } from "effect/Effect";
+import { andThen, catchTag, gen } from "effect/Effect";
 import { isNullable } from "effect/Predicate";
 import { CollectionRegistry } from "./internal/database/CollectionRegistry.js";
 
@@ -39,6 +40,9 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
 
       const replaceAllUserTypes = (types: UserTypes) =>
         userTypes.upsert({ username: types.username }, types);
+
+      const getAllUserTypes = (username: Username) =>
+        userTypes.findOne({ username });
 
       const deleteUserVehiclePhoto = (vehicle: Vehicle) =>
         gen(function* () {
@@ -219,7 +223,7 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
       ): Effect.Effect<
         Readonly<{
           stream: Stream.Stream<Uint8Array, MongoError>;
-          mimeType: string;
+          mimeType: ContentType;
         }>,
         NotFound | MongoError
       > =>
@@ -245,6 +249,9 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
           };
         });
 
+      const getAllEventRecordsForUser = (username: Username) =>
+        eventRecords.find({ username }).pipe(andThen(c => c.toArray));
+
       const insertEventRecords = (
         username: Username,
         vehicleId: VehicleId,
@@ -263,6 +270,9 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
           },
           { upsert: true },
         );
+
+      const streamAllFillupRecordsForUser = (username: Username) =>
+        fillupRecords.find({ username }).pipe(andThen(c => c.stream));
 
       const insertFillupRecords = (
         username: Username,
@@ -285,12 +295,15 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
 
       return {
         replaceAllUserTypes,
+        getAllUserTypes,
         deleteAllUserData,
         insertUserVehicle,
         getVehicles,
         addPhotoToVehicle,
         getPhotoForVehicle,
+        getAllEventRecordsForUser,
         insertEventRecords,
+        streamAllFillupRecordsForUser,
         insertFillupRecords,
       };
     }).pipe(Effect.annotateLogs({ layer: "AutosStorage" })),

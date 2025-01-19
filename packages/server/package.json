@@ -1,9 +1,11 @@
 {
   "name": "@guzzler/server",
   "version": "0.0.6",
+
   "description": "The server template",
   "license": "MIT",
   "type": "module",
+
   "repository": {
     "directory": "packages/server",
     "type": "git",
@@ -25,6 +27,7 @@
     "test": "vitest --run",
     "test:watch": "vitest"
   },
+
   "dependencies": {
     "@date-fns/tz": "^1.2.0",
     "@effect/platform": "^0.74.0",
@@ -53,14 +56,10 @@
   },
   "effect": {
     "generateExports": {
-      "include": [
-        "**/*.ts"
-      ]
+      "include": ["**/*.ts"]
     },
     "generateIndex": {
-      "include": [
-        "**/*.ts"
-      ]
+      "include": ["**/*.ts"]
     }
   },
   "nodemonConfig": {

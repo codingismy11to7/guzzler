@@ -4,6 +4,10 @@ export * as Authentication from "./Authentication.js";
 
 export * as Autos from "./Autos.js";
 
+export * as BackupMetadata from "./BackupMetadata.js";
+
+export * as ContentType from "./ContentType.js";
+
 export * as Errors from "./Errors.js";
 
 export * as MiscSchemas from "./MiscSchemas.js";

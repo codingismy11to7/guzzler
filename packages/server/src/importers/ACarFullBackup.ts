@@ -729,7 +729,8 @@ const importFromACarFullBackup =
         MissingBackupFile: () =>
           new AutosApi.WrongFormatError({ type: "MissingBackupFile" }),
         ParseError: () => new AutosApi.WrongFormatError({ type: "ParseError" }),
-        UnzipError: () => new AutosApi.FileCorruptedError({ type: "ZipError" }),
+        UnzipError: () =>
+          new AutosApi.FileCorruptedError({ type: "UnzipError" }),
         XmlParsingError: () =>
           new AutosApi.FileCorruptedError({ type: "XmlParsingError" }),
         SystemError: RedactedError.logged,

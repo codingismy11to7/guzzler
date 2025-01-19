@@ -142,6 +142,9 @@ export const encodeEventRecordSync = Schema.encodeSync(EventRecord);
 
 /* vehicle */
 
+export const PhotoId = ObjectIdStringSchema.pipe(Schema.brand("PhotoId"));
+export type PhotoId = typeof PhotoId.Type;
+
 export const VehicleId = Schema.Trimmed.pipe(
   Schema.brand("VehicleId"),
   Schema.annotations({ identifier: "VehicleId" }),
@@ -185,7 +188,7 @@ export class Vehicle extends Schema.Class<Vehicle>("Vehicle")({
   regionId: OptionalString,
   regionName: OptionalString,
   cityName: OptionalString,
-  photoId: Schema.OptionFromUndefinedOr(ObjectIdStringSchema),
+  photoId: Schema.OptionFromUndefinedOr(PhotoId),
 
   vehicleParts: Schema.Unknown,
   reminders: Schema.Unknown,
@@ -208,15 +211,15 @@ export const UserVehicles = Schema.Struct({
 });
 export type UserVehicles = typeof UserVehicles.Type;
 
-export const VehicleFillupRecord = Schema.Struct({
+export const VehicleFillupRecords = Schema.Struct({
   username: Username,
   vehicleId: VehicleId,
   fillups: Schema.Record({ key: FillupRecordId, value: FillupRecord }),
 });
-export type VehicleFillupRecord = typeof VehicleFillupRecord.Type;
+export type VehicleFillupRecords = typeof VehicleFillupRecords.Type;
 
-export const VehicleEventRecord = Schema.Struct({
-  ...Struct.omit(VehicleFillupRecord.fields, "fillups"),
+export const VehicleEventRecords = Schema.Struct({
+  ...Struct.omit(VehicleFillupRecords.fields, "fillups"),
   events: Schema.Record({ key: EventRecordId, value: EventRecord }),
 });
-export type VehicleEventRecord = typeof VehicleEventRecord.Type;
+export type VehicleEventRecords = typeof VehicleEventRecords.Type;

@@ -1,5 +1,5 @@
 import { Document } from "bson";
-import { Effect, flow, Option, pipe, Schema } from "effect";
+import { Effect, flow, Option, pipe, Schema, Stream } from "effect";
 import { andThen, gen } from "effect/Effect";
 import { ParseError } from "effect/ParseResult";
 import {
@@ -24,7 +24,7 @@ import { Model } from "../index.js";
 import { Conflict, MongoError, NotFound, SchemaMismatch } from "../Model.js";
 import { AnySchema, FindResult, MongoCollection } from "../MongoCollection.js";
 import { MongoTxnCtx } from "./createInTransaction.js";
-import { mongoEff } from "./utils.js";
+import { mongoEff, RealMongoError } from "./utils.js";
 
 export const make = <CName extends string, SchemaT extends AnySchema>(
   db: Db,
@@ -121,7 +121,13 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
     );
     const toArray = toArrayRaw.pipe(Effect.catchTags(dieFromFatal));
 
-    return { raw: c, toArrayRaw, toArray };
+    const streamRaw = Stream.fromAsyncIterable(
+      c.stream(),
+      e => new MongoError({ underlying: e as RealMongoError }),
+    ).pipe(Stream.mapEffect(decode));
+    const stream = streamRaw.pipe(Stream.catchTags(dieFromFatal));
+
+    return { raw: c, toArrayRaw, toArray, streamRaw, stream };
   };
   const findRaw = (
     filter?: Filter<MemSchema>,

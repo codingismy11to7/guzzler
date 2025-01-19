@@ -14,16 +14,17 @@ import { gen } from "effect/Effect";
 import { Writable } from "stream";
 import { ZipError } from "../../Zip.js";
 
-type Input<E, R> = Readonly<{
+/** @internal */
+export type Input<E = never> = Readonly<{
   metadataPath: string;
-  fileData: Stream.Stream<Uint8Array, E, R>;
+  fileData: Stream.Stream<Uint8Array, E>;
 }>;
 
 export const streamToZip =
-  <E1, R1, E2, R2>(runtime: Runtime.Runtime<R1 | R2>) =>
-  (
-    input: Stream.Stream<Input<E1, R1>, E2, R2>,
-  ): Stream.Stream<Uint8Array, E1 | E2 | ZipError, R1 | R2> =>
+  (runtime: Runtime.Runtime<never>) =>
+  <E1, E2>(
+    input: Stream.Stream<Input<E1>, E2>,
+  ): Stream.Stream<Uint8Array, E1 | E2 | ZipError> =>
     Stream.async(emit => {
       const runFork = Runtime.runFork(runtime);
       const runPromiseExit = Runtime.runPromiseExit(runtime);

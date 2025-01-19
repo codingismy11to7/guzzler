@@ -9,6 +9,8 @@ export * as AuthenticationMiddleware from "./AuthenticationMiddleware.js";
 
 export * as AutosStorage from "./AutosStorage.js";
 
+export * as BackupRestore from "./BackupRestore.js";
+
 export * as HttpLive from "./HttpLive.js";
 
 export * as OAuth2 from "./OAuth2.js";
