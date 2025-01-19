@@ -1,4 +1,5 @@
 import { HttpApiBuilder, HttpServerResponse } from "@effect/platform";
+import { ExportBackupCallId } from "@guzzler/domain/apis/AutosApi";
 import { AppApi } from "@guzzler/domain/AppApi";
 import { CurrentFullSession } from "@guzzler/domain/Authentication";
 import { gen } from "effect/Effect";
@@ -11,7 +12,7 @@ export const AutosApiLive = HttpApiBuilder.group(AppApi, "autos", handlers =>
     const { getBackupStream } = yield* BackupRestore;
 
     return handlers
-      .handleRaw("exportBackup", ({ path: { backupName } }) =>
+      .handleRaw(ExportBackupCallId, ({ path: { backupName } }) =>
         gen(function* () {
           const { user } = yield* CurrentFullSession;
 

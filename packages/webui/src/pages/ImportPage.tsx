@@ -41,6 +41,7 @@ import { VisuallyHiddenInput } from "../components/VisuallyHiddenInput.js";
 import { useTranslation } from "../i18n.js";
 import { makeRunFunctions } from "../internal/bootstrap.js";
 import { routes } from "../router.js";
+import { onEnterKey } from "../utils/onEnterKey.js";
 
 const MobileInfoIconP = () => import("../components/MobileInfoIcon.js");
 const MobileInfoIcon = lazy(MobileInfoIconP);
@@ -88,7 +89,7 @@ const ErrorDialog = ({ error, onClose }: ErrorDialogProps) => {
           ),
           FileCorruptedError: Match.type<AutosApi.FileCorruptedError>().pipe(
             discriminatorsExhaustive("type")({
-              ZipError: () =>
+              UnzipError: () =>
                 "The file is corrupted, or it's not an actual .abp file from aCar.",
               XmlParsingError: () =>
                 "An xml file in the backup is corrupted. Or the hamsters are rebelling.",
@@ -335,6 +336,53 @@ const ACarUpload = ({ setCloseDisabled }: ACarUploadProps) => {
   );
 };
 
+type NameBackupDialogProps = Readonly<{
+  onClose: (chosenName?: string) => void;
+}>;
+const NameBackupDialog = ({ onClose }: NameBackupDialogProps) => {
+  const { t } = useTranslation();
+
+  const [name, setName] = useState<string>(
+    t("nameBackupDialog.defaultBackupName"),
+  );
+
+  const saveDisabled = !name.trim().length;
+
+  const onSave = () => {
+    if (!saveDisabled) onClose(name);
+  };
+
+  return (
+    <Dialog open={true} onClose={() => onClose()} disableRestoreFocus>
+      <DialogTitle>{t("importDialog.export")}</DialogTitle>
+      <DialogContent>
+        <Stack direction="column" spacing={2}>
+          <DialogContentText>
+            {t("nameBackupDialog.nameLabel")}
+          </DialogContentText>
+          <TextField
+            fullWidth
+            autoFocus
+            size="small"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            onFocus={e => e.target.select()}
+            onKeyUp={onEnterKey(onSave)}
+          />
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button variant="outlined" onClick={() => onClose()}>
+          {t("common.cancel")}
+        </Button>
+        <Button variant="contained" disabled={saveDisabled} onClick={onSave}>
+          {t("nameBackupDialog.export")}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
 type Selection = "guzzler" | "aCar";
 
 const ImportPage = () => {
@@ -342,11 +390,34 @@ const ImportPage = () => {
 
   const [selection, _setSelection] = useState<Selection>();
   const [closeDisabled, setCloseDisabled] = useState(false);
+  const [nameBackupOpen, setNameBackupOpen] = useState(false);
 
   const toggleSelection = (selection: Selection) => () => {
     if (!closeDisabled)
       _setSelection(o => (o === selection ? undefined : selection));
   };
+
+  const onExportClick = () => {
+    if (!closeDisabled) setNameBackupOpen(true);
+  };
+
+  const onNameBackupClose = useCallback(
+    (name?: string) => {
+      setNameBackupOpen(false);
+      if (name) {
+        const link = document.createElement("a");
+        const appName = t("appName").toLowerCase();
+        link.download = `${name}.${appName}backup`;
+        link.href = AutosApi.AutosApi.endpoints[
+          AutosApi.ExportBackupCallId
+        ].path.replace(":backupName", name);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    },
+    [t],
+  );
 
   return (
     <>
@@ -415,13 +486,15 @@ const ImportPage = () => {
             <ImportSourceCardHeader
               title={t("importDialog.export")}
               selected={false}
-              onClick={toggleSelection("guzzler")}
+              onClick={onExportClick}
               sourceIconUrl="/vite.svg"
               closeDisabled={closeDisabled}
             />
           </Card>
         </>
       )}
+
+      {nameBackupOpen && <NameBackupDialog onClose={onNameBackupClose} />}
     </>
   );
 };

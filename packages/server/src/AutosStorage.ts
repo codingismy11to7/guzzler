@@ -18,7 +18,16 @@ import {
   randomObjectId,
 } from "@guzzler/mongodb/Mongo";
 import { MongoTransactions } from "@guzzler/mongodb/MongoTransactions";
-import { Array, Effect, Exit, Option, pipe, Stream, Struct } from "effect";
+import {
+  Array,
+  Effect,
+  Exit,
+  Option,
+  pipe,
+  Schema,
+  Stream,
+  Struct,
+} from "effect";
 import { andThen, catchTag, gen } from "effect/Effect";
 import { isNullable } from "effect/Predicate";
 import { CollectionRegistry } from "./internal/database/CollectionRegistry.js";
@@ -224,6 +233,7 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
         Readonly<{
           stream: Stream.Stream<Uint8Array, MongoError>;
           mimeType: ContentType;
+          fileName: string;
         }>,
         NotFound | MongoError
       > =>
@@ -246,6 +256,7 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
             stream,
             mimeType:
               photoFile.metadata?.mimeType ?? "application/octet-stream",
+            fileName: photoFile.filename,
           };
         });
 

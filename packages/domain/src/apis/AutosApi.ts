@@ -53,9 +53,11 @@ export class ZipError extends Schema.TaggedError<ZipError>("AutosApiZipError")(
 
 export type ImportError = WrongFormatError | FileCorruptedError;
 
+export const ExportBackupCallId = "exportBackup";
+
 export class AutosApi extends HttpApiGroup.make("autos")
   .add(
-    HttpApiEndpoint.get("exportBackup", "/export/:backupName")
+    HttpApiEndpoint.get(ExportBackupCallId, "/export/:backupName")
       .setPath(Schema.Struct({ backupName: Schema.Trim }))
       .addSuccess(
         Schema.String.pipe(
