@@ -12,9 +12,24 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { Duration, Effect, Either, Option, ParseResult, pipe, Schema } from "effect";
+import {
+  Duration,
+  Effect,
+  Either,
+  Option,
+  ParseResult,
+  pipe,
+  Schema,
+} from "effect";
 import { isUndefined } from "effect/Predicate";
-import React, { PropsWithChildren, ReactElement, useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  PropsWithChildren,
+  ReactElement,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { SignupClient } from "../apiclients/SignupClient.js";
 import { useCountdown } from "../hooks/useCountdown.js";
 import { useTranslation } from "../i18n.js";
@@ -73,31 +88,41 @@ const SetUsernameStep = ({ userInfo }: SetUsernameStepProps) => {
 
   const checkUsername = useCallback(() => {
     if (username) {
-      Either.match(Schema.decodeEither(U.Username)(username, { errors: "first" }), {
-        onRight: u => {
-          void pipe(
-            SignupClient.validateUsername(u),
-            Effect.ensuring(Effect.sync(() => setCheckingForConflict(false))),
-            Effect.andThen(({ available }) => setAvailable(available)),
-            Effect.catchAllDefect(() => Effect.sync(() => setError(t("common.thereWasAProblem")))),
-            runP,
-          );
+      Either.match(
+        Schema.decodeEither(U.Username)(username, { errors: "first" }),
+        {
+          onRight: u => {
+            void pipe(
+              SignupClient.validateUsername(u),
+              Effect.ensuring(Effect.sync(() => setCheckingForConflict(false))),
+              Effect.andThen(({ available }) => setAvailable(available)),
+              Effect.catchAllDefect(() =>
+                Effect.sync(() => setError(t("common.thereWasAProblem"))),
+              ),
+              runP,
+            );
+          },
+          onLeft: e => {
+            setCheckingForConflict(false);
+            setError(
+              ParseResult.ArrayFormatter.formatErrorSync(e)
+                .slice(0, 1)
+                .map(i => `${i.path.join(".")} ${i.message}`)
+                .join(),
+            );
+          },
         },
-        onLeft: e => {
-          setCheckingForConflict(false);
-          setError(
-            ParseResult.ArrayFormatter.formatErrorSync(e)
-              .slice(0, 1)
-              .map(i => `${i.path.join(".")} ${i.message}`)
-              .join(),
-          );
-        },
-      });
+      );
     }
   }, [t, username]);
 
   const clearTimer = useCallback(
-    () => void pipe(timerRef.current, Option.fromNullable, Option.andThen(clearTimeout)),
+    () =>
+      void pipe(
+        timerRef.current,
+        Option.fromNullable,
+        Option.andThen(clearTimeout),
+      ),
     [],
   );
 
@@ -127,10 +152,15 @@ const SetUsernameStep = ({ userInfo }: SetUsernameStepProps) => {
     [username],
   );
 
-  const helperText = error ?? (isUndefined(available) || available ? undefined : t("createUser.notAvailable"));
+  const helperText =
+    error ??
+    (isUndefined(available) || available
+      ? undefined
+      : t("createUser.notAvailable"));
 
   const handleConfirm = useCallback(() => {
-    if (username && !checkingForConflict && available) routes.SignupConfirm({ username }).push();
+    if (username && !checkingForConflict && available)
+      routes.SignupConfirm({ username }).push();
   }, [available, checkingForConflict, username]);
 
   const loading = checkingForConflict && !!username;
@@ -153,7 +183,11 @@ const SetUsernameStep = ({ userInfo }: SetUsernameStepProps) => {
           endIcon={<CheckCircle />}
           variant="contained"
         >
-          {t(loading ? "createUser.checkingForConflictButton" : "createUser.confirm")}
+          {t(
+            loading
+              ? "createUser.checkingForConflictButton"
+              : "createUser.confirm",
+          )}
         </Button>
       }
     >
@@ -172,9 +206,17 @@ const SetUsernameStep = ({ userInfo }: SetUsernameStepProps) => {
   );
 };
 
-type ConfirmStepProps = Readonly<{ userInfo: OAuthUserInfo; chosenUsername: string; onCancel: () => void }>;
+type ConfirmStepProps = Readonly<{
+  userInfo: OAuthUserInfo;
+  chosenUsername: string;
+  onCancel: () => void;
+}>;
 
-const ConfirmStep = ({ userInfo, chosenUsername, onCancel }: ConfirmStepProps) => {
+const ConfirmStep = ({
+  userInfo,
+  chosenUsername,
+  onCancel,
+}: ConfirmStepProps) => {
   const { t } = useTranslation();
 
   const [creating, setCreating] = useState(false);
@@ -214,7 +256,9 @@ const ConfirmStep = ({ userInfo, chosenUsername, onCancel }: ConfirmStepProps) =
 
   return (
     <CreateUserCard
-      title={t(`createUser.${creating ? "creatingAccount" : "createAccountQuestion"}`)}
+      title={t(
+        `createUser.${creating ? "creatingAccount" : "createAccountQuestion"}`,
+      )}
       userInfo={userInfo}
       subheader={chosenUsername}
       cancelButton={

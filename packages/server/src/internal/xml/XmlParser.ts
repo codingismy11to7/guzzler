@@ -15,7 +15,10 @@ type NodeStackEntry = Readonly<{
 
 const kebabToCamel = flow(kebabToSnake, snakeToCamel);
 
-class StartElement extends Data.TaggedClass("StartElement")<{ name: string; attrs: Record<string, string> }> {}
+class StartElement extends Data.TaggedClass("StartElement")<{
+  name: string;
+  attrs: Record<string, string>;
+}> {}
 class Text extends Data.TaggedClass("Text")<{ text: string }> {}
 class EndElement extends Data.TaggedClass("EndElement")<{ name: string }> {}
 export type ParseEvent = StartElement | Text | EndElement;
@@ -23,15 +26,21 @@ export type ParseEvent = StartElement | Text | EndElement;
 // this is the error from the expat lib, or an error from us if
 // a) we have a bug or b) the xml is malformed (dunno if libexpat throws errors
 // on those, will need to add test coverage one day)
-export class XmlParsingError extends Data.TaggedError("XmlParsingError")<{ cause: unknown }> {}
+export class XmlParsingError extends Data.TaggedError("XmlParsingError")<{
+  cause: unknown;
+}> {}
 
-const createEventStream = (parser: Parser): Stream.Stream<ParseEvent, XmlParsingError> =>
+const createEventStream = (
+  parser: Parser,
+): Stream.Stream<ParseEvent, XmlParsingError> =>
   Stream.async(emit => {
     parser.on("error", cause => void emit.fail(new XmlParsingError({ cause })));
 
     const handle = (e: ParseEvent) => void emit.single(e);
 
-    parser.on("startElement", (name: string, attrs) => handle(new StartElement({ name: kebabToCamel(name), attrs })));
+    parser.on("startElement", (name: string, attrs) =>
+      handle(new StartElement({ name: kebabToCamel(name), attrs })),
+    );
     parser.on("text", text => handle(new Text({ text })));
     parser.on(
       "endElement",
@@ -40,12 +49,16 @@ const createEventStream = (parser: Parser): Stream.Stream<ParseEvent, XmlParsing
     parser.on("close", () => void emit.end());
   });
 
-type Controller = Readonly<{ withPausedStream: <A, E>(e: Effect.Effect<A, E>) => Effect.Effect<A, E> }>;
+type Controller = Readonly<{
+  withPausedStream: <A, E>(e: Effect.Effect<A, E>) => Effect.Effect<A, E>;
+}>;
 
 const xmlStream = <E>(
   data: Stream.Stream<Uint8Array, E>,
   encoding = "UTF-8",
-): Effect.Effect<[Controller, Stream.Stream<ParseEvent, XmlParsingError | E>]> =>
+): Effect.Effect<
+  [Controller, Stream.Stream<ParseEvent, XmlParsingError | E>]
+> =>
   Effect.gen(function* () {
     const latch = yield* Effect.makeLatch(true);
 
@@ -59,7 +72,9 @@ const xmlStream = <E>(
     };
 
     const evtStream: Stream.Stream<ParseEvent, XmlParsingError> = pipe(
-      Stream.acquireRelease(Effect.succeed(new Parser(encoding)), p => Effect.sync(() => p.destroy())),
+      Stream.acquireRelease(Effect.succeed(new Parser(encoding)), p =>
+        Effect.sync(() => p.destroy()),
+      ),
       Stream.flatMap(parser => {
         const feedFromDataIntoParserFiber = pipe(
           data,
@@ -74,7 +89,9 @@ const xmlStream = <E>(
           Effect.fork,
         );
 
-        return Stream.flatMap(feedFromDataIntoParserFiber, () => createEventStream(parser));
+        return Stream.flatMap(feedFromDataIntoParserFiber, () =>
+          createEventStream(parser),
+        );
       }),
     );
 
@@ -86,7 +103,9 @@ const xmlStreamFromfile =
   (
     filePath: string,
     encoding = "UTF-8",
-  ): Effect.Effect<[Controller, Stream.Stream<ParseEvent, XmlParsingError | PlatformError>]> =>
+  ): Effect.Effect<
+    [Controller, Stream.Stream<ParseEvent, XmlParsingError | PlatformError>]
+  > =>
     xmlStream(stream(filePath), encoding);
 
 const transformToJson = <E>(
@@ -104,7 +123,9 @@ const transformToJson = <E>(
     ({ stack, currNode, currNodeTexts, currNodeChildren }: Z) =>
     (e: StartElement): Effect.Effect<Z> =>
       Effect.succeed({
-        stack: isUndefined(currNode) ? stack : Array.append(stack, { currNode, currNodeTexts, currNodeChildren }),
+        stack: isUndefined(currNode)
+          ? stack
+          : Array.append(stack, { currNode, currNodeTexts, currNodeChildren }),
         currNode: emptyXml2JsNode(kebabToCamel(e.name), e.attrs),
         currNodeTexts: [],
         currNodeChildren: [],
@@ -113,7 +134,10 @@ const transformToJson = <E>(
   const handleText =
     (acc: Z) =>
     (e: Text): Effect.Effect<Z> =>
-      Effect.succeed({ ...acc, currNodeTexts: Array.append(acc.currNodeTexts, e.text) });
+      Effect.succeed({
+        ...acc,
+        currNodeTexts: Array.append(acc.currNodeTexts, e.text),
+      });
 
   const handleEnd =
     ({ stack, currNode, currNodeTexts, currNodeChildren }: Z) =>
@@ -121,10 +145,18 @@ const transformToJson = <E>(
       const name = kebabToCamel(e.name);
 
       if (isUndefined(currNode)) {
-        return Effect.fail(new XmlParsingError({ cause: new Error(`Received ${name} endElement but stack is empty`) }));
+        return Effect.fail(
+          new XmlParsingError({
+            cause: new Error(`Received ${name} endElement but stack is empty`),
+          }),
+        );
       } else if (name !== currNode.name) {
         return Effect.fail(
-          new XmlParsingError({ cause: new Error(`Received ${name} endElement but expecting ${currNode.name}`) }),
+          new XmlParsingError({
+            cause: new Error(
+              `Received ${name} endElement but expecting ${currNode.name}`,
+            ),
+          }),
         );
       }
 
@@ -136,8 +168,15 @@ const transformToJson = <E>(
 
       return Effect.succeed(
         isNonEmptyReadonlyArray(stack)
-          ? pipe(Array.unappend(stack), ([stack, { currNode, currNodeTexts, currNodeChildren }]) =>
-              z(stack, currNode, currNodeTexts, Array.append(currNodeChildren, finalNode)),
+          ? pipe(
+              Array.unappend(stack),
+              ([stack, { currNode, currNodeTexts, currNodeChildren }]) =>
+                z(
+                  stack,
+                  currNode,
+                  currNodeTexts,
+                  Array.append(currNodeChildren, finalNode),
+                ),
             )
           : z(stack, finalNode),
       );
@@ -154,7 +193,10 @@ const transformToJson = <E>(
   ).pipe(Effect.andThen(({ currNode }) => currNode!));
 };
 
-const parseEntireXml = <E>(data: Stream.Stream<Uint8Array, E>, encoding = "UTF-8") =>
+const parseEntireXml = <E>(
+  data: Stream.Stream<Uint8Array, E>,
+  encoding = "UTF-8",
+) =>
   pipe(
     xmlStream(data, encoding),
     Effect.map(([, s]) => s),

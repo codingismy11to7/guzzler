@@ -5,7 +5,14 @@ const timeZones = Intl.supportedValuesOf("timeZone");
 
 // @ts-ignore
 const __dirname = import.meta.dirname;
-const outFile = path.resolve(__dirname, "..", "packages", "domain", "src", "TimeZone.ts");
+const outFile = path.resolve(
+  __dirname,
+  "..",
+  "packages",
+  "domain",
+  "src",
+  "TimeZone.ts",
+);
 
 fs.writeFileSync(
   outFile,

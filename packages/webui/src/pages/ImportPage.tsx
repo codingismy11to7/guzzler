@@ -27,7 +27,14 @@ import { acquireRelease, andThen, catchAll } from "effect/Effect";
 import { LazyArg } from "effect/Function";
 import { discriminatorsExhaustive } from "effect/Match";
 import { isNotNull } from "effect/Predicate";
-import { lazy, ReactNode, Suspense, useCallback, useEffect, useState } from "react";
+import {
+  lazy,
+  ReactNode,
+  Suspense,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import { AutosClient } from "../apiclients/AutosClient.js";
 import GPlayLogo from "../assets/Google_Play_2022_logo.svg?react";
 import { VisuallyHiddenInput } from "../components/VisuallyHiddenInput.js";
@@ -40,7 +47,10 @@ const MobileInfoIcon = lazy(MobileInfoIconP);
 
 const { runP } = makeRunFunctions(AutosClient.Default);
 
-type ErrorDialogProps = Readonly<{ error: AutosApi.ImportError | RedactedError; onClose: LazyArg<void> }>;
+type ErrorDialogProps = Readonly<{
+  error: AutosApi.ImportError | RedactedError;
+  onClose: LazyArg<void>;
+}>;
 const ErrorDialog = ({ error, onClose }: ErrorDialogProps) => {
   const { t } = useTranslation();
 
@@ -52,31 +62,46 @@ const ErrorDialog = ({ error, onClose }: ErrorDialogProps) => {
         Match.tagsExhaustive({
           RedactedError: e => (
             <Stack direction="column" spacing={1}>
-              <div>Something went wrong on the server. We&apos;ll redouble the whipping of the hamsters.</div>
+              <div>
+                Something went wrong on the server. We&apos;ll redouble the
+                whipping of the hamsters.
+              </div>
               <Stack
                 direction="row"
                 spacing={1}
                 justifyContent="center"
                 onClick={() => navigator.clipboard.writeText(e.id)}
               >
-                <Typography variant="inherit" fontSize="smaller" color="textDisabled">
+                <Typography
+                  variant="inherit"
+                  fontSize="smaller"
+                  color="textDisabled"
+                >
                   {`Error id: ${e.id}`}
                 </Typography>
-                <ContentCopy fontSize="inherit" sx={{ color: theme => theme.palette.text.disabled }} />
+                <ContentCopy
+                  fontSize="inherit"
+                  sx={{ color: theme => theme.palette.text.disabled }}
+                />
               </Stack>
             </Stack>
           ),
           FileCorruptedError: Match.type<AutosApi.FileCorruptedError>().pipe(
             discriminatorsExhaustive("type")({
-              ZipError: () => "The file is corrupted, or it's not an actual .abp file from aCar.",
-              XmlParsingError: () => "An xml file in the backup is corrupted. Or the hamsters are rebelling.",
+              ZipError: () =>
+                "The file is corrupted, or it's not an actual .abp file from aCar.",
+              XmlParsingError: () =>
+                "An xml file in the backup is corrupted. Or the hamsters are rebelling.",
             }),
           ),
           WrongFormatError: Match.type<AutosApi.WrongFormatError>().pipe(
             discriminatorsExhaustive("type")({
-              UnexpectedOpeningTag: () => "Something in the data didn't match what we expected.",
-              ParseError: () => "Something in the data didn't match what we expected.",
-              MissingBackupFile: () => "A file we were looking for inside of the backup wasn't there.",
+              UnexpectedOpeningTag: () =>
+                "Something in the data didn't match what we expected.",
+              ParseError: () =>
+                "Something in the data didn't match what we expected.",
+              MissingBackupFile: () =>
+                "A file we were looking for inside of the backup wasn't there.",
             }),
           ),
         }),
@@ -94,7 +119,11 @@ const ErrorDialog = ({ error, onClose }: ErrorDialogProps) => {
       )}
       <DialogActions>
         <Stack width="100%" direction="row" justifyContent="space-between">
-          <Button color="secondary" size="small" onClick={() => setShowDetails(o => !o)}>
+          <Button
+            color="secondary"
+            size="small"
+            onClick={() => setShowDetails(o => !o)}
+          >
             {t(`errorDialog.${showDetails ? "hideDetails" : "seeDetails"}`)}
           </Button>
           <Button variant="contained" onClick={onClose}>
@@ -174,19 +203,31 @@ const ImportSourceCardHeader = ({
   );
 };
 
-type ACarUploadProps = Readonly<{ setCloseDisabled: (disabled: boolean) => void }>;
+type ACarUploadProps = Readonly<{
+  setCloseDisabled: (disabled: boolean) => void;
+}>;
 
 const ACarUpload = ({ setCloseDisabled }: ACarUploadProps) => {
   const { t } = useTranslation();
 
   const [timezone, setTimezone] = useState<TimeZone.TimeZone | null>(
-    pipe(Intl.DateTimeFormat().resolvedOptions().timeZone, Option.liftPredicate(TimeZone.isTimeZone), Option.getOrNull),
+    pipe(
+      Intl.DateTimeFormat().resolvedOptions().timeZone,
+      Option.liftPredicate(TimeZone.isTimeZone),
+      Option.getOrNull,
+    ),
   );
   const [file, setFile] = useState<File>();
   const [importing, setImporting] = useState(false);
 
-  const [error, setErrorSync] = useState<RedactedError | AutosApi.ImportError>();
-  const setError = useCallback((e: RedactedError | AutosApi.ImportError) => Effect.sync(() => setErrorSync(e)), []);
+  const [error, setErrorSync] = useState<
+    RedactedError | AutosApi.ImportError
+  >();
+  const setError = useCallback(
+    (e: RedactedError | AutosApi.ImportError) =>
+      Effect.sync(() => setErrorSync(e)),
+    [],
+  );
   const [succeeded, setSucceeded] = useState(false);
 
   useEffect(() => setCloseDisabled(importing), [importing, setCloseDisabled]);
@@ -213,7 +254,9 @@ const ACarUpload = ({ setCloseDisabled }: ACarUploadProps) => {
 
   return (
     <Stack direction="column" padding={2} spacing={2}>
-      {error && <ErrorDialog error={error} onClose={() => setErrorSync(undefined)} />}
+      {error && (
+        <ErrorDialog error={error} onClose={() => setErrorSync(undefined)} />
+      )}
       <SuccessDialog open={succeeded} onClose={onSuccessAcked} />
       <Stack spacing={1} direction="row" alignItems="center">
         <Autocomplete
@@ -233,15 +276,36 @@ const ACarUpload = ({ setCloseDisabled }: ACarUploadProps) => {
           )}
           options={TimeZone.AllTimeZones}
         />
-        <Suspense fallback={<Skeleton variant="rounded" width={/* left margin plus size */ 2 + 24} height={24} />}>
-          <MobileInfoIcon tooltip={t("importDialog.aCar.timeZoneInfo")} disabled={importing} />
+        <Suspense
+          fallback={
+            <Skeleton
+              variant="rounded"
+              width={/* left margin plus size */ 2 + 24}
+              height={24}
+            />
+          }
+        >
+          <MobileInfoIcon
+            tooltip={t("importDialog.aCar.timeZoneInfo")}
+            disabled={importing}
+          />
         </Suspense>
       </Stack>
       <Typography
         variant="caption"
-        color={importing ? "textDisabled" : file ? (file.name.endsWith(".abp") ? "success" : "warning") : "textPrimary"}
+        color={
+          importing
+            ? "textDisabled"
+            : file
+              ? file.name.endsWith(".abp")
+                ? "success"
+                : "warning"
+              : "textPrimary"
+        }
       >
-        {file ? t("importDialog.selectedFile", { fileName: file.name }) : t("importDialog.noSelectedFile")}
+        {file
+          ? t("importDialog.selectedFile", { fileName: file.name })
+          : t("importDialog.noSelectedFile")}
       </Typography>
       <Button
         component="label"
@@ -252,7 +316,11 @@ const ACarUpload = ({ setCloseDisabled }: ACarUploadProps) => {
         disabled={importing}
       >
         {t("importDialog.pickFile")}
-        <VisuallyHiddenInput type="file" accept=".abp" onChange={e => setFile(e.target.files?.item(0) ?? undefined)} />
+        <VisuallyHiddenInput
+          type="file"
+          accept=".abp"
+          onChange={e => setFile(e.target.files?.item(0) ?? undefined)}
+        />
       </Button>
       <Button
         variant="contained"
@@ -276,7 +344,8 @@ const ImportPage = () => {
   const [closeDisabled, setCloseDisabled] = useState(false);
 
   const toggleSelection = (selection: Selection) => () => {
-    if (!closeDisabled) _setSelection(o => (o === selection ? undefined : selection));
+    if (!closeDisabled)
+      _setSelection(o => (o === selection ? undefined : selection));
   };
 
   return (
@@ -286,7 +355,10 @@ const ImportPage = () => {
           {t("importDialog.topText")}
         </Typography>
       </Divider>
-      <Card elevation={selection ? 1 : 0} sx={{ backgroundColor: selection ? undefined : "unset" }}>
+      <Card
+        elevation={selection ? 1 : 0}
+        sx={{ backgroundColor: selection ? undefined : "unset" }}
+      >
         <Stack direction="column" spacing={2} padding={1}>
           {(!selection || selection === "guzzler") && (
             <ImportSourceCardHeader
@@ -327,7 +399,9 @@ const ImportPage = () => {
             </Typography>
           </CardContent>
         )}
-        {selection === "aCar" && <ACarUpload setCloseDisabled={setCloseDisabled} />}
+        {selection === "aCar" && (
+          <ACarUpload setCloseDisabled={setCloseDisabled} />
+        )}
       </Card>
 
       {!selection && (

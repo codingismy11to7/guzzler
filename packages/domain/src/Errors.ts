@@ -20,7 +20,9 @@ export class RedactedError extends Schema.TaggedError<RedactedError>()(
       "This is some problem that happened on the server. To report one of these errors, a unique id is provided for administrator analysis.",
   }),
 ) {
-  static readonly logged = (...message: readonly unknown[]): Effect.Effect<never, RedactedError> =>
+  static readonly logged = (
+    ...message: readonly unknown[]
+  ): Effect.Effect<never, RedactedError> =>
     gen(function* () {
       const id = nanoid();
 

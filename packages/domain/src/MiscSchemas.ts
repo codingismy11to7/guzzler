@@ -2,7 +2,9 @@ import { identity, Schema } from "effect";
 
 export const OptionalString = Schema.Trim.pipe(Schema.optional);
 export const OptionalNumber = Schema.Number.pipe(Schema.optional);
-export const OptionalBigDecimal = Schema.OptionFromUndefinedOr(Schema.BigDecimal);
+export const OptionalBigDecimal = Schema.OptionFromUndefinedOr(
+  Schema.BigDecimal,
+);
 
 export const Timestamp = Schema.Int.pipe(Schema.positive());
 

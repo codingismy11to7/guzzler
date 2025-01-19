@@ -4,7 +4,10 @@ export type Xml2JsNode = Readonly<{
   text?: string | undefined;
   children: readonly Xml2JsNode[];
 }>;
-export const emptyXml2JsNode = (name: string, attrs: Record<string, string>): Xml2JsNode => ({
+export const emptyXml2JsNode = (
+  name: string,
+  attrs: Record<string, string>,
+): Xml2JsNode => ({
   name,
   attrs,
   children: [],

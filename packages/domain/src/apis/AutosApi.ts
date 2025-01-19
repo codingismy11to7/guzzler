@@ -1,23 +1,45 @@
-import { HttpApiEndpoint, HttpApiGroup, HttpApiSchema, Multipart } from "@effect/platform";
+import {
+  HttpApiEndpoint,
+  HttpApiGroup,
+  HttpApiSchema,
+  Multipart,
+} from "@effect/platform";
 import { Schema } from "effect";
 import { RequireFullSession } from "../Authentication.js";
 import { RedactedError } from "../Errors.js";
 import { TimeZone } from "../TimeZone.js";
 
-export const WrongFormatErrorType = Schema.Literal("UnexpectedOpeningTag", "ParseError", "MissingBackupFile");
-export class WrongFormatError extends Schema.TaggedError<WrongFormatError>("WrongFormatError")(
+export const WrongFormatErrorType = Schema.Literal(
+  "UnexpectedOpeningTag",
+  "ParseError",
+  "MissingBackupFile",
+);
+export class WrongFormatError extends Schema.TaggedError<WrongFormatError>(
+  "WrongFormatError",
+)(
   "WrongFormatError",
   {
     type: WrongFormatErrorType,
   },
-  HttpApiSchema.annotations({ status: 400, description: "The file wasn't in the format the server expects" }),
+  HttpApiSchema.annotations({
+    status: 400,
+    description: "The file wasn't in the format the server expects",
+  }),
 ) {}
 
-export const FileCorruptedErrorType = Schema.Literal("ZipError", "XmlParsingError");
-export class FileCorruptedError extends Schema.TaggedError<FileCorruptedError>("FileCorruptedError")(
+export const FileCorruptedErrorType = Schema.Literal(
+  "ZipError",
+  "XmlParsingError",
+);
+export class FileCorruptedError extends Schema.TaggedError<FileCorruptedError>(
+  "FileCorruptedError",
+)(
   "FileCorruptedError",
   { type: FileCorruptedErrorType },
-  HttpApiSchema.annotations({ status: 400, description: "The file was corrupted or not a .abp file." }),
+  HttpApiSchema.annotations({
+    status: 400,
+    description: "The file was corrupted or not a .abp file.",
+  }),
 ) {}
 
 export type ImportError = WrongFormatError | FileCorruptedError;

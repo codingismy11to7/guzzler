@@ -14,8 +14,18 @@ const App = lazy(() => import("./App.js"));
 
 const theme = createTheme({
   colorSchemes: {
-    light: { palette: { primary: { main: green[700] }, secondary: { main: orange[700] } } },
-    dark: { palette: { primary: { main: green[700] }, secondary: { main: orange[700] } } },
+    light: {
+      palette: {
+        primary: { main: green[700] },
+        secondary: { main: orange[700] },
+      },
+    },
+    dark: {
+      palette: {
+        primary: { main: green[700] },
+        secondary: { main: orange[700] },
+      },
+    },
   },
 });
 

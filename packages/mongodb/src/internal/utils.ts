@@ -7,7 +7,9 @@ import { MongoError } from "../Model.js";
 export type { RealMongoError as RealMongoError };
 
 export const toMongoErr = Effect.mapError(
-  (e: UnknownException) => new MongoError({ underlying: e.error as RealMongoError }),
+  (e: UnknownException) =>
+    new MongoError({ underlying: e.error as RealMongoError }),
 );
 
-export const mongoEff = <A>(p: LazyArg<Promise<A>>) => pipe(Effect.tryPromise(p), toMongoErr);
+export const mongoEff = <A>(p: LazyArg<Promise<A>>) =>
+  pipe(Effect.tryPromise(p), toMongoErr);

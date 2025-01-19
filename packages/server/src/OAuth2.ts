@@ -11,7 +11,17 @@ import { Cookie, CookiesError } from "@effect/platform/Cookies";
 import { OAuthToken as T, OAuthUserInfo } from "@guzzler/domain";
 import { ObjectUtils } from "@guzzler/utils";
 import { createHash, randomBytes } from "crypto";
-import { Context, Data, Duration, Effect, Layer, Option, pipe, Redacted, Schema } from "effect";
+import {
+  Context,
+  Data,
+  Duration,
+  Effect,
+  Layer,
+  Option,
+  pipe,
+  Redacted,
+  Schema,
+} from "effect";
 import { isFunction } from "effect/Function";
 import { ParseError } from "effect/ParseResult";
 import { isString } from "effect/String";
@@ -31,7 +41,9 @@ export const GoogleConfig: ProviderConfiguration = {
   tokenPath: "/oauth2/v4/token",
 };
 
-export class CouldNotGenerateState extends Data.TaggedError("CouldNotGenerateState")<{ message: string }> {}
+export class CouldNotGenerateState extends Data.TaggedError(
+  "CouldNotGenerateState",
+)<{ message: string }> {}
 
 export type GenerateStateFunction = (
   request: HttpServerRequest.HttpServerRequest,
@@ -39,7 +51,9 @@ export type GenerateStateFunction = (
 
 export type CheckStateFunction = (
   options: OAuth2Options,
-) => (request: HttpServerRequest.HttpServerRequest) => Effect.Effect<void, InvalidState>;
+) => (
+  request: HttpServerRequest.HttpServerRequest,
+) => Effect.Effect<void, InvalidState>;
 
 export type OAuth2Options = Readonly<{
   scope?: string[];
@@ -87,9 +101,13 @@ const defaultCheckStateFunction: CheckStateFunction = options => request => {
   const url = new URL(request.url, "http://localhost");
   const state = url.searchParams.get("state");
   const stateCookie: string | undefined =
-    request.cookies[options.redirectStateCookieName ?? DefaultRedirectStateCookieName];
+    request.cookies[
+      options.redirectStateCookieName ?? DefaultRedirectStateCookieName
+    ];
 
-  return stateCookie && state === stateCookie ? Effect.void : new InvalidState();
+  return stateCookie && state === stateCookie
+    ? Effect.void
+    : new InvalidState();
 };
 
 const getDiscoveryUri = (issuer: string) => {
@@ -107,14 +125,23 @@ const getDiscoveryUri = (issuer: string) => {
   }
 };
 
-const selectPkceFromMetadata = (metadata: Pick<DiscoveredMetadata, "code_challenge_methods_supported">) => {
+const selectPkceFromMetadata = (
+  metadata: Pick<DiscoveredMetadata, "code_challenge_methods_supported">,
+) => {
   const methodsSupported = metadata.code_challenge_methods_supported;
-  return methodsSupported && methodsSupported.length === 1 && methodsSupported.includes("plain") ? "plain" : "S256";
+  return methodsSupported &&
+    methodsSupported.length === 1 &&
+    methodsSupported.includes("plain")
+    ? "plain"
+    : "S256";
 };
 
 const getAuthFromMetadata = (
   metadata: DiscoveredMetadata,
-): (ProviderConfiguration & Pick<DiscoveredMetadata, "code_challenge_methods_supported">) | undefined => {
+):
+  | (ProviderConfiguration &
+      Pick<DiscoveredMetadata, "code_challenge_methods_supported">)
+  | undefined => {
   /* below comments are from RFC 8414 (https://www.rfc-editor.org/rfc/rfc8414.html#section-2) documentation */
 
   /*
@@ -126,7 +153,10 @@ const getAuthFromMetadata = (
   const auth = pipe(
     Option.fromNullable(metadata.authorization_endpoint),
     Option.andThen(formatEndpoint),
-    Option.andThen(({ path, host }) => ({ authorizePath: path, authorizeHost: host })),
+    Option.andThen(({ path, host }) => ({
+      authorizePath: path,
+      authorizeHost: host,
+    })),
   );
   /*
     token_endpoint
@@ -155,16 +185,22 @@ const getAuthFromMetadata = (
       ...c,
       ...Option.getOrUndefined(auth),
       revokePath: Option.getOrUndefined(revokePath),
-      code_challenge_methods_supported: metadata.code_challenge_methods_supported,
+      code_challenge_methods_supported:
+        metadata.code_challenge_methods_supported,
     })),
     Option.getOrUndefined,
   );
 };
 
 const formatEndpoint = (ep: string) =>
-  pipe(new URL(ep), ({ host, protocol, pathname }) => ({ host: `${protocol}//${host}`, path: pathname }));
+  pipe(new URL(ep), ({ host, protocol, pathname }) => ({
+    host: `${protocol}//${host}`,
+    path: pathname,
+  }));
 
-export class InvalidOptions extends Data.TaggedError("InvalidOptions")<{ message: string }> {}
+export class InvalidOptions extends Data.TaggedError("InvalidOptions")<{
+  message: string;
+}> {}
 const invalid = (check: boolean, message: string) =>
   Effect.andThen(
     pipe(
@@ -173,7 +209,9 @@ const invalid = (check: boolean, message: string) =>
     ),
   );
 
-const validateOptions = (options: OAuth2Options): Effect.Effect<void, InvalidOptions> =>
+const validateOptions = (
+  options: OAuth2Options,
+): Effect.Effect<void, InvalidOptions> =>
   pipe(
     Effect.void,
     invalid(
@@ -186,7 +224,9 @@ const validateOptions = (options: OAuth2Options): Effect.Effect<void, InvalidOpt
     ),
   );
 
-export class ExternalError extends Data.TaggedError("ExternalError")<{ underlying: Error }> {}
+export class ExternalError extends Data.TaggedError("ExternalError")<{
+  underlying: Error;
+}> {}
 
 type MethodViaParams = Readonly<{
   method?: HttpMethod.HttpMethod;
@@ -194,23 +234,31 @@ type MethodViaParams = Readonly<{
   params: Record<string, string>;
 }>;
 
-class DiscoveredMetadata extends Schema.Class<DiscoveredMetadata>("DiscoveredMetadata")({
+class DiscoveredMetadata extends Schema.Class<DiscoveredMetadata>(
+  "DiscoveredMetadata",
+)({
   authorization_endpoint: Schema.NonEmptyTrimmedString.pipe(Schema.optional),
   token_endpoint: Schema.NonEmptyTrimmedString.pipe(Schema.optional),
   revocation_endpoint: Schema.NonEmptyTrimmedString.pipe(Schema.optional),
   userinfo_endpoint: Schema.NonEmptyTrimmedString.pipe(Schema.optional),
-  code_challenge_methods_supported: Schema.Array(Schema.NonEmptyTrimmedString).pipe(Schema.optional),
+  code_challenge_methods_supported: Schema.Array(
+    Schema.NonEmptyTrimmedString,
+  ).pipe(Schema.optional),
 }) {}
 
 export class OAuth2 extends Context.Tag("OAuth2")<
   OAuth2,
   Readonly<{
     oauth2: AuthorizationCode;
-    getAccessTokenFromAuthorizationCodeFlow: (request: HttpServerRequest.HttpServerRequest) => Effect.Effect<
+    getAccessTokenFromAuthorizationCodeFlow: (
+      request: HttpServerRequest.HttpServerRequest,
+    ) => Effect.Effect<
       {
         token: T.OAuthToken;
         modifyReply: ReadonlyArray<
-          (resp: HttpServerResponse.HttpServerResponse) => HttpServerResponse.HttpServerResponse
+          (
+            resp: HttpServerResponse.HttpServerResponse,
+          ) => HttpServerResponse.HttpServerResponse
         >;
       },
       InvalidState | Error
@@ -219,37 +267,57 @@ export class OAuth2 extends Context.Tag("OAuth2")<
       refreshToken: T.OAuthToken,
       refreshParams?: {
         scope?: string | string[] | undefined;
-        onlyIfExpiringWithin: Duration.DurationInput | "disableExpirationCheck" | undefined;
+        onlyIfExpiringWithin:
+          | Duration.DurationInput
+          | "disableExpirationCheck"
+          | undefined;
       },
     ) => Effect.Effect<T.OAuthToken, Error | ParseError>;
-    generateAuthorizationUri: (request: HttpServerRequest.HttpServerRequest) => Effect.Effect<
+    generateAuthorizationUri: (
+      request: HttpServerRequest.HttpServerRequest,
+    ) => Effect.Effect<
       {
         authorizeURL: string;
         modifyReply: ReadonlyArray<
           (
             r: HttpServerResponse.HttpServerResponse,
-          ) => Effect.Effect<HttpServerResponse.HttpServerResponse, CookiesError>
+          ) => Effect.Effect<
+            HttpServerResponse.HttpServerResponse,
+            CookiesError
+          >
         >;
       },
       CouldNotGenerateState
     >;
-    revokeToken: (token: T.OAuthToken, tokenType: TokenType) => Effect.Effect<void, Error>;
+    revokeToken: (
+      token: T.OAuthToken,
+      tokenType: TokenType,
+    ) => Effect.Effect<void, Error>;
     revokeAllToken: (token: T.OAuthToken) => Effect.Effect<void, Error>;
     userinfo: (
       tokenSetOrToken: string | Readonly<{ access_token: string }>,
       params?: MethodViaParams,
     ) => Effect.Effect<
       OAuthUserInfo.OAuthUserInfo,
-      InvalidOptions | ExternalError | HttpClientError.HttpClientError | ParseError
+      | InvalidOptions
+      | ExternalError
+      | HttpClientError.HttpClientError
+      | ParseError
     >;
     fetchUserInfo: (
       userinfoEndpoint: URL | string,
       tokenSetOrToken: string | Readonly<{ access_token: string }>,
       params?: MethodViaParams,
-    ) => Effect.Effect<OAuthUserInfo.OAuthUserInfo, ExternalError | HttpClientError.HttpClientError | ParseError>;
+    ) => Effect.Effect<
+      OAuthUserInfo.OAuthUserInfo,
+      ExternalError | HttpClientError.HttpClientError | ParseError
+    >;
     startRedirectHandler: (
       request: HttpServerRequest.HttpServerRequest,
-      initialResponseOptions?: Omit<HttpServerResponse.Options.WithContentType, "status">,
+      initialResponseOptions?: Omit<
+        HttpServerResponse.Options.WithContentType,
+        "status"
+      >,
     ) => Effect.Effect<HttpServerResponse.HttpServerResponse>;
   }>
 >() {}
@@ -263,7 +331,10 @@ export const make = (inputOptions: Omit<OAuth2Options, "credentials">) =>
       const options: OAuth2Options = {
         ...inputOptions,
         credentials: {
-          client: { id: Redacted.value(clientId), secret: Redacted.value(clientSecret) },
+          client: {
+            id: Redacted.value(clientId),
+            secret: Redacted.value(clientSecret),
+          },
           auth: GoogleConfig,
         },
       };
@@ -272,15 +343,23 @@ export const make = (inputOptions: Omit<OAuth2Options, "credentials">) =>
 
       const omitUserAgent = options.userAgent === false;
       const discovery = options.discovery;
-      const userAgent = options.userAgent === false ? undefined : (options.userAgent ?? UserAgent);
+      const userAgent =
+        options.userAgent === false
+          ? undefined
+          : (options.userAgent ?? UserAgent);
 
       const fetchUserInfo = (
         userinfoEndpoint: URL | string,
         tokenSetOrToken: string | Readonly<{ access_token: string }>,
         { method = "GET", via, params = {} }: MethodViaParams = { params: {} },
-      ): Effect.Effect<OAuthUserInfo.OAuthUserInfo, ExternalError | HttpClientError.HttpClientError | ParseError> =>
+      ): Effect.Effect<
+        OAuthUserInfo.OAuthUserInfo,
+        ExternalError | HttpClientError.HttpClientError | ParseError
+      > =>
         Effect.gen(function* () {
-          const token = isString(tokenSetOrToken) ? tokenSetOrToken : tokenSetOrToken.access_token;
+          const token = isString(tokenSetOrToken)
+            ? tokenSetOrToken
+            : tokenSetOrToken.access_token;
           const httpOpts = pipe(
             {
               method,
@@ -294,7 +373,10 @@ export const make = (inputOptions: Omit<OAuth2Options, "credentials">) =>
               !omitUserAgent
                 ? httpOpts
                 : produce(httpOpts, draft => {
-                    draft.headers = ObjectUtils.removeField(draft.headers, "User-Agent");
+                    draft.headers = ObjectUtils.removeField(
+                      draft.headers,
+                      "User-Agent",
+                    );
                   }),
           );
 
@@ -306,7 +388,8 @@ export const make = (inputOptions: Omit<OAuth2Options, "credentials">) =>
                 infoUrl.searchParams.append(k, v);
               });
             } else {
-              httpOpts.headers["Content-Type"] = "application/x-www-form-urlencoded";
+              httpOpts.headers["Content-Type"] =
+                "application/x-www-form-urlencoded";
               const body = new URLSearchParams();
               if (via === "body") {
                 delete httpOpts.headers.Authorization;
@@ -339,7 +422,10 @@ export const make = (inputOptions: Omit<OAuth2Options, "credentials">) =>
 
       const discoverMetadata = (
         issuer: string,
-      ): Effect.Effect<DiscoveredMetadata, ExternalError | HttpClientError.HttpClientError | ParseError> =>
+      ): Effect.Effect<
+        DiscoveredMetadata,
+        ExternalError | HttpClientError.HttpClientError | ParseError
+      > =>
         pipe(
           pipe(
             {
@@ -352,19 +438,31 @@ export const make = (inputOptions: Omit<OAuth2Options, "credentials">) =>
               !omitUserAgent
                 ? httpOpts
                 : produce(httpOpts, draft => {
-                    draft.headers = ObjectUtils.removeField(draft.headers, "User-Agent");
+                    draft.headers = ObjectUtils.removeField(
+                      draft.headers,
+                      "User-Agent",
+                    );
                   }),
           ),
-          httpOpts => httpClient.execute(HttpClientRequest.make("GET")(getDiscoveryUri(issuer), httpOpts)),
+          httpOpts =>
+            httpClient.execute(
+              HttpClientRequest.make("GET")(getDiscoveryUri(issuer), httpOpts),
+            ),
           Effect.andThen(resp => resp.text),
           Effect.scoped,
           Effect.andThen(respBody =>
-            Effect.try({ try: () => JSON.parse(respBody), catch: e => new ExternalError({ underlying: e as Error }) }),
+            Effect.try({
+              try: () => JSON.parse(respBody),
+              catch: e => new ExternalError({ underlying: e as Error }),
+            }),
           ),
           Effect.andThen(Schema.decodeUnknown(DiscoveredMetadata)),
         );
 
-      const configure = (configured: OAuth2Options, fetchedMetadata?: DiscoveredMetadata): OAuth2Type => {
+      const configure = (
+        configured: OAuth2Options,
+        fetchedMetadata?: DiscoveredMetadata,
+      ): OAuth2Type => {
         const {
           callbackUri,
           callbackUriParams = {},
@@ -388,35 +486,62 @@ export const make = (inputOptions: Omit<OAuth2Options, "credentials">) =>
               }),
         );
 
-        const cookieOpts = Object.assign({ httpOnly: true, sameSite: "lax" }, options.cookie);
+        const cookieOpts = Object.assign(
+          { httpOnly: true, sameSite: "lax" },
+          options.cookie,
+        );
 
-        const generateAuthorizationUri = (request: HttpServerRequest.HttpServerRequest) =>
+        const generateAuthorizationUri = (
+          request: HttpServerRequest.HttpServerRequest,
+        ) =>
           Effect.gen(function* () {
-            const state = yield* pipe(generateStateFunction(request), e => (isString(e) ? Effect.succeed(e) : e));
+            const state = yield* pipe(generateStateFunction(request), e =>
+              isString(e) ? Effect.succeed(e) : e,
+            );
 
             let modifyReply: ReadonlyArray<
               (
                 r: HttpServerResponse.HttpServerResponse,
-              ) => Effect.Effect<HttpServerResponse.HttpServerResponse, CookiesError>
+              ) => Effect.Effect<
+                HttpServerResponse.HttpServerResponse,
+                CookiesError
+              >
             > = [];
-            modifyReply = [...modifyReply, HttpServerResponse.setCookie(redirectStateCookieName, state, cookieOpts)];
+            modifyReply = [
+              ...modifyReply,
+              HttpServerResponse.setCookie(
+                redirectStateCookieName,
+                state,
+                cookieOpts,
+              ),
+            ];
 
             // when PKCE extension is used
             let pkceParams = {};
             if (configured.pkce) {
               const verifier = codeVerifier();
-              const challenge = configured.pkce === "S256" ? codeChallenge(verifier) : verifier;
+              const challenge =
+                configured.pkce === "S256" ? codeChallenge(verifier) : verifier;
               pkceParams = {
                 code_challenge: challenge,
                 code_challenge_method: configured.pkce,
               };
-              modifyReply = [...modifyReply, HttpServerResponse.setCookie(verifierCookieName, verifier, cookieOpts)];
+              modifyReply = [
+                ...modifyReply,
+                HttpServerResponse.setCookie(
+                  verifierCookieName,
+                  verifier,
+                  cookieOpts,
+                ),
+              ];
             }
 
             const authorizeURL = oauth2.authorizeURL({
               ...callbackUriParams,
               ...{
-                redirect_uri: isFunction(callbackUri) ? callbackUri(request) : callbackUri,
+                redirect_uri: isFunction(callbackUri)
+                  ? callbackUri(request)
+                  : callbackUri,
                 scope,
                 state,
               },
@@ -427,23 +552,33 @@ export const make = (inputOptions: Omit<OAuth2Options, "credentials">) =>
 
         const startRedirectHandler = (
           request: HttpServerRequest.HttpServerRequest,
-          initialResponseOptions?: Omit<HttpServerResponse.Options.WithContentType, "status">,
+          initialResponseOptions?: Omit<
+            HttpServerResponse.Options.WithContentType,
+            "status"
+          >,
         ) =>
           pipe(
             generateAuthorizationUri(request),
             Effect.andThen(({ authorizeURL, modifyReply }) =>
               Effect.reduce(
                 modifyReply,
-                HttpServerResponse.redirect(authorizeURL, { ...initialResponseOptions, status: 303 }),
+                HttpServerResponse.redirect(authorizeURL, {
+                  ...initialResponseOptions,
+                  status: 303,
+                }),
                 (acc, m) => m(acc),
               ),
             ),
-            Effect.catchAll(e => HttpServerResponse.text(e.message, { status: 500 })),
+            Effect.catchAll(e =>
+              HttpServerResponse.text(e.message, { status: 500 }),
+            ),
           );
 
         const checkStateFunctionConfigured = checkStateFunction(configured);
 
-        const getAccessTokenFromAuthorizationCodeFlow = (request: HttpServerRequest.HttpServerRequest) =>
+        const getAccessTokenFromAuthorizationCodeFlow = (
+          request: HttpServerRequest.HttpServerRequest,
+        ) =>
           Effect.gen(function* () {
             const code = yield* pipe(
               stringQueryParam("code")(request),
@@ -452,10 +587,16 @@ export const make = (inputOptions: Omit<OAuth2Options, "credentials">) =>
               ),
             );
 
-            const pkceParams = { code_verifier: configured.pkce ? request.cookies[verifierCookieName] : undefined };
+            const pkceParams = {
+              code_verifier: configured.pkce
+                ? request.cookies[verifierCookieName]
+                : undefined,
+            };
 
             let modifyReply: ReadonlyArray<
-              (resp: HttpServerResponse.HttpServerResponse) => HttpServerResponse.HttpServerResponse
+              (
+                resp: HttpServerResponse.HttpServerResponse,
+              ) => HttpServerResponse.HttpServerResponse
             > = [];
             // cleanup a cookie if plugin user uses (req, res, cb) signature variant of getAccessToken fn
             modifyReply = [...modifyReply, clearCodeVerifierCookie];
@@ -466,7 +607,12 @@ export const make = (inputOptions: Omit<OAuth2Options, "credentials">) =>
               Effect.tryPromise(() =>
                 oauth2.getToken({
                   ...tokenRequestParams,
-                  ...{ code, redirect_uri: isFunction(callbackUri) ? callbackUri(request) : callbackUri },
+                  ...{
+                    code,
+                    redirect_uri: isFunction(callbackUri)
+                      ? callbackUri(request)
+                      : callbackUri,
+                  },
                   ...pkceParams,
                 }),
               ),
@@ -480,17 +626,32 @@ export const make = (inputOptions: Omit<OAuth2Options, "credentials">) =>
           token: T.OAuthToken,
           refreshParams?: {
             scope?: string | string[] | undefined;
-            onlyIfExpiringWithin: Duration.DurationInput | "disableExpirationCheck" | undefined;
+            onlyIfExpiringWithin:
+              | Duration.DurationInput
+              | "disableExpirationCheck"
+              | undefined;
           },
         ) =>
           pipe(oauth2.createToken({ ...token }), accessToken =>
             refreshParams?.onlyIfExpiringWithin !== "disableExpirationCheck" &&
-            accessToken.expired(Duration.toSeconds(refreshParams?.onlyIfExpiringWithin ?? Duration.seconds(30)))
+            accessToken.expired(
+              Duration.toSeconds(
+                refreshParams?.onlyIfExpiringWithin ?? Duration.seconds(30),
+              ),
+            )
               ? pipe(
                   Effect.logWarning("SENDING REFRESH"),
-                  Effect.andThen(Effect.tryPromise(() => accessToken.refresh({ scope: refreshParams?.scope }))),
-                  Effect.catchTag("UnknownException", e => Effect.fail(e.error as Error)),
-                  Effect.andThen(a => Schema.decodeUnknown(T.OAuthToken)(a.token)),
+                  Effect.andThen(
+                    Effect.tryPromise(() =>
+                      accessToken.refresh({ scope: refreshParams?.scope }),
+                    ),
+                  ),
+                  Effect.catchTag("UnknownException", e =>
+                    Effect.fail(e.error as Error),
+                  ),
+                  Effect.andThen(a =>
+                    Schema.decodeUnknown(T.OAuthToken)(a.token),
+                  ),
                 )
               : Effect.succeed(token),
           );
@@ -498,46 +659,71 @@ export const make = (inputOptions: Omit<OAuth2Options, "credentials">) =>
         const revokeToken = (token: T.OAuthToken, tokenType: TokenType) =>
           pipe(
             oauth2.createToken({ ...token }),
-            accessToken => Effect.tryPromise(() => accessToken.revoke(tokenType)),
-            Effect.catchTag("UnknownException", e => Effect.fail(e.error as Error)),
+            accessToken =>
+              Effect.tryPromise(() => accessToken.revoke(tokenType)),
+            Effect.catchTag("UnknownException", e =>
+              Effect.fail(e.error as Error),
+            ),
           );
 
         const revokeAllToken = (token: T.OAuthToken) =>
           pipe(
             oauth2.createToken({ ...token }),
             accessToken => Effect.tryPromise(() => accessToken.revokeAll()),
-            Effect.catchTag("UnknownException", e => Effect.fail(e.error as Error)),
+            Effect.catchTag("UnknownException", e =>
+              Effect.fail(e.error as Error),
+            ),
           );
 
-        const clearCodeVerifierCookie = HttpServerResponse.removeCookie(verifierCookieName);
+        const clearCodeVerifierCookie =
+          HttpServerResponse.removeCookie(verifierCookieName);
 
         const userinfo = (
           tokenSetOrToken: string | Readonly<{ access_token: string }>,
-          { method = "GET", via = "header", params = {} }: MethodViaParams = { params: {} },
+          { method = "GET", via = "header", params = {} }: MethodViaParams = {
+            params: {},
+          },
         ) =>
           Effect.gen(function* () {
             if (!configured.discovery) {
-              yield* new InvalidOptions({ message: "userinfo can not be used without discovery" });
+              yield* new InvalidOptions({
+                message: "userinfo can not be used without discovery",
+              });
             }
             if (!["GET", "POST"].includes(method)) {
-              yield* new InvalidOptions({ message: "userinfo methods supported are only GET and POST" });
+              yield* new InvalidOptions({
+                message: "userinfo methods supported are only GET and POST",
+              });
             }
 
             if (method === "GET" && via === "body") {
-              yield* new InvalidOptions({ message: "body is supported only with POST" });
+              yield* new InvalidOptions({
+                message: "body is supported only with POST",
+              });
             }
 
-            const token = isString(tokenSetOrToken) ? tokenSetOrToken : tokenSetOrToken.access_token;
+            const token = isString(tokenSetOrToken)
+              ? tokenSetOrToken
+              : tokenSetOrToken.access_token;
 
             const endpoint = yield* pipe(
               Option.fromNullable(fetchedMetadata?.userinfo_endpoint),
               Effect.catchTag(
                 "NoSuchElementException",
-                () => new ExternalError({ underlying: new Error("No discovered metadata or no userinfo endpoint") }),
+                () =>
+                  new ExternalError({
+                    underlying: new Error(
+                      "No discovered metadata or no userinfo endpoint",
+                    ),
+                  }),
               ),
             );
 
-            return yield* fetchUserInfo(endpoint, token, { method, params, via });
+            return yield* fetchUserInfo(endpoint, token, {
+              method,
+              params,
+              via,
+            });
           });
 
         const oauth2 = new AuthorizationCode(configured.credentials);
@@ -559,7 +745,8 @@ export const make = (inputOptions: Omit<OAuth2Options, "credentials">) =>
 
       const { discoveredOptions, fetchedMetadata } = yield* (() =>
         Effect.gen(function* () {
-          if (!discovery) return { discoveredOptions: options, fetchedMetadata: undefined };
+          if (!discovery)
+            return { discoveredOptions: options, fetchedMetadata: undefined };
           else {
             const fetchedMetadata = yield* discoverMetadata(discovery.issuer);
             const authFromMetadata = getAuthFromMetadata(fetchedMetadata);

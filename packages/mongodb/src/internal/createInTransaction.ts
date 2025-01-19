@@ -12,12 +12,19 @@ import {
 import { MongoError } from "../Model.js";
 
 /** @internal */
-export class MongoTxnCtx extends Context.Tag("MongoTxnCtx")<MongoTxnCtx, ClientSession>() {}
+export class MongoTxnCtx extends Context.Tag("MongoTxnCtx")<
+  MongoTxnCtx,
+  ClientSession
+>() {}
 
-const provideSession = (session: ClientSession) => Effect.provideService(MongoTxnCtx, session);
+const provideSession = (session: ClientSession) =>
+  Effect.provideService(MongoTxnCtx, session);
 
 export const createInTransaction =
-  <CommitErr>(client: MongoClient, handleCommitErr: (err: MongoError) => Effect.Effect<never, CommitErr>) =>
+  <CommitErr>(
+    client: MongoClient,
+    handleCommitErr: (err: MongoError) => Effect.Effect<never, CommitErr>,
+  ) =>
   (
     startSessionOptions?: ClientSessionOptions,
     endSessionOptions?: EndSessionOptions,
@@ -25,7 +32,9 @@ export const createInTransaction =
   ) =>
   <A, E, R>(e: Effect.Effect<A, E, R>): Effect.Effect<A, E | CommitErr, R> =>
     gen(function* () {
-      const alreadyInTxn = Option.isSome(yield* Effect.serviceOption(MongoTxnCtx));
+      const alreadyInTxn = Option.isSome(
+        yield* Effect.serviceOption(MongoTxnCtx),
+      );
       if (alreadyInTxn) return yield* e;
 
       const session = yield* Effect.acquireRelease(
@@ -37,30 +46,45 @@ export const createInTransaction =
           ),
       );
 
-      const collectErrors = (c: Cause.Cause<unknown>) => Chunk.appendAll(Cause.failures(c), Cause.defects(c));
+      const collectErrors = (c: Cause.Cause<unknown>) =>
+        Chunk.appendAll(Cause.failures(c), Cause.defects(c));
 
       // rip code from the mongo node driver docs below
 
       const doCommit: Effect.Effect<void, CommitErr> = pipe(
-        Effect.tryPromise({ try: () => session.commitTransaction(), catch: e => e as RealMongoError }),
+        Effect.tryPromise({
+          try: () => session.commitTransaction(),
+          catch: e => e as RealMongoError,
+        }),
         Effect.catchAll(e =>
-          e instanceof MongoServerError && e.hasErrorLabel("UnknownTransactionCommitResult")
+          e instanceof MongoServerError &&
+          e.hasErrorLabel("UnknownTransactionCommitResult")
             ? doCommit
             : handleCommitErr(new MongoError({ underlying: e })),
         ),
       );
 
-      const isRetryable = (i: unknown) => i instanceof MongoServerError && i.hasErrorLabel("TransientTransactionError");
+      const isRetryable = (i: unknown) =>
+        i instanceof MongoServerError &&
+        i.hasErrorLabel("TransientTransactionError");
       const isRetryableWrapped = (i: unknown) =>
-        isRetryable(i) || (i instanceof MongoError && isRetryable(i.underlying));
+        isRetryable(i) ||
+        (i instanceof MongoError && isRetryable(i.underlying));
 
-      const runTxnWithRetry = <A, E, R>(e: Effect.Effect<A, E, R>): Effect.Effect<A, E, R> =>
+      const runTxnWithRetry = <A, E, R>(
+        e: Effect.Effect<A, E, R>,
+      ): Effect.Effect<A, E, R> =>
         gen(function* () {
           const exit = yield* e.pipe(Effect.exit);
           if (Exit.isSuccess(exit)) return exit.value;
           else {
-            const shouldRetry = Chunk.some(collectErrors(exit.cause), isRetryableWrapped);
-            return yield* shouldRetry ? runTxnWithRetry(e) : Effect.failCause(exit.cause);
+            const shouldRetry = Chunk.some(
+              collectErrors(exit.cause),
+              isRetryableWrapped,
+            );
+            return yield* shouldRetry
+              ? runTxnWithRetry(e)
+              : Effect.failCause(exit.cause);
           }
         });
 
@@ -72,7 +96,9 @@ export const createInTransaction =
 
           yield* pipe(
             doCommit,
-            Effect.tapError(() => Effect.promise(() => session.abortTransaction())),
+            Effect.tapError(() =>
+              Effect.promise(() => session.abortTransaction()),
+            ),
           );
 
           return ret;

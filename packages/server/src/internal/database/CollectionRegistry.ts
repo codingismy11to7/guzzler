@@ -1,5 +1,10 @@
 import { Todo } from "@guzzler/domain/apis/TodosApi";
-import { UserTypes, UserVehicles, VehicleEventRecord, VehicleFillupRecord } from "@guzzler/domain/Autos";
+import {
+  UserTypes,
+  UserVehicles,
+  VehicleEventRecord,
+  VehicleFillupRecord,
+} from "@guzzler/domain/Autos";
 import { Session } from "@guzzler/domain/Session";
 import { User } from "@guzzler/domain/User";
 import { MongoCollectionLayer } from "@guzzler/mongodb/MongoCollection";
@@ -25,4 +30,7 @@ export class CollectionRegistry extends Context.Tag("CollectionRegistry")<
   Effect.Effect.Success<typeof collections>
 >() {}
 
-export const CollectionRegistryLive = Layer.effect(CollectionRegistry, collections);
+export const CollectionRegistryLive = Layer.effect(
+  CollectionRegistry,
+  collections,
+);

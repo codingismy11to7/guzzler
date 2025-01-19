@@ -53,17 +53,26 @@ type DbSchema<SchemaT extends AnySchema> = Schema.Schema.Encoded<SchemaT>;
 // this type is the instantiated Schema object, with type {a: X, B: Redacted<Y>}
 type MemSchema<SchemaT extends AnySchema> = Schema.Schema.Type<SchemaT>;
 
-export type MongoCollection<CName extends string, SchemaT extends AnySchema> = Readonly<{
+export type MongoCollection<
+  CName extends string,
+  SchemaT extends AnySchema,
+> = Readonly<{
   name: CName;
   schema: SchemaT;
   connection: Collection<DbSchema<SchemaT>>;
-  sortBy: (field: keyof DbSchema<SchemaT>, order: "asc" | "desc") => Model.SortParam<SchemaT>;
+  sortBy: (
+    field: keyof DbSchema<SchemaT>,
+    order: "asc" | "desc",
+  ) => Model.SortParam<SchemaT>;
 
   countRaw: (
     filter?: Filter<MemSchema<SchemaT>>,
     options?: CountDocumentsOptions,
   ) => Effect.Effect<number, MongoError | SchemaMismatch>;
-  count: (filter?: Filter<MemSchema<SchemaT>>, options?: CountDocumentsOptions) => Effect.Effect<number>;
+  count: (
+    filter?: Filter<MemSchema<SchemaT>>,
+    options?: CountDocumentsOptions,
+  ) => Effect.Effect<number>;
 
   findOneRaw: (
     filter?: Filter<MemSchema<SchemaT>>,
@@ -77,7 +86,10 @@ export type MongoCollection<CName extends string, SchemaT extends AnySchema> = R
   findRaw: (
     filter?: Filter<MemSchema<SchemaT>>,
     options?: FindOptions,
-  ) => Effect.Effect<FindResult<MemSchema<SchemaT>, DbSchema<SchemaT>>, SchemaMismatch>;
+  ) => Effect.Effect<
+    FindResult<MemSchema<SchemaT>, DbSchema<SchemaT>>,
+    SchemaMismatch
+  >;
   find: (
     filter?: Filter<MemSchema<SchemaT>>,
     options?: FindOptions,
@@ -86,7 +98,10 @@ export type MongoCollection<CName extends string, SchemaT extends AnySchema> = R
   insertOneRaw: (
     doc: MemSchema<SchemaT>,
     options?: InsertOneOptions,
-  ) => Effect.Effect<InsertOneResult<DbSchema<SchemaT>>, MongoError | SchemaMismatch>;
+  ) => Effect.Effect<
+    InsertOneResult<DbSchema<SchemaT>>,
+    MongoError | SchemaMismatch
+  >;
   insertOne: (
     doc: MemSchema<SchemaT>,
     options?: InsertOneOptions,
@@ -96,7 +111,10 @@ export type MongoCollection<CName extends string, SchemaT extends AnySchema> = R
     filter: Filter<MemSchema<SchemaT>>,
     replacement: MemSchema<SchemaT>,
     options?: ReplaceOptions,
-  ) => Effect.Effect<UpdateResult<DbSchema<SchemaT>> | Document, MongoError | SchemaMismatch>;
+  ) => Effect.Effect<
+    UpdateResult<DbSchema<SchemaT>> | Document,
+    MongoError | SchemaMismatch
+  >;
   replaceOne: (
     filter: Filter<MemSchema<SchemaT>>,
     replacement: MemSchema<SchemaT>,
@@ -121,7 +139,10 @@ export type MongoCollection<CName extends string, SchemaT extends AnySchema> = R
     filter: Filter<MemSchema<SchemaT>>,
     fields: Partial<MemSchema<SchemaT>>,
     options?: UpdateOptions,
-  ) => Effect.Effect<UpdateResult<DbSchema<SchemaT>>, MongoError | SchemaMismatch>;
+  ) => Effect.Effect<
+    UpdateResult<DbSchema<SchemaT>>,
+    MongoError | SchemaMismatch
+  >;
   setFieldsOne: (
     filter: Filter<MemSchema<SchemaT>>,
     fields: Partial<MemSchema<SchemaT>>,
@@ -132,7 +153,10 @@ export type MongoCollection<CName extends string, SchemaT extends AnySchema> = R
     filter: Filter<MemSchema<SchemaT>>,
     replacement: MemSchema<SchemaT>,
     options?: Omit<ReplaceOptions, "upsert">,
-  ) => Effect.Effect<UpdateResult<DbSchema<SchemaT>> | Document, MongoError | SchemaMismatch>;
+  ) => Effect.Effect<
+    UpdateResult<DbSchema<SchemaT>> | Document,
+    MongoError | SchemaMismatch
+  >;
   upsert: (
     filter: Filter<MemSchema<SchemaT>>,
     replacement: MemSchema<SchemaT>,
@@ -143,13 +167,19 @@ export type MongoCollection<CName extends string, SchemaT extends AnySchema> = R
     filter?: Filter<MemSchema<SchemaT>>,
     options?: DeleteOptions,
   ) => Effect.Effect<DeleteResult, MongoError | SchemaMismatch>;
-  deleteOne: (filter?: Filter<MemSchema<SchemaT>>, options?: DeleteOptions) => Effect.Effect<DeleteResult>;
+  deleteOne: (
+    filter?: Filter<MemSchema<SchemaT>>,
+    options?: DeleteOptions,
+  ) => Effect.Effect<DeleteResult>;
 
   deleteManyRaw: (
     filter?: Filter<MemSchema<SchemaT>>,
     options?: DeleteOptions,
   ) => Effect.Effect<DeleteResult, MongoError | SchemaMismatch>;
-  deleteMany: (filter?: Filter<MemSchema<SchemaT>>, options?: DeleteOptions) => Effect.Effect<DeleteResult>;
+  deleteMany: (
+    filter?: Filter<MemSchema<SchemaT>>,
+    options?: DeleteOptions,
+  ) => Effect.Effect<DeleteResult>;
 }>;
 
 // TODO lots more to add
@@ -159,19 +189,25 @@ export type FindResult<MemSchema, DbSchema> = Readonly<{
   toArray: Effect.Effect<readonly MemSchema[]>;
 }>;
 
-export class MongoCollectionLayer extends Effect.Service<MongoCollectionLayer>()("MongoCollectionLayer", {
-  accessors: true,
-  effect: Effect.gen(function* () {
-    const db = yield* MongoDatabaseLayer;
+export class MongoCollectionLayer extends Effect.Service<MongoCollectionLayer>()(
+  "MongoCollectionLayer",
+  {
+    accessors: true,
+    effect: Effect.gen(function* () {
+      const db = yield* MongoDatabaseLayer;
 
-    const RegistryCreator = {
-      collection: <CName extends string, SchemaT extends AnySchema>(
-        collectionName: CName,
-        schema: SchemaT,
-      ): MongoCollection<CName, SchemaT> => internal.make(db, collectionName, schema),
-    };
-    const createCollectionRegistry = <T>(f: (creator: typeof RegistryCreator) => T) => f(RegistryCreator);
+      const RegistryCreator = {
+        collection: <CName extends string, SchemaT extends AnySchema>(
+          collectionName: CName,
+          schema: SchemaT,
+        ): MongoCollection<CName, SchemaT> =>
+          internal.make(db, collectionName, schema),
+      };
+      const createCollectionRegistry = <T>(
+        f: (creator: typeof RegistryCreator) => T,
+      ) => f(RegistryCreator);
 
-    return { createCollectionRegistry };
-  }),
-}) {}
+      return { createCollectionRegistry };
+    }),
+  },
+) {}

@@ -58,11 +58,31 @@ const MongoConfig = Config.all({
 });
 
 const ConfigSchema = {
-  port: Schema.Config("PORT", Schema.NumberFromString.pipe(Schema.filter(i => i >= 0 || "port cannot be negative"))),
+  port: Schema.Config(
+    "PORT",
+    Schema.NumberFromString.pipe(
+      Schema.filter(i => i >= 0 || "port cannot be negative"),
+    ),
+  ),
   logLevel: Config.logLevel("LOG_LEVEL"),
-  serveOpenapiAt: Config.option(Schema.Config("SERVE_OPENAPI_AT", Schema.TemplateLiteral("/", Schema.String))),
-  serveScalarUiAt: Config.option(Schema.Config("SERVE_SCALAR_UI_AT", Schema.TemplateLiteral("/", Schema.String))),
-  serveSwaggerUiAt: Config.option(Schema.Config("SERVE_SWAGGER_UI_AT", Schema.TemplateLiteral("/", Schema.String))),
+  serveOpenapiAt: Config.option(
+    Schema.Config(
+      "SERVE_OPENAPI_AT",
+      Schema.TemplateLiteral("/", Schema.String),
+    ),
+  ),
+  serveScalarUiAt: Config.option(
+    Schema.Config(
+      "SERVE_SCALAR_UI_AT",
+      Schema.TemplateLiteral("/", Schema.String),
+    ),
+  ),
+  serveSwaggerUiAt: Config.option(
+    Schema.Config(
+      "SERVE_SWAGGER_UI_AT",
+      Schema.TemplateLiteral("/", Schema.String),
+    ),
+  ),
   webuiRoot: Schema.Config("WEBUI_DIR", Schema.NonEmptyTrimmedString).pipe(c =>
     Effect.runSync(prodModeConf) ? c : Config.withDefault(c, ""),
   ),
@@ -90,4 +110,7 @@ export const AppConfigLive = Layer.effect(
     Effect.all(ConfigSchema),
     Effect.andThen(conf => AppConfig.make(conf)),
   ),
-).pipe(Layer.provideMerge(ProdMode.Default), Layer.provideMerge(ServerInfo.Default));
+).pipe(
+  Layer.provideMerge(ProdMode.Default),
+  Layer.provideMerge(ServerInfo.Default),
+);

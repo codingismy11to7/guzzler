@@ -10,8 +10,12 @@ const TodoWithoutId = Schema.Struct({
   done: Schema.Boolean,
 });
 export const OptionalTodoWithoutId = Schema.Struct({
-  text: Schema.NonEmptyTrimmedString.pipe(Schema.optionalWith({ exact: true, nullable: true })),
-  done: Schema.Boolean.pipe(Schema.optionalWith({ exact: true, nullable: true })),
+  text: Schema.NonEmptyTrimmedString.pipe(
+    Schema.optionalWith({ exact: true, nullable: true }),
+  ),
+  done: Schema.Boolean.pipe(
+    Schema.optionalWith({ exact: true, nullable: true }),
+  ),
 });
 export type OptionalTodoWithoutId = typeof OptionalTodoWithoutId.Type;
 
@@ -21,9 +25,10 @@ export const Todo = Schema.Struct({
 });
 export type Todo = typeof Todo.Type;
 
-export class TodoNotFound extends Schema.TaggedError<TodoNotFound>()("TodoNotFound", {
-  id: Schema.String,
-}) {}
+export class TodoNotFound extends Schema.TaggedError<TodoNotFound>()(
+  "TodoNotFound",
+  { id: Schema.String },
+) {}
 
 export class TodosApiGroup extends HttpApiGroup.make("todos")
   .add(HttpApiEndpoint.get("getAllTodos", "/").addSuccess(Schema.Array(Todo)))

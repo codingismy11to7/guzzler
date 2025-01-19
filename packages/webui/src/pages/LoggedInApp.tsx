@@ -55,9 +55,14 @@ const StyledFab = styled(Fab)({
 const drawerWidth = 270;
 const drawerBleeding = 50;
 
-const iOS = typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
+const iOS =
+  typeof navigator !== "undefined" &&
+  /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-const BottomAppBar = ({ route, children }: { route: PagesRoute } & PropsWithChildren) => {
+const BottomAppBar = ({
+  route,
+  children,
+}: { route: PagesRoute } & PropsWithChildren) => {
   const { t } = useTranslation();
   const theme = useTheme();
 
@@ -68,7 +73,10 @@ const BottomAppBar = ({ route, children }: { route: PagesRoute } & PropsWithChil
   const onImportClick = (closeMenu: LazyArg<void>) => () => {
     closeMenu();
     setOpen(false);
-    setTimeout(() => routes.ImportExport().push(), theme.transitions.duration.standard);
+    setTimeout(
+      () => routes.ImportExport().push(),
+      theme.transitions.duration.standard,
+    );
   };
 
   const title = Match.value(route).pipe(
@@ -82,7 +90,12 @@ const BottomAppBar = ({ route, children }: { route: PagesRoute } & PropsWithChil
     <>
       <Paper square elevation={10} sx={{ height: "100vh", pb: "50px" }}>
         <Paper square elevation={1} sx={{ pb: 1 }}>
-          <Typography variant="h5" gutterBottom component="div" sx={{ p: 2, pb: 0 }}>
+          <Typography
+            variant="h5"
+            gutterBottom
+            component="div"
+            sx={{ p: 2, pb: 0 }}
+          >
             {title}
           </Typography>
         </Paper>
@@ -93,7 +106,11 @@ const BottomAppBar = ({ route, children }: { route: PagesRoute } & PropsWithChil
       <AppBar
         position="fixed"
         color="primary"
-        sx={{ top: "auto", bottom: 0, zIndex: theme => 1 + theme.zIndex.drawer }}
+        sx={{
+          top: "auto",
+          bottom: 0,
+          zIndex: theme => 1 + theme.zIndex.drawer,
+        }}
       >
         <Toolbar>
           <IconButton color="inherit">
@@ -106,12 +123,20 @@ const BottomAppBar = ({ route, children }: { route: PagesRoute } & PropsWithChil
             <AddIcon />
           </StyledFab>
           <Box sx={{ flexGrow: 1 }} />
-          <IconButton color="inherit" aria-label="open drawer" onClick={() => setOpen(o => !o)}>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            onClick={() => setOpen(o => !o)}
+          >
             <MenuIcon />
           </IconButton>
         </Toolbar>
       </AppBar>
-      <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }} aria-label="navigation drawer">
+      <Box
+        component="nav"
+        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+        aria-label="navigation drawer"
+      >
         <SwipeableDrawer
           disableDiscovery={iOS}
           ModalProps={{ keepMounted: true }}
@@ -122,7 +147,12 @@ const BottomAppBar = ({ route, children }: { route: PagesRoute } & PropsWithChil
           onClose={() => setOpen(false)}
           elevation={1}
           swipeAreaWidth={drawerBleeding}
-          sx={{ "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth } }}
+          sx={{
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+              width: drawerWidth,
+            },
+          }}
           PaperProps={{ elevation: 1, sx: {} }}
         >
           <Card elevation={0}>
@@ -161,7 +191,9 @@ const BottomAppBar = ({ route, children }: { route: PagesRoute } & PropsWithChil
             {["Nav 1", "Nav 2"].map((text, index) => (
               <ListItem key={text} disablePadding>
                 <ListItemButton>
-                  <ListItemIcon>{index % 2 === 0 ? <Logout /> : <Settings />}</ListItemIcon>
+                  <ListItemIcon>
+                    {index % 2 === 0 ? <Logout /> : <Settings />}
+                  </ListItemIcon>
                   <ListItemText primary={text} />
                 </ListItemButton>
               </ListItem>

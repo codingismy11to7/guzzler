@@ -20,7 +20,15 @@ export type SessionInfo = typeof SessionInfo.Type;
 export const Logout = "logout";
 
 export class SessionApi extends HttpApiGroup.make("session")
-  .add(HttpApiEndpoint.get("getSessionInfo", "/info").addSuccess(SessionInfo).addError(Unauthorized))
-  .add(HttpApiEndpoint.get(Logout, "/logout").addSuccess(Schema.Void, { status: 303 }))
+  .add(
+    HttpApiEndpoint.get("getSessionInfo", "/info")
+      .addSuccess(SessionInfo)
+      .addError(Unauthorized),
+  )
+  .add(
+    HttpApiEndpoint.get(Logout, "/logout").addSuccess(Schema.Void, {
+      status: 303,
+    }),
+  )
   .middleware(RawSessionAccess_DoNotUse)
   .prefix("/session") {}

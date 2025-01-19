@@ -1,9 +1,18 @@
-import { Route, createRouter, defineRoute, param, createGroup } from "type-route";
+import {
+  Route,
+  createRouter,
+  defineRoute,
+  param,
+  createGroup,
+} from "type-route";
 
 const Signup = defineRoute("/signup");
 const SignupRoutes = {
   Signup,
-  SignupConfirm: Signup.extend({ username: param.path.string }, p => `/confirm/${p.username}`),
+  SignupConfirm: Signup.extend(
+    { username: param.path.string },
+    p => `/confirm/${p.username}`,
+  ),
 } as const;
 
 const Home = defineRoute("/");
