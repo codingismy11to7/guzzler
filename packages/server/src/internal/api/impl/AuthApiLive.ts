@@ -4,7 +4,11 @@ import { StartGoogleLogin } from "@guzzler/domain/apis/AuthApi";
 import { AppApi } from "@guzzler/domain/AppApi";
 import { SessionCookieName } from "@guzzler/domain/Authentication";
 import { RedactedError } from "@guzzler/domain/Errors";
-import { SessionId, UnknownUserSession, UserSession } from "@guzzler/domain/Session";
+import {
+  SessionId,
+  UnknownUserSession,
+  UserSession,
+} from "@guzzler/domain/Session";
 import { UserId } from "@guzzler/domain/User";
 import { Effect, pipe, Redacted, Struct } from "effect";
 import { nanoid } from "nanoid";
@@ -23,26 +27,44 @@ export const AuthApiLive = HttpApiBuilder.group(AppApi, "auth", handlers =>
     const { addSession } = yield* SessionStorage;
     const { getUser, updateUserInfo } = yield* Users;
     const { userinfoUrl } = yield* AppConfig.googleOAuth;
-    const { startRedirectHandler, getAccessTokenFromAuthorizationCodeFlow, fetchUserInfo } = yield* OAuth2;
+    const {
+      startRedirectHandler,
+      getAccessTokenFromAuthorizationCodeFlow,
+      fetchUserInfo,
+    } = yield* OAuth2;
 
     return handlers
-      .handleRaw(StartGoogleLogin, () => HttpServerRequest.pipe(Effect.andThen(req => startRedirectHandler(req))))
+      .handleRaw(StartGoogleLogin, () =>
+        HttpServerRequest.pipe(
+          Effect.andThen(req => startRedirectHandler(req)),
+        ),
+      )
       .handleRaw("oAuthCallback", () =>
         pipe(
           Effect.gen(function* () {
             const req = yield* HttpServerRequest;
-            const { token, modifyReply } = yield* getAccessTokenFromAuthorizationCodeFlow(req);
+            const { token, modifyReply } =
+              yield* getAccessTokenFromAuthorizationCodeFlow(req);
 
             yield* Effect.logDebug("received accessToken");
 
-            const ui = yield* fetchUserInfo(userinfoUrl, Redacted.value(token.access_token));
+            const ui = yield* fetchUserInfo(
+              userinfoUrl,
+              Redacted.value(token.access_token),
+            );
             yield* Effect.logDebug("received userInfo");
 
             const session = yield* addSession(
-              UnknownUserSession.make({ id: pipe(nanoid(), Redacted.make, SessionId.make), token, oAuthUserInfo: ui }),
+              UnknownUserSession.make({
+                id: pipe(nanoid(), Redacted.make, SessionId.make),
+                token,
+                oAuthUserInfo: ui,
+              }),
             );
 
-            const userOpt = yield* getUser(UserId.make(session.oAuthUserInfo.id)).pipe(Effect.option);
+            const userOpt = yield* getUser(
+              UserId.make(session.oAuthUserInfo.id),
+            ).pipe(Effect.option);
             yield* pipe(
               Effect.gen(function* () {
                 const user = yield* userOpt;
@@ -50,7 +72,9 @@ export const AuthApiLive = HttpApiBuilder.group(AppApi, "auth", handlers =>
                 yield* Effect.logDebug("fetched local user");
 
                 yield* updateUserInfo(user.id, ui);
-                yield* addSession(UserSession.make({ ...Struct.omit(session, "_tag"), user }));
+                yield* addSession(
+                  UserSession.make({ ...Struct.omit(session, "_tag"), user }),
+                );
               }),
               Effect.catchTag("NoSuchElementException", () => Effect.void),
             );
@@ -61,7 +85,9 @@ export const AuthApiLive = HttpApiBuilder.group(AppApi, "auth", handlers =>
               status: 303,
             });
 
-            return yield* Effect.reduce(modifyReply, baseResp, (acc, m) => m(acc));
+            return yield* Effect.reduce(modifyReply, baseResp, (acc, m) =>
+              m(acc),
+            );
           }),
           Effect.catchAll(cause => RedactedError.logged(cause.message, cause)),
         ),

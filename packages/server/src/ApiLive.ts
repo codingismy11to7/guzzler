@@ -1,5 +1,14 @@
-import { Headers, HttpApi, HttpApiBuilder, HttpClientError } from "@effect/platform";
-import { NodeFileSystem, NodeHttpClient, NodePath } from "@effect/platform-node";
+import {
+  Headers,
+  HttpApi,
+  HttpApiBuilder,
+  HttpClientError,
+} from "@effect/platform";
+import {
+  NodeFileSystem,
+  NodeHttpClient,
+  NodePath,
+} from "@effect/platform-node";
 import { AppApi } from "@guzzler/domain/AppApi";
 import { GridFS } from "@guzzler/mongodb/GridFS";
 import { MongoTransactions } from "@guzzler/mongodb/MongoTransactions";
@@ -29,7 +38,9 @@ import { AuthenticationMiddleware } from "./index.js";
 const UILayer = Layer.unwrapEffect(
   pipe(
     ProdMode.isProdMode,
-    Effect.andThen(prodMode => (prodMode ? UILive : UIDev.pipe(Layer.provide(NodeHttpClient.layerUndici)))),
+    Effect.andThen(prodMode =>
+      prodMode ? UILive : UIDev.pipe(Layer.provide(NodeHttpClient.layerUndici)),
+    ),
   ),
 );
 

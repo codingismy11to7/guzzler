@@ -31,15 +31,18 @@ export const SignupApiLive = HttpApiBuilder.group(AppApi, "signup", handlers =>
               const userId = UserId.make(sess.oAuthUserInfo.id);
               const user = User.make({ ...sess, id: userId, username });
 
-              yield* Effect.logInfo("Setting username and creating account").pipe(
-                Effect.annotateLogs({ userId, user }),
-              );
+              yield* Effect.logInfo(
+                "Setting username and creating account",
+              ).pipe(Effect.annotateLogs({ userId, user }));
 
               yield* addUser(user);
 
               yield* Effect.logDebug("promoting session to full");
 
-              const fullSess = UserSession.make({ ...Struct.omit(sess, "_tag"), user });
+              const fullSess = UserSession.make({
+                ...Struct.omit(sess, "_tag"),
+                user,
+              });
 
               yield* addSession(fullSess);
             }),

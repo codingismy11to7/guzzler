@@ -4,23 +4,34 @@ import { CollectionRegistry } from "./internal/database/CollectionRegistry.js";
 
 export class SessionNotFound extends Data.TaggedError("SessionNotFound") {}
 
-export class SessionStorage extends Effect.Service<SessionStorage>()("SessionStorage", {
-  accessors: true,
-  effect: Effect.gen(function* () {
-    const { sessions } = yield* CollectionRegistry;
+export class SessionStorage extends Effect.Service<SessionStorage>()(
+  "SessionStorage",
+  {
+    accessors: true,
+    effect: Effect.gen(function* () {
+      const { sessions } = yield* CollectionRegistry;
 
-    const persistSession = (session: Session) => sessions.upsert({ id: session.id }, session);
-    const clearSession = (sessionId: SessionId) => sessions.deleteOne({ id: sessionId }).pipe(Effect.asVoid);
+      const persistSession = (session: Session) =>
+        sessions.upsert({ id: session.id }, session);
+      const clearSession = (sessionId: SessionId) =>
+        sessions.deleteOne({ id: sessionId }).pipe(Effect.asVoid);
 
-    const addSession = (session: Session): Effect.Effect<Session> =>
-      pipe(Effect.logDebug("adding session", session), Effect.andThen(persistSession(session)), Effect.as(session));
+      const addSession = (session: Session): Effect.Effect<Session> =>
+        pipe(
+          Effect.logDebug("adding session", session),
+          Effect.andThen(persistSession(session)),
+          Effect.as(session),
+        );
 
-    const getSession = (sessionId: SessionId): Effect.Effect<Session, SessionNotFound> =>
-      pipe(
-        sessions.findOne({ id: sessionId }),
-        Effect.catchTag("NotFound", () => new SessionNotFound()),
-      );
+      const getSession = (
+        sessionId: SessionId,
+      ): Effect.Effect<Session, SessionNotFound> =>
+        pipe(
+          sessions.findOne({ id: sessionId }),
+          Effect.catchTag("NotFound", () => new SessionNotFound()),
+        );
 
-    return { addSession, getSession, clearSession };
-  }),
-}) {}
+      return { addSession, getSession, clearSession };
+    }),
+  },
+) {}

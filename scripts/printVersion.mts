@@ -5,7 +5,10 @@ import * as path from "node:path";
 const __dirname = import.meta.dirname;
 
 const pkg = JSON.parse(
-  fs.readFileSync(path.resolve(__dirname, "..", "packages", "server", "package.json"), { encoding: "utf8" }),
+  fs.readFileSync(
+    path.resolve(__dirname, "..", "packages", "server", "package.json"),
+    { encoding: "utf8" },
+  ),
 );
 
 // eslint-disable-next-line no-console

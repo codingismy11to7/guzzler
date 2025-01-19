@@ -11,7 +11,9 @@ import { Username } from "./User.js";
 
 /* event subtype */
 
-export const EventSubtypeId = Schema.Trimmed.pipe(Schema.brand("EventSubtypeId"));
+export const EventSubtypeId = Schema.Trimmed.pipe(
+  Schema.brand("EventSubtypeId"),
+);
 export type EventSubtypeId = typeof EventSubtypeId.Type;
 
 export const EventType = Schema.Trimmed.pipe(Schema.brand("EventType"));
@@ -86,7 +88,9 @@ export class Place extends Schema.Class<Place>("Place")({
 
 /* fillup record */
 
-export const FillupRecordId = Schema.Trimmed.pipe(Schema.brand("FillupRecordId"));
+export const FillupRecordId = Schema.Trimmed.pipe(
+  Schema.brand("FillupRecordId"),
+);
 export type FillupRecordId = typeof FillupRecordId.Type;
 
 export class FillupRecord extends Schema.Class<FillupRecord>("FillupRecord")({

@@ -8,11 +8,15 @@ export const liveLayers = (
   dbName: string,
   dbUrl: string,
   clientOptions: MongoClientOptions,
-): Layer.Layer<MongoClient | Db | MongoCollectionLayer | MongoMigrationHandler> =>
+): Layer.Layer<
+  MongoClient | Db | MongoCollectionLayer | MongoMigrationHandler
+> =>
   pipe(
     MongoMigrationHandler.Default,
     Layer.provideMerge(MongoCollectionLayer.Default),
-    Layer.provideMerge(MongoDatabaseLayer.make(dbName, { ignoreUndefined: true })),
+    Layer.provideMerge(
+      MongoDatabaseLayer.make(dbName, { ignoreUndefined: true }),
+    ),
     Layer.provideMerge(MongoClientLayer.make(dbUrl, clientOptions)),
   );
 
@@ -23,9 +27,13 @@ const ObjectIdFromHexString = Schema.Trimmed.pipe(
     decode: (input, _, ast) =>
       ObjectId.isValid(input)
         ? ParseResult.succeed(ObjectId.createFromHexString(input))
-        : ParseResult.fail(new ParseResult.Type(ast, input, "Not a valid ObjectId hex string")),
+        : ParseResult.fail(
+            new ParseResult.Type(ast, input, "Not a valid ObjectId hex string"),
+          ),
   }),
 );
-export const makeObjectIdFromHexString = Schema.decodeSync(ObjectIdFromHexString);
+export const makeObjectIdFromHexString = Schema.decodeSync(
+  ObjectIdFromHexString,
+);
 
 export const randomObjectId = () => new ObjectId();

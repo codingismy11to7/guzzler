@@ -14,10 +14,15 @@ const open = effectify(yauzl.open);
 
 const openStream = (z: YauzlZipFile, entry: Entry) =>
   Effect.async<Readable, ZipError>(cb =>
-    z.openReadStream(entry, (err, stream) => cb(err ? new ZipError({ cause: err }) : Effect.succeed(stream))),
+    z.openReadStream(entry, (err, stream) =>
+      cb(err ? new ZipError({ cause: err }) : Effect.succeed(stream)),
+    ),
   );
 
-export class ZipFile extends Schema.Class<ZipFile>("ZipFile")({ isDirectory: Schema.Boolean, fileName: Schema.Trim }) {}
+export class ZipFile extends Schema.Class<ZipFile>("ZipFile")({
+  isDirectory: Schema.Boolean,
+  fileName: Schema.Trim,
+}) {}
 
 type ZipEntry = Data.TaggedEnum<{
   File: Readonly<{
@@ -32,15 +37,19 @@ const ZipEntry = Data.taggedEnum<ZipEntry>();
 const zipStream = (zipFilePath: string): Stream.Stream<ZipEntry, ZipError> =>
   Stream.unwrap(
     gen(function* () {
-      const zipFile = yield* open(zipFilePath, { autoClose: true, lazyEntries: true }).pipe(
-        mapError(cause => new ZipError({ cause })),
-      );
+      const zipFile = yield* open(zipFilePath, {
+        autoClose: true,
+        lazyEntries: true,
+      }).pipe(mapError(cause => new ZipError({ cause })));
 
       return Stream.async<ZipEntry, ZipError>(emit => {
         zipFile.on("close", () => emit.end());
         zipFile.on("entry", (entry: Entry) => {
           // skip directories
-          if (entry.fileName.endsWith("/")) emit.single(ZipEntry.Directory({ entry })).then(() => zipFile.readEntry());
+          if (entry.fileName.endsWith("/"))
+            emit
+              .single(ZipEntry.Directory({ entry }))
+              .then(() => zipFile.readEntry());
           else {
             const stream = pipe(
               openStream(zipFile, entry),
@@ -54,7 +63,11 @@ const zipStream = (zipFilePath: string): Stream.Stream<ZipEntry, ZipError> =>
             );
 
             void emit.single(
-              ZipEntry.File({ entry, doneProcessing: Effect.sync(() => zipFile.readEntry()), contents: stream }),
+              ZipEntry.File({
+                entry,
+                doneProcessing: Effect.sync(() => zipFile.readEntry()),
+                contents: stream,
+              }),
             );
           }
         });
@@ -70,7 +83,9 @@ export class Zip extends Effect.Service<Zip>()("Zip", {
     const fs = yield* FileSystem.FileSystem;
     const path = yield* Path.Path;
 
-    const getZipContents = (zipFilePath: string): Effect.Effect<readonly ZipFile[], ZipError | SystemError, Scope> =>
+    const getZipContents = (
+      zipFilePath: string,
+    ): Effect.Effect<readonly ZipFile[], ZipError | SystemError, Scope> =>
       gen(function* () {
         const tmpDir = yield* fs.makeTempDirectoryScoped({ prefix: "guzzler" });
 
@@ -85,7 +100,11 @@ export class Zip extends Effect.Service<Zip>()("Zip", {
 
               yield* withFileName(fileName);
 
-              yield* fs.utimes(fileName, entry.getLastModDate(), entry.getLastModDate());
+              yield* fs.utimes(
+                fileName,
+                entry.getLastModDate(),
+                entry.getLastModDate(),
+              );
 
               return new ZipFile({ isDirectory, fileName });
             });
@@ -95,7 +114,10 @@ export class Zip extends Effect.Service<Zip>()("Zip", {
           Stream.mapEffect(
             ZipEntry.$match({
               Directory: ({ entry }) =>
-                handleEntry(true, entry)(fileName => fs.makeDirectory(fileName, { recursive: true })),
+                handleEntry(
+                  true,
+                  entry,
+                )(fileName => fs.makeDirectory(fileName, { recursive: true })),
 
               File: ({ entry, contents, doneProcessing }) =>
                 handleEntry(
@@ -104,7 +126,9 @@ export class Zip extends Effect.Service<Zip>()("Zip", {
                 )(fileName =>
                   gen(function* () {
                     // just in case they didn't store a directory entry earlier
-                    yield* fs.makeDirectory(path.resolve(fileName, ".."), { recursive: true });
+                    yield* fs.makeDirectory(path.resolve(fileName, ".."), {
+                      recursive: true,
+                    });
                     yield* pipe(contents, Stream.run(fs.sink(fileName)));
                   }),
                 ).pipe(ensuring(doneProcessing)),

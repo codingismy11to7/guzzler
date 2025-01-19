@@ -1,6 +1,10 @@
 import { HttpApiClient } from "@effect/platform";
 import { AppApi } from "@guzzler/domain";
-import { OptionalTodoWithoutId, Todo, TodoId } from "@guzzler/domain/apis/TodosApi";
+import {
+  OptionalTodoWithoutId,
+  Todo,
+  TodoId,
+} from "@guzzler/domain/apis/TodosApi";
 import { Effect, Option, pipe } from "effect";
 import { dieFromFatal } from "./utils.js";
 
@@ -31,7 +35,9 @@ export class TodosClient extends Effect.Service<TodosClient>()("TodosClient", {
           Effect.asSome,
           Effect.catchTags({
             TodoNotFound: () =>
-              Effect.logError(`Failed to find todo with id: ${id}`).pipe(Effect.as(Option.none<Todo>())),
+              Effect.logError(`Failed to find todo with id: ${id}`).pipe(
+                Effect.as(Option.none<Todo>()),
+              ),
             ...dieFromFatal,
           }),
         );
@@ -40,7 +46,8 @@ export class TodosClient extends Effect.Service<TodosClient>()("TodosClient", {
         client.todos.editTodo({ path: { id }, payload }).pipe(
           Effect.andThen(todo => Effect.logInfo("Edited todo: ", todo)),
           Effect.catchTags({
-            TodoNotFound: () => Effect.logError(`Failed to find todo with id: ${id}`),
+            TodoNotFound: () =>
+              Effect.logError(`Failed to find todo with id: ${id}`),
             ...dieFromFatal,
           }),
         );
@@ -49,7 +56,8 @@ export class TodosClient extends Effect.Service<TodosClient>()("TodosClient", {
         client.todos.removeTodo({ path: { id } }).pipe(
           Effect.andThen(Effect.logInfo(`Deleted todo with id: ${id}`)),
           Effect.catchTags({
-            TodoNotFound: () => Effect.logError(`Failed to find todo with id: ${id}`),
+            TodoNotFound: () =>
+              Effect.logError(`Failed to find todo with id: ${id}`),
             ...dieFromFatal,
           }),
         );

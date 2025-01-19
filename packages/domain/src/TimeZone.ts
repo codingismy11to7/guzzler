@@ -424,4 +424,5 @@ export type TimeZone = typeof TimeZone.Encoded;
 
 export const AllTimeZones = TimeZone.literals;
 export const AllTimeZoneStrings: readonly string[] = AllTimeZones;
-export const isTimeZone = (x: string): x is TimeZone => AllTimeZoneStrings.includes(x);
+export const isTimeZone = (x: string): x is TimeZone =>
+  AllTimeZoneStrings.includes(x);

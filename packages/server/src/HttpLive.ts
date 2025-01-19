@@ -1,4 +1,9 @@
-import { HttpApiBuilder, HttpApiScalar, HttpApiSwagger, HttpMiddleware } from "@effect/platform";
+import {
+  HttpApiBuilder,
+  HttpApiScalar,
+  HttpApiSwagger,
+  HttpMiddleware,
+} from "@effect/platform";
 import { NodeHttpServer } from "@effect/platform-node";
 import { Effect, flow, Layer, pipe } from "effect";
 import { NoSuchElementException } from "effect/Cause";
@@ -20,16 +25,30 @@ const ifConfiguredPath =
     );
 
 export const HttpLive = HttpApiBuilder.serve(
-  flow(HttpMiddleware.logger, HttpMiddleware.cors(), HttpMiddleware.xForwardedHeaders),
+  flow(
+    HttpMiddleware.logger,
+    HttpMiddleware.cors(),
+    HttpMiddleware.xForwardedHeaders,
+  ),
 ).pipe(
-  ifConfiguredPath(AppConfig.serveSwaggerUiAt, path => HttpApiSwagger.layer({ path })),
-  ifConfiguredPath(AppConfig.serveOpenapiAt, path => HttpApiBuilder.middlewareOpenApi({ path })),
-  ifConfiguredPath(AppConfig.serveScalarUiAt, path => HttpApiScalar.layer({ path })),
+  ifConfiguredPath(AppConfig.serveSwaggerUiAt, path =>
+    HttpApiSwagger.layer({ path }),
+  ),
+  ifConfiguredPath(AppConfig.serveOpenapiAt, path =>
+    HttpApiBuilder.middlewareOpenApi({ path }),
+  ),
+  ifConfiguredPath(AppConfig.serveScalarUiAt, path =>
+    HttpApiScalar.layer({ path }),
+  ),
   Layer.provide(ApiLive),
   Layer.provide(
     Layer.unwrapEffect(
       AppConfig.port.pipe(
-        Effect.tap(port => Effect.logInfo(`Listening on http://localhost:${port} (and also 0.0.0.0)`)),
+        Effect.tap(port =>
+          Effect.logInfo(
+            `Listening on http://localhost:${port} (and also 0.0.0.0)`,
+          ),
+        ),
         Effect.andThen(port => NodeHttpServer.layer(createServer, { port })),
       ),
     ),

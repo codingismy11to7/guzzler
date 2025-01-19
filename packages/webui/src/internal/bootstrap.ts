@@ -16,14 +16,18 @@ export const makeRunFunctions = <
   // the HttpClient layer (which can't error) and replacing the logger (which
   // can't error)...so this type should be right? try to figure out later
   // @ts-expect-error
-  const layer: Layer.Layer<{ [k in keyof Layers]: Layer.Layer.Success<Layers[k]> }[number]> = Layer.mergeAll(
-    ...layers,
-  ).pipe(
+  const layer: Layer.Layer<
+    { [k in keyof Layers]: Layer.Layer.Success<Layers[k]> }[number]
+  > = Layer.mergeAll(...layers).pipe(
     Layer.provide(BrowserHttpClient.layerXMLHttpRequest),
     Layer.provide(
       Logger.replace(
         Logger.defaultLogger,
-        Logger.prettyLogger({ colors: "auto", mode: "browser", formatDate: format("MM/dd/yyyy hh:mm:ss.SSS aa") }),
+        Logger.prettyLogger({
+          colors: "auto",
+          mode: "browser",
+          formatDate: format("MM/dd/yyyy hh:mm:ss.SSS aa"),
+        }),
       ),
     ),
   );
@@ -31,7 +35,9 @@ export const makeRunFunctions = <
   const runtime = ManagedRuntime.make(layer);
 
   const runPromise = runtime.runPromise;
-  const runP = <A>(e: Effect.Effect<A, never, Layer.Layer.Success<typeof layer>>) => runPromise(e);
+  const runP = <A>(
+    e: Effect.Effect<A, never, Layer.Layer.Success<typeof layer>>,
+  ) => runPromise(e);
   const runSync = runtime.runSync;
   const runFork = runtime.runFork;
 

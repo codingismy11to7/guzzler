@@ -3,7 +3,10 @@ import { OAuthToken } from "./OAuthToken.js";
 import { OAuthUserInfo } from "./OAuthUserInfo.js";
 import { User } from "./User.js";
 
-export const SessionId = Schema.String.pipe(Schema.Redacted, Schema.brand("SessionId"));
+export const SessionId = Schema.String.pipe(
+  Schema.Redacted,
+  Schema.brand("SessionId"),
+);
 export type SessionId = typeof SessionId.Type;
 
 export const UnknownUserSession = Schema.TaggedStruct("UnknownUserSession", {

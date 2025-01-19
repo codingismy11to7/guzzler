@@ -13,12 +13,17 @@ export class AutosClient extends Effect.Service<AutosClient>()("AutosClient", {
       const importACarBackup = (
         tz: TimeZone,
         file: File,
-      ): Effect.Effect<void, AutosApi.FileCorruptedError | AutosApi.WrongFormatError | RedactedError> => {
+      ): Effect.Effect<
+        void,
+        AutosApi.FileCorruptedError | AutosApi.WrongFormatError | RedactedError
+      > => {
         const payload = new FormData();
         payload.set("tz", tz);
         payload.set("abpFile", file);
 
-        return client.autos.importACarBackup({ payload }).pipe(Effect.catchTags(dieFromFatal));
+        return client.autos
+          .importACarBackup({ payload })
+          .pipe(Effect.catchTags(dieFromFatal));
       };
 
       return { importACarBackup };

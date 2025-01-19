@@ -12,7 +12,11 @@ describe("AppConfig", () => {
       const err = yield* AppConfig.pipe(
         Effect.provide(
           AppConfigLive.pipe(
-            Layer.provide(Layer.setConfigProvider(ConfigProvider.fromMap(new Map([["PORT", value]])))),
+            Layer.provide(
+              Layer.setConfigProvider(
+                ConfigProvider.fromMap(new Map([["PORT", value]])),
+              ),
+            ),
           ),
         ),
         Effect.flip,
@@ -31,7 +35,11 @@ describe("AppConfig", () => {
       const err = yield* AppConfig.pipe(
         Effect.provide(
           AppConfigLive.pipe(
-            Layer.provide(Layer.setConfigProvider(ConfigProvider.fromMap(new Map([["PORTypo", "42"]])))),
+            Layer.provide(
+              Layer.setConfigProvider(
+                ConfigProvider.fromMap(new Map([["PORTypo", "42"]])),
+              ),
+            ),
           ),
         ),
         Effect.flip,

@@ -24,19 +24,25 @@ export const _delete =
   ) =>
     mongoEff(() => bucket.delete(id, options));
 
-export const find = (bucket: GridFSBucket) => (filter?: Filter<GridFSFile>, options?: FindOptions) =>
-  gen(function* () {
-    const cursor = bucket.find(filter, options);
+export const find =
+  (bucket: GridFSBucket) =>
+  (filter?: Filter<GridFSFile>, options?: FindOptions) =>
+    gen(function* () {
+      const cursor = bucket.find(filter, options);
 
-    return yield* mongoEff(() => cursor.toArray());
-  });
+      return yield* mongoEff(() => cursor.toArray());
+    });
 
-export const findAttachments = (bucket: GridFSBucket) => (query: Filter<GridFSFile>) =>
-  mongoEff(() => bucket.find(query).toArray());
+export const findAttachments =
+  (bucket: GridFSBucket) => (query: Filter<GridFSFile>) =>
+    mongoEff(() => bucket.find(query).toArray());
 
 export const openDownloadStream =
   (bucket: GridFSBucket) =>
-  (id: ObjectId, options?: GridFSBucketReadStreamOptions): Stream.Stream<Uint8Array, MongoError> =>
+  (
+    id: ObjectId,
+    options?: GridFSBucketReadStreamOptions,
+  ): Stream.Stream<Uint8Array, MongoError> =>
     NodeStream.fromReadable(
       () => bucket.openDownloadStream(id, options),
       e => new MongoError({ underlying: e as RealMongoError }),
@@ -44,7 +50,10 @@ export const openDownloadStream =
 
 export const openDownloadStreamByName =
   (bucket: GridFSBucket) =>
-  (filename: string, options?: GridFSBucketReadStreamOptionsWithRevision): Stream.Stream<Uint8Array, MongoError> =>
+  (
+    filename: string,
+    options?: GridFSBucketReadStreamOptionsWithRevision,
+  ): Stream.Stream<Uint8Array, MongoError> =>
     NodeStream.fromReadable(
       () => bucket.openDownloadStreamByName(filename, options),
       e => new MongoError({ underlying: e as RealMongoError }),
@@ -52,7 +61,10 @@ export const openDownloadStreamByName =
 
 export const openUploadSink =
   (bucket: GridFSBucket) =>
-  (filename: string, options?: GridFSBucketWriteStreamOptions): Sink.Sink<void, Uint8Array, never, MongoError> =>
+  (
+    filename: string,
+    options?: GridFSBucketWriteStreamOptions,
+  ): Sink.Sink<void, Uint8Array, never, MongoError> =>
     NodeSink.fromWritable(
       () => bucket.openUploadStream(filename, options),
       e => new MongoError({ underlying: e as RealMongoError }),

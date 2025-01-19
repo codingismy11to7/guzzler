@@ -16,7 +16,10 @@ const HomePage = () => {
   const [todos, setTodos] = useState<readonly Todo[]>([]);
   const [text, setText] = useState("");
 
-  const fetchTodos = useCallback(() => runP(TodosClient.list).then(setTodos), []);
+  const fetchTodos = useCallback(
+    () => runP(TodosClient.list).then(setTodos),
+    [],
+  );
 
   useEffect(() => {
     void fetchTodos();
@@ -37,7 +40,8 @@ const HomePage = () => {
   );
 
   const setDone = useCallback(
-    (id: TodoId, done: boolean) => runP(TodosClient.edit(id, { done })).then(fetchTodos),
+    (id: TodoId, done: boolean) =>
+      runP(TodosClient.edit(id, { done })).then(fetchTodos),
     [fetchTodos],
   );
 
@@ -86,17 +90,31 @@ const HomePage = () => {
       </div>
       {todos.map(todo => (
         <div key={todo.id}>
-          <input type="checkbox" checked={todo.done} onChange={e => setDone(todo.id, e.target.checked)} />{" "}
-          <span style={{ textDecoration: todo.done ? "line-through" : undefined }}>{todo.text}</span>{" "}
+          <input
+            type="checkbox"
+            checked={todo.done}
+            onChange={e => setDone(todo.id, e.target.checked)}
+          />{" "}
+          <span
+            style={{ textDecoration: todo.done ? "line-through" : undefined }}
+          >
+            {todo.text}
+          </span>{" "}
           <button onClick={() => doDelete(todo.id)}>🗑️</button>
           <button onClick={() => view(todo.id)}>🔎</button>
         </div>
       ))}
       <div>
-        <input type="text" value={text} onChange={e => setText(e.target.value)} />
+        <input
+          type="text"
+          value={text}
+          onChange={e => setText(e.target.value)}
+        />
         <button onClick={addTodo}>Add</button>
       </div>
-      <p className="read-the-docs">Click on the Vite and React logos to learn more</p>
+      <p className="read-the-docs">
+        Click on the Vite and React logos to learn more
+      </p>
     </>
   );
 };

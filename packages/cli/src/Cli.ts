@@ -6,9 +6,14 @@ import { TodosClient } from "./TodosClient.js";
  * CLI description
  */
 
-const todoArg = Args.text({ name: "todo" }).pipe(Args.withDescription("The message associated with a todo"));
+const todoArg = Args.text({ name: "todo" }).pipe(
+  Args.withDescription("The message associated with a todo"),
+);
 
-const todoId = Options.text("id").pipe(Options.map(TodoId.make), Options.withDescription("The identifier of the todo"));
+const todoId = Options.text("id").pipe(
+  Options.map(TodoId.make),
+  Options.withDescription("The identifier of the todo"),
+);
 
 const add = Command.make("add", { todo: todoArg }).pipe(
   Command.withDescription("Add a new todo"),
@@ -35,7 +40,9 @@ const remove = Command.make("remove", { id: todoId }).pipe(
   Command.withHandler(({ id }) => TodosClient.remove(id)),
 );
 
-const command = Command.make("todo").pipe(Command.withSubcommands([add, done, undo, list, remove]));
+const command = Command.make("todo").pipe(
+  Command.withSubcommands([add, done, undo, list, remove]),
+);
 
 export const cli = Command.run(command, {
   name: "Todo CLI",

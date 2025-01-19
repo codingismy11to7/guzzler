@@ -1,4 +1,9 @@
-import { Headers, HttpApiBuilder, HttpBody, HttpClientRequest } from "@effect/platform";
+import {
+  Headers,
+  HttpApiBuilder,
+  HttpBody,
+  HttpClientRequest,
+} from "@effect/platform";
 import { HttpClient } from "@effect/platform/HttpClient";
 import { withLoggerDisabled } from "@effect/platform/HttpMiddleware";
 import { HttpServerRequest } from "@effect/platform/HttpServerRequest";
@@ -16,13 +21,17 @@ export const UIDev = HttpApiBuilder.group(AppApi, "ui", handlers =>
       const resp = yield* httpClient.execute(
         HttpClientRequest.make(req.method)(`http://localhost:3000${req.url}`, {
           headers: pipe(req.headers, Headers.remove("host")),
-          ...(req.method === "GET" || req.method === "HEAD" ? {} : { body: HttpBody.stream(req.stream) }),
+          ...(req.method === "GET" || req.method === "HEAD"
+            ? {}
+            : { body: HttpBody.stream(req.stream) }),
         }),
       );
 
       return stream(resp.stream, resp);
     }).pipe(
-      Effect.catchAllCause(e => new ServerError({ message: `Error proxying: ${Cause.pretty(e)}` })),
+      Effect.catchAllCause(
+        e => new ServerError({ message: `Error proxying: ${Cause.pretty(e)}` }),
+      ),
       withLoggerDisabled,
     ),
   ),

@@ -2,7 +2,10 @@ import { Duration } from "effect";
 import { DurationInput } from "effect/Duration";
 import { useEffect, useState } from "react";
 
-export const useCountdown = (forDuration: DurationInput, updateFrequency: DurationInput = "250 millis") => {
+export const useCountdown = (
+  forDuration: DurationInput,
+  updateFrequency: DurationInput = "250 millis",
+) => {
   const timeMillis = Duration.toMillis(forDuration);
   const freqMillis = Duration.toMillis(updateFrequency);
 
