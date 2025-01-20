@@ -7,6 +7,8 @@ import {
   UserTypes,
   UserVehicles,
   Vehicle,
+  VehicleEventRecords,
+  VehicleFillupRecords,
   VehicleId,
 } from "@guzzler/domain/Autos";
 import { ContentType } from "@guzzler/domain/ContentType";
@@ -18,6 +20,7 @@ import {
   randomObjectId,
 } from "@guzzler/mongodb/Mongo";
 import { MongoTransactions } from "@guzzler/mongodb/MongoTransactions";
+import { ObjectId } from "bson";
 import {
   Array,
   Effect,
@@ -47,7 +50,7 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
         find: findFile,
       } = yield* GridFS;
 
-      const replaceAllUserTypes = (types: UserTypes) =>
+      const replaceAllUserTypes = (types: UserTypes): Effect.Effect<void> =>
         userTypes.upsert({ username: types.username }, types);
 
       const getAllUserTypes = (username: Username) =>
@@ -77,7 +80,7 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
       const deleteAllUserData = (
         username: Username,
         { includeUserTypes = true }: { includeUserTypes?: boolean } = {},
-      ) =>
+      ): Effect.Effect<void> =>
         gen(function* () {
           const userVehicles = yield* getVehicles(username).pipe(
             catchTag("NotFound", () =>
@@ -124,9 +127,20 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
           {
             $set: {
               username,
-              [`vehicles.${vehicle.id}`]: encodeVehicleSync(vehicle),
+              vehicles: {
+                [vehicle.id]: encodeVehicleSync(vehicle),
+              },
             },
           },
+          { upsert: true },
+        );
+
+      const insertUserVehicles = (
+        vehicleRec: UserVehicles,
+      ): Effect.Effect<void> =>
+        vehicles.updateOne(
+          { username: vehicleRec.username },
+          { $set: Schema.encodeSync(UserVehicles)(vehicleRec) },
           { upsert: true },
         );
 
@@ -153,78 +167,98 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
       const getPhotoId = ({ photoId }: Vehicle) =>
         getPhotoIdAsString(photoId).pipe(Effect.map(makeObjectIdFromHexString));
 
+      const _insertVehiclePhoto =
+        <PostAddE>(postAddToDb: Effect.Effect<void, PostAddE>) =>
+        <StreamE>(
+          newPhotoId: ObjectId,
+          filename: string,
+          mimeType: string,
+          data: Stream.Stream<Uint8Array, StreamE>,
+        ): Effect.Effect<void, StreamE | PostAddE | MongoError> =>
+          Effect.acquireUseRelease(
+            Effect.sync(() => {
+              const sink = openUploadSinkWithId(newPhotoId, filename, {
+                metadata: { mimeType },
+              });
+              return { newPhotoId, sink };
+            }),
+            ({ newPhotoId, sink }) =>
+              gen(function* () {
+                yield* pipe(data, Stream.run(sink));
+                yield* Effect.logInfo(`Added photo ${newPhotoId} to database`);
+
+                yield* postAddToDb;
+              }),
+            ({ newPhotoId }, exit) =>
+              gen(function* () {
+                if (Exit.isFailure(exit)) {
+                  yield* deleteFile(newPhotoId).pipe(
+                    Effect.catchAll(e =>
+                      Effect.logWarning(
+                        `Got an error trying to delete just-created file with id ${newPhotoId}`,
+                        e,
+                      ),
+                    ),
+                  );
+                }
+              }),
+          );
+
+      const insertVehiclePhoto = _insertVehiclePhoto(Effect.void);
+
       const addPhotoToVehicle = <E>(
         username: Username,
         vehicleId: VehicleId,
         filename: string,
         mimeType: string,
         data: Stream.Stream<Uint8Array, E>,
-      ): Effect.Effect<void, E | MongoError | NotFound> =>
-        Effect.acquireUseRelease(
-          Effect.sync(() => {
-            const newPhotoId = randomObjectId();
-            const sink = openUploadSinkWithId(newPhotoId, filename, {
-              metadata: { mimeType },
-            });
-            return { newPhotoId, sink };
-          }),
-          ({ newPhotoId, sink }) =>
+      ): Effect.Effect<void, E | MongoError | NotFound> => {
+        const newPhotoId = randomObjectId();
+
+        const postAddFunc = gen(function* () {
+          const oldPhotoId = yield* inTransaction()(
             gen(function* () {
-              yield* pipe(data, Stream.run(sink));
-              yield* Effect.logInfo(`Added photo ${newPhotoId} to database`);
+              const vehicle = yield* getSingleVehicle(username, vehicleId);
 
-              const oldPhotoId = yield* inTransaction()(
-                gen(function* () {
-                  const vehicle = yield* getSingleVehicle(username, vehicleId);
+              const oldPhotoId = yield* getPhotoId(vehicle).pipe(Effect.option);
 
-                  const oldPhotoId = yield* getPhotoId(vehicle).pipe(
-                    Effect.option,
-                  );
-
-                  yield* vehicles.updateOneRaw(
-                    { username },
-                    {
-                      $set: {
-                        [`vehicles.${vehicleId}.photoId`]:
-                          newPhotoId.toHexString(),
-                      },
-                    },
-                  );
-                  yield* Effect.logInfo(
-                    `Updated vehicle ${vehicleId} with new photo id`,
-                  );
-
-                  return oldPhotoId;
-                }),
+              yield* vehicles.updateOneRaw(
+                { username },
+                {
+                  $set: {
+                    [`vehicles.${vehicleId}.photoId`]: newPhotoId.toHexString(),
+                  },
+                },
+              );
+              yield* Effect.logInfo(
+                `Updated vehicle ${vehicleId} with new photo id`,
               );
 
-              if (Option.isNone(oldPhotoId))
-                yield* Effect.logDebug("no old photo to delete");
-              else {
-                const id = oldPhotoId.value;
-                yield* Effect.logInfo(`going to delete old photo ${id}`);
-                yield* deleteFile(id).pipe(
-                  Effect.andThen(Effect.logInfo("deleted")),
-                  Effect.catchAll(e =>
-                    Effect.logWarning("Problem deleting photo", e),
-                  ),
-                );
-              }
+              return oldPhotoId;
             }),
-          ({ newPhotoId }, exit) =>
-            gen(function* () {
-              if (Exit.isFailure(exit)) {
-                yield* deleteFile(newPhotoId).pipe(
-                  Effect.catchAll(e =>
-                    Effect.logWarning(
-                      `Got an error trying to delete just-created file with id ${newPhotoId}`,
-                      e,
-                    ),
-                  ),
-                );
-              }
-            }),
+          );
+
+          if (Option.isNone(oldPhotoId))
+            yield* Effect.logDebug("no old photo to delete");
+          else {
+            const id = oldPhotoId.value;
+            yield* Effect.logInfo(`going to delete old photo ${id}`);
+            yield* deleteFile(id).pipe(
+              Effect.andThen(Effect.logInfo("deleted")),
+              Effect.catchAll(e =>
+                Effect.logWarning("Problem deleting photo", e),
+              ),
+            );
+          }
+        });
+
+        return _insertVehiclePhoto(postAddFunc)(
+          newPhotoId,
+          filename,
+          mimeType,
+          data,
         );
+      };
 
       const getPhotoForVehicle = (
         username: Username,
@@ -263,6 +297,17 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
       const getAllEventRecordsForUser = (username: Username) =>
         eventRecords.find({ username }).pipe(andThen(c => c.toArray));
 
+      const bulkInsertVehicleEventRecords = (
+        vers: readonly VehicleEventRecords[],
+      ) =>
+        eventRecords
+          .insertMany(vers)
+          .pipe(
+            Effect.as(
+              vers.reduce((acc, e) => acc + Object.keys(e.events).length, 0),
+            ),
+          );
+
       const insertEventRecords = (
         username: Username,
         vehicleId: VehicleId,
@@ -284,6 +329,17 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
 
       const streamAllFillupRecordsForUser = (username: Username) =>
         fillupRecords.find({ username }).pipe(andThen(c => c.stream));
+
+      const bulkInsertVehicleFillupRecords = (
+        vfrs: readonly VehicleFillupRecords[],
+      ) =>
+        fillupRecords
+          .insertMany(vfrs)
+          .pipe(
+            Effect.as(
+              vfrs.reduce((acc, f) => acc + Object.keys(f.fillups).length, 0),
+            ),
+          );
 
       const insertFillupRecords = (
         username: Username,
@@ -309,13 +365,17 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
         getAllUserTypes,
         deleteAllUserData,
         insertUserVehicle,
+        insertUserVehicles,
         getVehicles,
+        insertVehiclePhoto,
         addPhotoToVehicle,
         getPhotoForVehicle,
         getAllEventRecordsForUser,
         insertEventRecords,
+        bulkInsertVehicleEventRecords,
         streamAllFillupRecordsForUser,
         insertFillupRecords,
+        bulkInsertVehicleFillupRecords,
       };
     }).pipe(Effect.annotateLogs({ layer: "AutosStorage" })),
   },

@@ -9,7 +9,7 @@ import { ACarFullBackup } from "../../../importers/ACarFullBackup.js";
 export const AutosApiLive = HttpApiBuilder.group(AppApi, "autos", handlers =>
   gen(function* () {
     const aCar = yield* ACarFullBackup;
-    const { getBackupStream } = yield* BackupRestore;
+    const { getBackupStream, importFromGuzzlerBackup } = yield* BackupRestore;
 
     return handlers
       .handleRaw(ExportBackupCallId, ({ path: { backupName } }) =>
@@ -28,6 +28,15 @@ export const AutosApiLive = HttpApiBuilder.group(AppApi, "autos", handlers =>
           const [file] = abpFile;
 
           yield* aCar.import(user.username, tz, file.path);
+        }),
+      )
+      .handle("importBackup", ({ payload: { backupFile } }) =>
+        gen(function* () {
+          const { user } = yield* CurrentFullSession;
+
+          const [file] = backupFile;
+
+          yield* importFromGuzzlerBackup(user.username, file.path);
         }),
       );
   }),

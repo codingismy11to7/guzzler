@@ -15,6 +15,14 @@ export const addField: {
 
 export const removeField = Struct.omit;
 
+export const mapFields = <K extends string | number | symbol, V, B>(
+  r: Record<K, V>,
+  map: (v: V) => B,
+): Record<K, B> =>
+  Object.fromEntries(
+    Object.entries(r).map(([k, v]) => [k, map(v as V)]),
+  ) as Record<K, B>;
+
 if (import.meta.vitest) {
   const { it, expect } = import.meta.vitest;
 
