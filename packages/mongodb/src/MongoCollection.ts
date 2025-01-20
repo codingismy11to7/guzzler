@@ -1,6 +1,7 @@
 import { Document } from "bson";
 import { Effect, Schema, Stream } from "effect";
 import {
+  BulkWriteOptions,
   Collection,
   CountDocumentsOptions,
   DeleteOptions,
@@ -8,6 +9,7 @@ import {
   Filter,
   FindCursor,
   FindOptions,
+  InsertManyResult,
   InsertOneOptions,
   InsertOneResult,
   ReplaceOptions,
@@ -106,6 +108,18 @@ export type MongoCollection<
     doc: MemSchema<SchemaT>,
     options?: InsertOneOptions,
   ) => Effect.Effect<InsertOneResult<DbSchema<SchemaT>>, Conflict>;
+
+  insertManyRaw: (
+    docs: ReadonlyArray<MemSchema<SchemaT>>,
+    options?: BulkWriteOptions,
+  ) => Effect.Effect<
+    InsertManyResult<DbSchema<SchemaT>>,
+    MongoError | SchemaMismatch
+  >;
+  insertMany: (
+    docs: ReadonlyArray<MemSchema<SchemaT>>,
+    options?: BulkWriteOptions,
+  ) => Effect.Effect<InsertManyResult<DbSchema<SchemaT>>>;
 
   replaceOneRaw: (
     filter: Filter<MemSchema<SchemaT>>,

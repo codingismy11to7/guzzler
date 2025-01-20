@@ -44,6 +44,7 @@
     "immer": "^10.1.1",
     "node-expat": "^2.4.1",
     "simple-oauth2": "^5.1.0",
+    "slash": "^5.1.0",
     "yauzl": "^3.2.0"
   },
   "devDependencies": {
@@ -51,6 +52,7 @@
     "@types/node-expat": "^2.3.5",
     "@types/npmcli__package-json": "^4.0.4",
     "@types/simple-oauth2": "^5.0.7",
+    "@types/slash": "^2.0.0",
     "@types/yauzl": "^2.10.3",
     "nodemon": "^3.1.9"
   },

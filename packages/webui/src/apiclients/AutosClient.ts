@@ -3,6 +3,7 @@ import { AppApi, AutosApi } from "@guzzler/domain";
 import { RedactedError } from "@guzzler/domain/Errors";
 import { TimeZone } from "@guzzler/domain/TimeZone";
 import { Effect, pipe } from "effect";
+import { catchTags } from "effect/Effect";
 import { dieFromFatal } from "./utils.js";
 
 export class AutosClient extends Effect.Service<AutosClient>()("AutosClient", {
@@ -15,7 +16,9 @@ export class AutosClient extends Effect.Service<AutosClient>()("AutosClient", {
         file: File,
       ): Effect.Effect<
         void,
-        AutosApi.FileCorruptedError | AutosApi.WrongFormatError | RedactedError
+        | AutosApi.AbpFileCorruptedError
+        | AutosApi.AbpWrongFormatError
+        | RedactedError
       > => {
         const payload = new FormData();
         payload.set("tz", tz);
@@ -26,7 +29,23 @@ export class AutosClient extends Effect.Service<AutosClient>()("AutosClient", {
           .pipe(Effect.catchTags(dieFromFatal));
       };
 
-      return { importACarBackup };
+      const importGuzzlerBackup = (
+        file: File,
+      ): Effect.Effect<
+        void,
+        | AutosApi.BackupFileCorruptedError
+        | AutosApi.BackupWrongFormatError
+        | RedactedError
+      > => {
+        const payload = new FormData();
+        payload.set("backupFile", file);
+
+        return client.autos
+          .importBackup({ payload })
+          .pipe(catchTags(dieFromFatal));
+      };
+
+      return { importACarBackup, importGuzzlerBackup };
     }),
   ),
 }) {}

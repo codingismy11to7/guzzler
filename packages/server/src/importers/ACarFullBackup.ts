@@ -49,6 +49,7 @@ import { ParseError } from "effect/ParseResult";
 import { isNotUndefined, isUndefined } from "effect/Predicate";
 import { fileTypeFromBuffer } from "file-type";
 import { AutosStorage } from "../AutosStorage.js";
+import { MissingBackupFile } from "../internal/MissingBackupFile.js";
 import { singleStreamPuller } from "../internal/util/singleStreamPuller.js";
 import { Xml2JsNode } from "../internal/xml/Xml2JsNode.js";
 import type { XmlParsingError } from "../internal/xml/XmlParser.js";
@@ -261,14 +262,6 @@ class UnexpectedOpeningTag extends Data.TaggedError("UnexpectedOpeningTag")<{
 const unexpectedOpeningTag = (expected: string, received: string) =>
   new UnexpectedOpeningTag({ expected, received });
 
-class MissingBackupFile extends Data.TaggedError("MissingBackupFile")<{
-  fileName: string;
-}> {
-  get message() {
-    return `Missing expected backup file '${this.fileName}'`;
-  }
-}
-
 const importFromACarFullBackup =
   (
     autos: AutosStorage,
@@ -284,7 +277,9 @@ const importFromACarFullBackup =
     zipPath: string,
   ): Effect.Effect<
     void,
-    AutosApi.FileCorruptedError | AutosApi.WrongFormatError | RedactedError,
+    | AutosApi.AbpFileCorruptedError
+    | AutosApi.AbpWrongFormatError
+    | RedactedError,
     RandomId
   > =>
     gen(function* () {
@@ -725,14 +720,15 @@ const importFromACarFullBackup =
       Effect.tapError(e => Effect.logError(e.message)),
       catchTags({
         UnexpectedOpeningTag: () =>
-          new AutosApi.WrongFormatError({ type: "UnexpectedOpeningTag" }),
+          new AutosApi.AbpWrongFormatError({ type: "UnexpectedOpeningTag" }),
         MissingBackupFile: () =>
-          new AutosApi.WrongFormatError({ type: "MissingBackupFile" }),
-        ParseError: () => new AutosApi.WrongFormatError({ type: "ParseError" }),
+          new AutosApi.AbpWrongFormatError({ type: "MissingBackupFile" }),
+        ParseError: () =>
+          new AutosApi.AbpWrongFormatError({ type: "ParseError" }),
         UnzipError: () =>
-          new AutosApi.FileCorruptedError({ type: "UnzipError" }),
+          new AutosApi.AbpFileCorruptedError({ type: "UnzipError" }),
         XmlParsingError: () =>
-          new AutosApi.FileCorruptedError({ type: "XmlParsingError" }),
+          new AutosApi.AbpFileCorruptedError({ type: "XmlParsingError" }),
         SystemError: RedactedError.logged,
         MongoError: RedactedError.logged,
         // wow, if we couldn't find a document we literally just inserted...

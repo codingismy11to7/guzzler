@@ -9,17 +9,17 @@ import { RequireFullSession } from "../Authentication.js";
 import { RedactedError } from "../Errors.js";
 import { TimeZone } from "../TimeZone.js";
 
-export const WrongFormatErrorType = Schema.Literal(
+export const AbpWrongFormatErrorType = Schema.Literal(
   "UnexpectedOpeningTag",
   "ParseError",
   "MissingBackupFile",
 );
-export class WrongFormatError extends Schema.TaggedError<WrongFormatError>(
-  "WrongFormatError",
+export class AbpWrongFormatError extends Schema.TaggedError<AbpWrongFormatError>(
+  "AbpWrongFormatError",
 )(
-  "WrongFormatError",
+  "AbpWrongFormatError",
   {
-    type: WrongFormatErrorType,
+    type: AbpWrongFormatErrorType,
   },
   HttpApiSchema.annotations({
     status: 400,
@@ -27,15 +27,45 @@ export class WrongFormatError extends Schema.TaggedError<WrongFormatError>(
   }),
 ) {}
 
-export const FileCorruptedErrorType = Schema.Literal(
+export const AbpFileCorruptedErrorType = Schema.Literal(
   "UnzipError",
   "XmlParsingError",
 );
-export class FileCorruptedError extends Schema.TaggedError<FileCorruptedError>(
-  "FileCorruptedError",
+export class AbpFileCorruptedError extends Schema.TaggedError<AbpFileCorruptedError>(
+  "AbpFileCorruptedError",
 )(
-  "FileCorruptedError",
-  { type: FileCorruptedErrorType },
+  "AbpFileCorruptedError",
+  { type: AbpFileCorruptedErrorType },
+  HttpApiSchema.annotations({
+    status: 400,
+    description: "The file was corrupted or not a .abp file.",
+  }),
+) {}
+
+export const BackupWrongFormatErrorType = Schema.Literal(
+  "ParseError",
+  "MissingBackupFile",
+  "UnknownBackupVersion",
+);
+export class BackupWrongFormatError extends Schema.TaggedError<BackupWrongFormatError>(
+  "BackupWrongFormatError",
+)(
+  "BackupWrongFormatError",
+  {
+    type: BackupWrongFormatErrorType,
+  },
+  HttpApiSchema.annotations({
+    status: 400,
+    description: "The file wasn't in the format the server expects",
+  }),
+) {}
+
+export const BackupFileCorruptedErrorType = Schema.Literal("UnzipError");
+export class BackupFileCorruptedError extends Schema.TaggedError<BackupFileCorruptedError>(
+  "BackupFileCorruptedError",
+)(
+  "BackupFileCorruptedError",
+  { type: BackupFileCorruptedErrorType },
   HttpApiSchema.annotations({
     status: 400,
     description: "The file was corrupted or not a .abp file.",
@@ -51,7 +81,10 @@ export class ZipError extends Schema.TaggedError<ZipError>("AutosApiZipError")(
   }),
 ) {}
 
-export type ImportError = WrongFormatError | FileCorruptedError;
+export type AbpImportError = AbpWrongFormatError | AbpFileCorruptedError;
+export type BackupImportError =
+  | BackupWrongFormatError
+  | BackupFileCorruptedError;
 
 export const ExportBackupCallId = "exportBackup";
 
@@ -100,8 +133,30 @@ Trying to upload no or more than one file will be rejected.`,
         ),
       )
       .addSuccess(Schema.Void, { status: 204 })
-      .addError(WrongFormatError)
-      .addError(FileCorruptedError)
+      .addError(AbpWrongFormatError)
+      .addError(AbpFileCorruptedError)
+      .addError(RedactedError),
+  )
+  .add(
+    HttpApiEndpoint.post("importBackup", "/backup")
+      .setPayload(
+        HttpApiSchema.Multipart(
+          Schema.Struct({
+            // TODO trying to specify Multipart.FileSchema to signify that only
+            //  one file should be uploaded ends up with an error. check back
+            //  later.
+            backupFile: Schema.Tuple(Multipart.FileSchema).pipe(
+              Schema.annotations({
+                description:
+                  "A backup file. Trying to upload no or more than one file will be rejected.",
+              }),
+            ),
+          }),
+        ),
+      )
+      .addSuccess(Schema.Void, { status: 204 })
+      .addError(BackupWrongFormatError)
+      .addError(BackupFileCorruptedError)
       .addError(RedactedError),
   )
   .prefix("/import")

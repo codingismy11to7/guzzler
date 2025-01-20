@@ -1,8 +1,9 @@
 import { Document } from "bson";
 import { Effect, flow, Option, pipe, Schema, Stream } from "effect";
-import { andThen, gen } from "effect/Effect";
+import { andThen, catchTags, forEach, gen } from "effect/Effect";
 import { ParseError } from "effect/ParseResult";
 import {
+  BulkWriteOptions,
   CountDocumentsOptions,
   Db,
   DeleteOptions,
@@ -10,6 +11,7 @@ import {
   Filter,
   FindCursor,
   FindOptions,
+  InsertManyResult,
   InsertOneOptions,
   InsertOneResult,
   MongoServerError,
@@ -167,6 +169,22 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
     Effect.catchTags(dieFromFatal),
   );
 
+  const insertManyRaw = (
+    docs: readonly MemSchema[],
+    options?: BulkWriteOptions,
+  ): Effect.Effect<InsertManyResult<DbSchema>, MongoError | SchemaMismatch> =>
+    gen(function* () {
+      const toIns = yield* forEach(docs, encode, { concurrency: "unbounded" });
+      const session = yield* txnSession;
+      return yield* mongoEff(() =>
+        coll.insertMany(
+          toIns as ReadonlyArray<OptionalUnlessRequiredId<DbSchema>>,
+          { ...options, ...session },
+        ),
+      );
+    });
+  const insertMany = flow(insertManyRaw, catchTags(dieFromFatal));
+
   const replaceOneRaw = (
     filter: Filter<MemSchema>,
     replacement: MemSchema,
@@ -259,6 +277,8 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
     find,
     insertOneRaw,
     insertOne,
+    insertManyRaw,
+    insertMany,
     replaceOneRaw,
     replaceOne,
     updateOneRaw,

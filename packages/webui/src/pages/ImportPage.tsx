@@ -38,7 +38,7 @@ import {
 import { AutosClient } from "../apiclients/AutosClient.js";
 import GPlayLogo from "../assets/Google_Play_2022_logo.svg?react";
 import { VisuallyHiddenInput } from "../components/VisuallyHiddenInput.js";
-import { useTranslation } from "../i18n.js";
+import { TFunction, useTranslation } from "../i18n.js";
 import { makeRunFunctions } from "../internal/bootstrap.js";
 import { routes } from "../router.js";
 import { onEnterKey } from "../utils/onEnterKey.js";
@@ -48,11 +48,11 @@ const MobileInfoIcon = lazy(MobileInfoIconP);
 
 const { runP } = makeRunFunctions(AutosClient.Default);
 
-type ErrorDialogProps = Readonly<{
-  error: AutosApi.ImportError | RedactedError;
+type AbpErrorDialogProps = Readonly<{
+  error: AutosApi.AbpImportError | RedactedError;
   onClose: LazyArg<void>;
 }>;
-const ErrorDialog = ({ error, onClose }: ErrorDialogProps) => {
+const AbpErrorDialog = ({ error, onClose }: AbpErrorDialogProps) => {
   const { t } = useTranslation();
 
   const [showDetails, setShowDetails] = useState(false);
@@ -87,15 +87,16 @@ const ErrorDialog = ({ error, onClose }: ErrorDialogProps) => {
               </Stack>
             </Stack>
           ),
-          FileCorruptedError: Match.type<AutosApi.FileCorruptedError>().pipe(
-            discriminatorsExhaustive("type")({
-              UnzipError: () =>
-                "The file is corrupted, or it's not an actual .abp file from aCar.",
-              XmlParsingError: () =>
-                "An xml file in the backup is corrupted. Or the hamsters are rebelling.",
-            }),
-          ),
-          WrongFormatError: Match.type<AutosApi.WrongFormatError>().pipe(
+          AbpFileCorruptedError:
+            Match.type<AutosApi.AbpFileCorruptedError>().pipe(
+              discriminatorsExhaustive("type")({
+                UnzipError: () =>
+                  "The file is corrupted, or it's not an actual .abp file from aCar.",
+                XmlParsingError: () =>
+                  "An xml file in the backup is corrupted. Or the hamsters are rebelling.",
+              }),
+            ),
+          AbpWrongFormatError: Match.type<AutosApi.AbpWrongFormatError>().pipe(
             discriminatorsExhaustive("type")({
               UnexpectedOpeningTag: () =>
                 "Something in the data didn't match what we expected.",
@@ -108,6 +109,96 @@ const ErrorDialog = ({ error, onClose }: ErrorDialogProps) => {
         }),
       ),
     [error],
+  );
+
+  return (
+    <Dialog open={true} onClose={onClose}>
+      <DialogTitle>{t("errorDialog.title")}</DialogTitle>
+      {showDetails && (
+        <DialogContent>
+          <DialogContentText variant="body2">{getDetails()}</DialogContentText>
+        </DialogContent>
+      )}
+      <DialogActions>
+        <Stack width="100%" direction="row" justifyContent="space-between">
+          <Button
+            color="secondary"
+            size="small"
+            onClick={() => setShowDetails(o => !o)}
+          >
+            {t(`errorDialog.${showDetails ? "hideDetails" : "seeDetails"}`)}
+          </Button>
+          <Button variant="contained" onClick={onClose}>
+            {t("common.close")}
+          </Button>
+        </Stack>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+// TODO remove copypasta
+type BackupErrorDialogProps = Readonly<{
+  error: AutosApi.BackupImportError | RedactedError;
+  onClose: LazyArg<void>;
+}>;
+const BackupErrorDialog = ({ error, onClose }: BackupErrorDialogProps) => {
+  const { t } = useTranslation();
+
+  const [showDetails, setShowDetails] = useState(false);
+
+  const getDetails = useCallback(
+    () =>
+      Match.value(error).pipe(
+        Match.tagsExhaustive({
+          RedactedError: e => (
+            <Stack direction="column" spacing={1}>
+              <div>
+                Something went wrong on the server. We&apos;ll redouble the
+                whipping of the hamsters.
+              </div>
+              <Stack
+                direction="row"
+                spacing={1}
+                justifyContent="center"
+                onClick={() => navigator.clipboard.writeText(e.id)}
+              >
+                <Typography
+                  variant="inherit"
+                  fontSize="smaller"
+                  color="textDisabled"
+                >
+                  {`Error id: ${e.id}`}
+                </Typography>
+                <ContentCopy
+                  fontSize="inherit"
+                  sx={{ color: theme => theme.palette.text.disabled }}
+                />
+              </Stack>
+            </Stack>
+          ),
+          BackupFileCorruptedError:
+            Match.type<AutosApi.BackupFileCorruptedError>().pipe(
+              discriminatorsExhaustive("type")({
+                UnzipError: () =>
+                  "The file is corrupted, or it's not an actual backup file" +
+                  ` from ${t("appName")}.`,
+              }),
+            ),
+          BackupWrongFormatError:
+            Match.type<AutosApi.BackupWrongFormatError>().pipe(
+              discriminatorsExhaustive("type")({
+                ParseError: () =>
+                  "Something in the data didn't match what we expected.",
+                MissingBackupFile: () =>
+                  "A file we were looking for inside of the backup wasn't there.",
+                UnknownBackupVersion: () =>
+                  `The backup file seems to be from ${t("appName")}, but perhaps too new of a version?`,
+              }),
+            ),
+        }),
+      ),
+    [error, t],
   );
 
   return (
@@ -204,11 +295,11 @@ const ImportSourceCardHeader = ({
   );
 };
 
-type ACarUploadProps = Readonly<{
+type UploadProps = Readonly<{
   setCloseDisabled: (disabled: boolean) => void;
 }>;
 
-const ACarUpload = ({ setCloseDisabled }: ACarUploadProps) => {
+const ACarUpload = ({ setCloseDisabled }: UploadProps) => {
   const { t } = useTranslation();
 
   const [timezone, setTimezone] = useState<TimeZone.TimeZone | null>(
@@ -222,10 +313,10 @@ const ACarUpload = ({ setCloseDisabled }: ACarUploadProps) => {
   const [importing, setImporting] = useState(false);
 
   const [error, setErrorSync] = useState<
-    RedactedError | AutosApi.ImportError
+    RedactedError | AutosApi.AbpImportError
   >();
   const setError = useCallback(
-    (e: RedactedError | AutosApi.ImportError) =>
+    (e: RedactedError | AutosApi.AbpImportError) =>
       Effect.sync(() => setErrorSync(e)),
     [],
   );
@@ -256,7 +347,7 @@ const ACarUpload = ({ setCloseDisabled }: ACarUploadProps) => {
   return (
     <Stack direction="column" padding={2} spacing={2}>
       {error && (
-        <ErrorDialog error={error} onClose={() => setErrorSync(undefined)} />
+        <AbpErrorDialog error={error} onClose={() => setErrorSync(undefined)} />
       )}
       <SuccessDialog open={succeeded} onClose={onSuccessAcked} />
       <Stack spacing={1} direction="row" alignItems="center">
@@ -330,11 +421,104 @@ const ACarUpload = ({ setCloseDisabled }: ACarUploadProps) => {
         loadingPosition="start"
         onClick={doUpload}
       >
-        {t(importing ? "common.loading" : "importDialog.aCar.startImport")}
+        {t(importing ? "common.loading" : "importDialog.startImport")}
       </Button>
     </Stack>
   );
 };
+
+const BackupUpload = ({ setCloseDisabled }: UploadProps) => {
+  const { t } = useTranslation();
+
+  const [file, setFile] = useState<File>();
+  const [importing, setImporting] = useState(false);
+
+  const [error, setErrorSync] = useState<
+    RedactedError | AutosApi.BackupImportError
+  >();
+  const setError = useCallback(
+    (e: RedactedError | AutosApi.BackupImportError) =>
+      Effect.sync(() => setErrorSync(e)),
+    [],
+  );
+  const [succeeded, setSucceeded] = useState(false);
+
+  useEffect(() => setCloseDisabled(importing), [importing, setCloseDisabled]);
+
+  const doUpload = useCallback(() => {
+    if (file) {
+      setImporting(true);
+
+      pipe(
+        acquireRelease(
+          Effect.sync(() => setImporting(true)),
+          () => Effect.sync(() => setImporting(false)),
+        ),
+        andThen(AutosClient.importGuzzlerBackup(file)),
+        Effect.scoped,
+        andThen(() => setSucceeded(true)),
+        catchAll(setError),
+        runP,
+      );
+    }
+  }, [file, setError]);
+
+  const onSuccessAcked = useCallback(() => routes.Home().push(), []);
+
+  return (
+    <Stack direction="column" padding={2} spacing={2}>
+      {error && (
+        <BackupErrorDialog
+          error={error}
+          onClose={() => setErrorSync(undefined)}
+        />
+      )}
+      <SuccessDialog open={succeeded} onClose={onSuccessAcked} />
+      <Typography
+        variant="caption"
+        color={
+          importing
+            ? "textDisabled"
+            : file
+              ? file.name.endsWith(`.${backupExtension(t)}`)
+                ? "success"
+                : "warning"
+              : "textPrimary"
+        }
+      >
+        {file
+          ? t("importDialog.selectedFile", { fileName: file.name })
+          : t("importDialog.noSelectedFile")}
+      </Typography>
+      <Button
+        component="label"
+        role="undefined"
+        variant="outlined"
+        tabIndex={-1}
+        startIcon={<CloudUpload />}
+        disabled={importing}
+      >
+        {t("importDialog.pickFile")}
+        <VisuallyHiddenInput
+          type="file"
+          accept={`.${backupExtension(t)}`}
+          onChange={e => setFile(e.target.files?.item(0) ?? undefined)}
+        />
+      </Button>
+      <Button
+        variant="contained"
+        disabled={!file}
+        loading={importing}
+        loadingPosition="start"
+        onClick={doUpload}
+      >
+        {t(importing ? "common.loading" : "importDialog.startImport")}
+      </Button>
+    </Stack>
+  );
+};
+
+const backupExtension = (t: TFunction) => `${t("appName").toLowerCase()}backup`;
 
 type NameBackupDialogProps = Readonly<{
   onClose: (chosenName?: string) => void;
@@ -406,8 +590,7 @@ const ImportPage = () => {
       setNameBackupOpen(false);
       if (name) {
         const link = document.createElement("a");
-        const appName = t("appName").toLowerCase();
-        link.download = `${name}.${appName}backup`;
+        link.download = `${name}.${backupExtension(t)}`;
         link.href = AutosApi.AutosApi.endpoints[
           AutosApi.ExportBackupCallId
         ].path.replace(":backupName", name);
@@ -472,6 +655,9 @@ const ImportPage = () => {
         )}
         {selection === "aCar" && (
           <ACarUpload setCloseDisabled={setCloseDisabled} />
+        )}
+        {selection === "guzzler" && (
+          <BackupUpload setCloseDisabled={setCloseDisabled} />
         )}
       </Card>
 

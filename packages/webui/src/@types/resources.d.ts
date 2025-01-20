@@ -30,7 +30,6 @@ interface Resources {
       aCar: {
         downloadUrl: "https://play.google.com/store/apps/details?id=com.zonewalker.acar";
         name: "aCar";
-        startImport: "Start Import";
         timeZone: "Time Zone";
         timeZoneInfo: "The backup file has timestamps without any timezone information. Pick a zone to use to interpret them.";
       };
@@ -41,6 +40,7 @@ interface Resources {
       pickFile: "Pick File to Import";
       resetWarning: "This will erase all your settings and data. Be sure to make a backup before continuing, if you have any data to save.";
       selectedFile: "Selected File: {{fileName}}";
+      startImport: "Start Import";
       title: "Import / Export";
       topText: "Import a backup file from:";
     };

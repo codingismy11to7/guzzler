@@ -21,7 +21,7 @@ const provideSession = (session: ClientSession) =>
   Effect.provideService(MongoTxnCtx, session);
 
 export const createInTransaction =
-  <CommitErr>(
+  <CommitErr = MongoError>(
     client: MongoClient,
     handleCommitErr: (err: MongoError) => Effect.Effect<never, CommitErr>,
   ) =>
