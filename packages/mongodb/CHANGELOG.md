@@ -1,5 +1,16 @@
 # @guzzler/mongodb
 
+## 0.0.4
+
+### Patch Changes
+
+- [#110](https://github.com/codingismy11to7/guzzler/pull/110) [`18573cd`](https://github.com/codingismy11to7/guzzler/commit/18573cd92087cbc9ed166039cec2b354e9faec7e) Thanks [@codingismy11to7](https://github.com/codingismy11to7)! - reformat code to be 80 chars instead of 120
+
+- [#119](https://github.com/codingismy11to7/guzzler/pull/119) [`052f767`](https://github.com/codingismy11to7/guzzler/commit/052f767e3ddff21f5936691ad3b0c4e9c6b228e7) Thanks [@codingismy11to7](https://github.com/codingismy11to7)! - add the ability for users to backup and restore data
+
+- Updated dependencies [[`18573cd`](https://github.com/codingismy11to7/guzzler/commit/18573cd92087cbc9ed166039cec2b354e9faec7e), [`052f767`](https://github.com/codingismy11to7/guzzler/commit/052f767e3ddff21f5936691ad3b0c4e9c6b228e7), [`f3433b5`](https://github.com/codingismy11to7/guzzler/commit/f3433b51c2746b884b7e8a485ca785b0d589f57a)]:
+  - @guzzler/utils@0.0.3
+
 ## 0.0.3
 
 ### Patch Changes
