@@ -1,11 +1,9 @@
 {
   "name": "@guzzler/webui",
-  "version": "0.0.5",
-
+  "version": "0.0.6",
   "license": "MIT",
   "private": true,
   "type": "module",
-
   "repository": {
     "directory": "packages/webui",
     "type": "git",
@@ -23,14 +21,13 @@
     "test": "vitest --run",
     "test:watch": "vitest"
   },
-
   "dependencies": {
     "@effect/platform-browser": "^0.53.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@fontsource/roboto": "^5.1.1",
-    "@guzzler/domain": "^0.0.5",
-    "@guzzler/utils": "^0.0.2",
+    "@guzzler/domain": "^0.0.6",
+    "@guzzler/utils": "^0.0.3",
     "@mui/icons-material": "^6.4.0",
     "@mui/lab": "^6.0.0-beta.23",
     "@mui/material": "^6.4.0",

@@ -1,11 +1,9 @@
 {
   "name": "@guzzler/cli",
-  "version": "0.0.5",
-
+  "version": "0.0.6",
   "description": "The CLI template",
   "license": "MIT",
   "type": "module",
-
   "publishConfig": {
     "access": "public",
     "directory": "dist"
@@ -27,20 +25,23 @@
     "test": "vitest --run",
     "test:watch": "vitest"
   },
-
   "dependencies": {
     "@effect/cli": "^0.53.0",
     "@effect/platform": "^0.74.0",
     "@effect/platform-node": "^0.70.0",
-    "@guzzler/domain": "^0.0.5",
+    "@guzzler/domain": "^0.0.6",
     "effect": "^3.12.5"
   },
   "effect": {
     "generateExports": {
-      "include": ["**/*.ts"]
+      "include": [
+        "**/*.ts"
+      ]
     },
     "generateIndex": {
-      "include": ["**/*.ts"]
+      "include": [
+        "**/*.ts"
+      ]
     }
   }
 }
