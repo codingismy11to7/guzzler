@@ -4,6 +4,8 @@ export * as Model from "./Model.js";
 
 export * as Mongo from "./Mongo.js";
 
+export * as MongoChangeStreams from "./MongoChangeStreams.js";
+
 export * as MongoClientLayer from "./MongoClientLayer.js";
 
 /**
