@@ -1,6 +1,6 @@
 import { Document } from "bson";
 import { Effect, flow, Option, pipe, Schema, Stream } from "effect";
-import { andThen, catchTags, forEach, gen } from "effect/Effect";
+import { andThen, catchTags, dieMessage, forEach, gen } from "effect/Effect";
 import { ParseError } from "effect/ParseResult";
 import {
   BulkWriteOptions,
@@ -30,33 +30,98 @@ import {
   SchemaMismatch,
 } from "../Model.js";
 import { AnySchema, FindResult, MongoCollection } from "../MongoCollection.js";
+import { MongoCrypto } from "../MongoCrypto.js";
 import { MongoTxnCtx } from "./createInTransaction.js";
 import { mongoEff, RealMongoError } from "./utils.js";
+
+export type Options = Readonly<{
+  encrypted?: Readonly<{ plainTextFields: readonly string[] }> | undefined;
+}>;
+
+export type InternalMongoColl<
+  CName extends string,
+  SchemaT extends AnySchema,
+> = MongoCollection<CName, SchemaT> &
+  Readonly<{ unencrypted: () => InternalMongoColl<CName, SchemaT> }>;
 
 export const make = <CName extends string, SchemaT extends AnySchema>(
   db: Db,
   collectionName: CName,
   schema: SchemaT,
-): MongoCollection<CName, SchemaT> => {
+  options: Options,
+  cryptoOpt: Option.Option<MongoCrypto>,
+): InternalMongoColl<CName, SchemaT> => {
   type DbSchema = Schema.Schema.Encoded<SchemaT>;
   type MemSchema = Schema.Schema.Type<SchemaT>;
 
-  const toMismatch = Effect.catchTags({
-    ParseError: (p: ParseError) => new SchemaMismatch({ cause: p }),
-  });
-  const encode = (d: MemSchema) =>
-    Schema.encode(schema)(d).pipe(toMismatch) as Effect.Effect<
-      DbSchema,
-      SchemaMismatch
-    >;
-  const decode = (d: unknown) =>
-    Schema.decodeUnknown(schema)(d).pipe(toMismatch) as Effect.Effect<
-      MemSchema,
-      SchemaMismatch
-    >;
+  const unencrypted = () =>
+    make(
+      db,
+      collectionName,
+      schema,
+      { ...options, encrypted: undefined },
+      cryptoOpt,
+    );
+
+  const crypto = pipe(
+    cryptoOpt,
+    catchTags({
+      NoSuchElementException: () =>
+        dieMessage(
+          "An encrypted collection is configured, but no MongoCrypto layer was provided to MongoCollectionLayer",
+        ),
+    }),
+  );
+
+  const encrypt = (d: DbSchema): Effect.Effect<DbSchema> =>
+    gen(function* () {
+      if (!options.encrypted) return d;
+
+      const mc = yield* crypto;
+
+      // doesn't really return a DbSchema but we'll pretend
+      const ret: DbSchema = yield* mc.encrypt(
+        d,
+        ...options.encrypted.plainTextFields,
+      );
+
+      return ret;
+    });
+
+  const decrypt = (d: unknown): Effect.Effect<unknown, ParseError> =>
+    gen(function* () {
+      if (!options.encrypted) return d;
+
+      const mc = yield* crypto;
+
+      return yield* mc.decrypt(d as Record<string, unknown>);
+    });
+
+  const toMismatch = {
+    ParseError: (cause: ParseError) => new SchemaMismatch({ cause }),
+  } as const;
+
+  const doEncode = (u: unknown) =>
+    Schema.encode(schema)(u) as Effect.Effect<DbSchema, ParseError>;
+  const encode = (d: MemSchema): Effect.Effect<DbSchema, SchemaMismatch> =>
+    gen(function* () {
+      const db: DbSchema = yield* doEncode(d).pipe(catchTags(toMismatch));
+
+      return yield* encrypt(db);
+    });
+
+  const doDecode = (d: unknown) =>
+    Schema.decodeUnknown(schema)(d) as Effect.Effect<MemSchema, ParseError>;
+  const decode = (d: unknown): Effect.Effect<MemSchema, SchemaMismatch> =>
+    gen(function* () {
+      const decrypted = yield* decrypt(d);
+
+      return yield* doDecode(decrypted);
+    }).pipe(catchTags(toMismatch));
+
   const encodePartial = (fields: Partial<MemSchema>) =>
     Schema.encode(Schema.partial(schema))(fields).pipe(
-      toMismatch,
+      catchTags(toMismatch),
     ) as Effect.Effect<Partial<DbSchema>, SchemaMismatch>;
 
   const coll = db.collection<DbSchema>(collectionName);
@@ -273,6 +338,7 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
     name: collectionName,
     schema,
     connection: coll,
+    unencrypted,
     sortBy,
     countRaw,
     count,

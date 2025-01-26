@@ -13,7 +13,9 @@ const collections = pipe(
   MongoCollectionLayer,
   Effect.andThen(mcl =>
     mcl.createCollectionRegistry(c => ({
-      sessions: c.collection("sessions", Session),
+      sessions: c.collection("sessions", Session, {
+        encrypted: { plainTextFields: ["_id"] },
+      }),
       users: c.collection("users", User),
       userTypes: c.collection("userTypes", UserTypes),
       vehicles: c.collection("vehicles", UserVehicles),

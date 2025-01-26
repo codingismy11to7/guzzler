@@ -25,6 +25,7 @@ import {
   DocumentNotFound,
   SchemaMismatch,
 } from "./Model.js";
+import { MongoCrypto } from "./MongoCrypto.js";
 import { MongoDatabaseLayer } from "./MongoDatabaseLayer.js";
 import { Model } from "./index.js";
 
@@ -216,13 +217,15 @@ export class MongoCollectionLayer extends Effect.Service<MongoCollectionLayer>()
     accessors: true,
     effect: Effect.gen(function* () {
       const db = yield* MongoDatabaseLayer;
+      const cryptoOpt = yield* Effect.serviceOption(MongoCrypto);
 
       const RegistryCreator = {
         collection: <CName extends string, SchemaT extends AnySchema>(
           collectionName: CName,
           schema: SchemaT,
+          options: internal.Options = {},
         ): MongoCollection<CName, SchemaT> =>
-          internal.make(db, collectionName, schema),
+          internal.make(db, collectionName, schema, options, cryptoOpt),
       };
       const createCollectionRegistry = <T>(
         f: (creator: typeof RegistryCreator) => T,

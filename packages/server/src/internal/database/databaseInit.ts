@@ -1,6 +1,7 @@
 import { Mongo } from "@guzzler/mongodb";
 import { GridFS } from "@guzzler/mongodb/GridFS";
 import { MongoChangeStreams } from "@guzzler/mongodb/MongoChangeStreams";
+import { MongoCrypto, MongoCryptoKey } from "@guzzler/mongodb/MongoCrypto";
 import {
   addIndex,
   clearCollection,
@@ -38,12 +39,14 @@ export const runMigrations = Effect.gen(function* () {
     noOp(),
     noOp(),
     noOp(),
+    clearCollection(sessions),
   );
 }).pipe(Effect.withLogSpan("migrations"));
 
 export const mongoLiveLayers = Layer.unwrapEffect(
   Effect.gen(function* () {
-    const { url, dbName, username, password } = yield* AppConfig.mongo;
+    const { url, dbName, username, password, encryptionKey } =
+      yield* AppConfig.mongo;
 
     return CollectionRegistryLive.pipe(
       Layer.provideMerge(GridFS.Default),
@@ -57,6 +60,11 @@ export const mongoLiveLayers = Layer.unwrapEffect(
           },
           directConnection: true,
         }),
+      ),
+      Layer.provideMerge(
+        MongoCrypto.Default.pipe(
+          Layer.provide(MongoCryptoKey.make(Redacted.value(encryptionKey))),
+        ),
       ),
     );
   }),

@@ -58,7 +58,7 @@ export default tseslint.config([
       ...jsonRules,
     },
     files: ["**/*.json"],
-    ignores: ["package-lock.json", "**/tsconfig.json", "**/tsconfig.*.json"],
+    ignores: ["package-lock.json", "**/tsconfig.json", "**/tsconfig.*.json", "coverage/**/*"],
     language: "json/json",
   },
   {
