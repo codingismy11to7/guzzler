@@ -7,7 +7,7 @@ import { green, orange } from "@mui/material/colors";
 import { lazy, StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import "./i18n.js";
-import Loading from "./Loading.js";
+import Loading from "./components/Loading.js";
 import { RouteProvider } from "./router.js";
 
 const App = lazy(() => import("./App.js"));

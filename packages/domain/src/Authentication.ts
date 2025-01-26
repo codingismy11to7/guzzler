@@ -2,6 +2,7 @@ import { HttpApiMiddleware } from "@effect/platform";
 import { Forbidden, Unauthorized } from "@effect/platform/HttpApiError";
 import { apiKey } from "@effect/platform/HttpApiSecurity";
 import { Context, Schema } from "effect";
+import { gen } from "effect/Effect";
 import { Session, UnknownUserSession, UserSession } from "./Session.js";
 
 export const SessionCookieName = "guzzler-session-id";
@@ -16,6 +17,11 @@ export class CurrentFullSession extends Context.Tag("CurrentFullSession")<
   CurrentFullSession,
   UserSession
 >() {}
+
+export const currentSessionUsername = gen(function* () {
+  const { user } = yield* CurrentFullSession;
+  return user.username;
+});
 
 export class RequireNewUserSession extends HttpApiMiddleware.Tag<RequireNewUserSession>()(
   "RequireNewUserSession",

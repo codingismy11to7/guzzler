@@ -3,7 +3,6 @@
   "include": [],
 
   "references": [
-    {"path": "packages/cli"},
     {"path": "packages/domain"},
     {"path": "packages/mongodb"},
     {"path": "packages/server"},

@@ -32,7 +32,6 @@ const config: ViteUserConfig = {
       exclude: [...configDefaults.exclude, "**/dist/**", "**/build/**", "**/*.js"]
     },
     alias: {
-      ...alias("cli"),
       ...alias("domain"),
       ...alias("mongodb"),
       ...alias("server"),

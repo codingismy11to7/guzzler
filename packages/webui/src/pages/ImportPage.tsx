@@ -1,4 +1,4 @@
-import { AutosApi, TimeZone } from "@guzzler/domain";
+import { AutosApi, AutosModel, TimeZone } from "@guzzler/domain";
 import { RedactedError } from "@guzzler/domain/Errors";
 import { Check, Close, CloudUpload, ContentCopy } from "@mui/icons-material";
 import {
@@ -22,6 +22,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { useCopyToClipboard } from "@uidotdev/usehooks";
 import { Effect, Match, Option, pipe, Struct } from "effect";
 import { acquireRelease, andThen, catchAll } from "effect/Effect";
 import { LazyArg } from "effect/Function";
@@ -37,6 +38,7 @@ import {
 } from "react";
 import { AutosClient } from "../apiclients/AutosClient.js";
 import GPlayLogo from "../assets/Google_Play_2022_logo.svg?react";
+import { StandardPageBox } from "../components/StandardPageBox.js";
 import { VisuallyHiddenInput } from "../components/VisuallyHiddenInput.js";
 import { TFunction, useTranslation } from "../i18n.js";
 import { makeRunFunctions } from "../internal/bootstrap.js";
@@ -49,13 +51,15 @@ const MobileInfoIcon = lazy(MobileInfoIconP);
 const { runP } = makeRunFunctions(AutosClient.Default);
 
 type AbpErrorDialogProps = Readonly<{
-  error: AutosApi.AbpImportError | RedactedError;
+  error: AutosModel.AbpImportError | RedactedError;
   onClose: LazyArg<void>;
 }>;
 const AbpErrorDialog = ({ error, onClose }: AbpErrorDialogProps) => {
   const { t } = useTranslation();
 
   const [showDetails, setShowDetails] = useState(false);
+
+  const [, copyToClipboard] = useCopyToClipboard();
 
   const getDetails = useCallback(
     () =>
@@ -71,7 +75,7 @@ const AbpErrorDialog = ({ error, onClose }: AbpErrorDialogProps) => {
                 direction="row"
                 spacing={1}
                 justifyContent="center"
-                onClick={() => navigator.clipboard.writeText(e.id)}
+                onClick={() => copyToClipboard(e.id)}
               >
                 <Typography
                   variant="inherit"
@@ -88,7 +92,7 @@ const AbpErrorDialog = ({ error, onClose }: AbpErrorDialogProps) => {
             </Stack>
           ),
           AbpFileCorruptedError:
-            Match.type<AutosApi.AbpFileCorruptedError>().pipe(
+            Match.type<AutosModel.AbpFileCorruptedError>().pipe(
               discriminatorsExhaustive("type")({
                 UnzipError: () =>
                   "The file is corrupted, or it's not an actual .abp file from aCar.",
@@ -96,19 +100,20 @@ const AbpErrorDialog = ({ error, onClose }: AbpErrorDialogProps) => {
                   "An xml file in the backup is corrupted. Or the hamsters are rebelling.",
               }),
             ),
-          AbpWrongFormatError: Match.type<AutosApi.AbpWrongFormatError>().pipe(
-            discriminatorsExhaustive("type")({
-              UnexpectedOpeningTag: () =>
-                "Something in the data didn't match what we expected.",
-              ParseError: () =>
-                "Something in the data didn't match what we expected.",
-              MissingBackupFile: () =>
-                "A file we were looking for inside of the backup wasn't there.",
-            }),
-          ),
+          AbpWrongFormatError:
+            Match.type<AutosModel.AbpWrongFormatError>().pipe(
+              discriminatorsExhaustive("type")({
+                UnexpectedOpeningTag: () =>
+                  "Something in the data didn't match what we expected.",
+                ParseError: () =>
+                  "Something in the data didn't match what we expected.",
+                MissingBackupFile: () =>
+                  "A file we were looking for inside of the backup wasn't there.",
+              }),
+            ),
         }),
       ),
-    [error],
+    [copyToClipboard, error],
   );
 
   return (
@@ -139,13 +144,15 @@ const AbpErrorDialog = ({ error, onClose }: AbpErrorDialogProps) => {
 
 // TODO remove copypasta
 type BackupErrorDialogProps = Readonly<{
-  error: AutosApi.BackupImportError | RedactedError;
+  error: AutosModel.BackupImportError | RedactedError;
   onClose: LazyArg<void>;
 }>;
 const BackupErrorDialog = ({ error, onClose }: BackupErrorDialogProps) => {
   const { t } = useTranslation();
 
   const [showDetails, setShowDetails] = useState(false);
+
+  const [, copyToClipboard] = useCopyToClipboard();
 
   const getDetails = useCallback(
     () =>
@@ -161,7 +168,7 @@ const BackupErrorDialog = ({ error, onClose }: BackupErrorDialogProps) => {
                 direction="row"
                 spacing={1}
                 justifyContent="center"
-                onClick={() => navigator.clipboard.writeText(e.id)}
+                onClick={() => copyToClipboard(e.id)}
               >
                 <Typography
                   variant="inherit"
@@ -178,7 +185,7 @@ const BackupErrorDialog = ({ error, onClose }: BackupErrorDialogProps) => {
             </Stack>
           ),
           BackupFileCorruptedError:
-            Match.type<AutosApi.BackupFileCorruptedError>().pipe(
+            Match.type<AutosModel.BackupFileCorruptedError>().pipe(
               discriminatorsExhaustive("type")({
                 UnzipError: () =>
                   "The file is corrupted, or it's not an actual backup file" +
@@ -186,7 +193,7 @@ const BackupErrorDialog = ({ error, onClose }: BackupErrorDialogProps) => {
               }),
             ),
           BackupWrongFormatError:
-            Match.type<AutosApi.BackupWrongFormatError>().pipe(
+            Match.type<AutosModel.BackupWrongFormatError>().pipe(
               discriminatorsExhaustive("type")({
                 ParseError: () =>
                   "Something in the data didn't match what we expected.",
@@ -198,7 +205,7 @@ const BackupErrorDialog = ({ error, onClose }: BackupErrorDialogProps) => {
             ),
         }),
       ),
-    [error, t],
+    [copyToClipboard, error, t],
   );
 
   return (
@@ -313,10 +320,10 @@ const ACarUpload = ({ setCloseDisabled }: UploadProps) => {
   const [importing, setImporting] = useState(false);
 
   const [error, setErrorSync] = useState<
-    RedactedError | AutosApi.AbpImportError
+    RedactedError | AutosModel.AbpImportError
   >();
   const setError = useCallback(
-    (e: RedactedError | AutosApi.AbpImportError) =>
+    (e: RedactedError | AutosModel.AbpImportError) =>
       Effect.sync(() => setErrorSync(e)),
     [],
   );
@@ -342,7 +349,7 @@ const ACarUpload = ({ setCloseDisabled }: UploadProps) => {
     }
   }, [file, setError, timezone]);
 
-  const onSuccessAcked = useCallback(() => routes.Home().push(), []);
+  const onSuccessAcked = useCallback(() => routes.Vehicles().push(), []);
 
   return (
     <Stack direction="column" padding={2} spacing={2}>
@@ -434,10 +441,10 @@ const BackupUpload = ({ setCloseDisabled }: UploadProps) => {
   const [importing, setImporting] = useState(false);
 
   const [error, setErrorSync] = useState<
-    RedactedError | AutosApi.BackupImportError
+    RedactedError | AutosModel.BackupImportError
   >();
   const setError = useCallback(
-    (e: RedactedError | AutosApi.BackupImportError) =>
+    (e: RedactedError | AutosModel.BackupImportError) =>
       Effect.sync(() => setErrorSync(e)),
     [],
   );
@@ -463,7 +470,7 @@ const BackupUpload = ({ setCloseDisabled }: UploadProps) => {
     }
   }, [file, setError]);
 
-  const onSuccessAcked = useCallback(() => routes.Home().push(), []);
+  const onSuccessAcked = useCallback(() => routes.Vehicles().push(), []);
 
   return (
     <Stack direction="column" padding={2} spacing={2}>
@@ -592,7 +599,7 @@ const ImportPage = () => {
         const link = document.createElement("a");
         link.download = `${name}.${backupExtension(t)}`;
         link.href = AutosApi.AutosApi.endpoints[
-          AutosApi.ExportBackupCallId
+          AutosModel.ExportBackupCallId
         ].path.replace(":backupName", name);
         document.body.appendChild(link);
         link.click();
@@ -603,7 +610,7 @@ const ImportPage = () => {
   );
 
   return (
-    <>
+    <StandardPageBox>
       <Divider>
         <Typography variant="body1" color="textSecondary">
           {t("importDialog.topText")}
@@ -681,7 +688,7 @@ const ImportPage = () => {
       )}
 
       {nameBackupOpen && <NameBackupDialog onClose={onNameBackupClose} />}
-    </>
+    </StandardPageBox>
   );
 };
 

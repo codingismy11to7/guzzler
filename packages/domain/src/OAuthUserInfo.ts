@@ -1,7 +1,10 @@
 import { Schema } from "effect";
 
+export const UserInfoId = Schema.Trim.pipe(Schema.brand("UserInfoId"));
+export type UserInfoId = typeof UserInfoId.Type;
+
 export const OAuthUserInfo = Schema.Struct({
-  id: Schema.String,
+  id: UserInfoId,
   email: Schema.String,
   verified_email: Schema.Boolean,
   name: Schema.String,

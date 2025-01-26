@@ -1,4 +1,3 @@
-import { HttpApiSchema } from "@effect/platform";
 import { FancyTypes } from "@guzzler/utils";
 import { Data, Schema } from "effect";
 import { ParseError } from "effect/ParseResult";
@@ -14,29 +13,27 @@ export type SortParams<SchemaT extends AnySchema> = ReadonlyArray<
   SortParam<SchemaT>
 >;
 
-export class NotFound extends Schema.TaggedError<NotFound>()(
-  "NotFound",
+export class DocumentNotFound extends Schema.TaggedError<DocumentNotFound>()(
+  "DocumentNotFound",
   { method: Schema.String, filter: Schema.Object.pipe(Schema.optional) },
-  HttpApiSchema.annotations({ status: 404 }),
 ) {
   get message() {
-    return `NotFound: ${this.method}${this.filter ? ` (filter=${JSON.stringify(this.filter)})` : ""}`;
+    return `DocumentNotFound: ${this.method}${this.filter ? ` (filter=${JSON.stringify(this.filter)})` : ""}`;
   }
 }
-export class Conflict extends Schema.TaggedError<Conflict>()(
-  "Conflict",
+export class DocumentConflict extends Schema.TaggedError<DocumentConflict>()(
+  "DocumentConflict",
   {},
-  HttpApiSchema.annotations({ status: 403 }),
 ) {}
 export class SchemaMismatch extends Data.TaggedError("SchemaMismatch")<{
-  underlying: ParseError;
+  cause: ParseError;
 }> {
   get message() {
-    return this.underlying.message;
+    return this.cause.message;
   }
 }
 export class MongoError extends Data.TaggedError("MongoError")<{
-  underlying: RealMongoError;
+  cause: RealMongoError;
 }> {}
 
 export const AppStateId = Schema.Literal("AppStateId");

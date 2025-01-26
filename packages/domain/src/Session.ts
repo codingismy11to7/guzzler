@@ -10,7 +10,7 @@ export const SessionId = Schema.String.pipe(
 export type SessionId = typeof SessionId.Type;
 
 export const UnknownUserSession = Schema.TaggedStruct("UnknownUserSession", {
-  id: Schema.propertySignature(SessionId).pipe(Schema.fromKey("_id")),
+  _id: SessionId,
   token: OAuthToken,
   oAuthUserInfo: OAuthUserInfo,
 });

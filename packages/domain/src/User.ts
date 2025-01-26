@@ -1,8 +1,5 @@
 import { Schema } from "effect";
-import { OAuthUserInfo } from "./OAuthUserInfo.js";
-
-export const UserId = Schema.String.pipe(Schema.brand("UserId"));
-export type UserId = typeof UserId.Type;
+import { OAuthUserInfo, UserInfoId } from "./OAuthUserInfo.js";
 
 export const Username = Schema.String.pipe(
   Schema.length({ min: 5, max: 20 }),
@@ -12,7 +9,7 @@ export const Username = Schema.String.pipe(
 export type Username = typeof Username.Type;
 
 export const User = Schema.Struct({
-  id: Schema.propertySignature(UserId).pipe(Schema.fromKey("_id")),
+  _id: UserInfoId,
   username: Username,
   oAuthUserInfo: OAuthUserInfo,
 });

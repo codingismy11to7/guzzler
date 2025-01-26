@@ -1,3 +1,4 @@
+import { Autos } from "@guzzler/domain";
 import {
   Route,
   createRouter,
@@ -17,8 +18,19 @@ const SignupRoutes = {
 
 const Home = defineRoute("/");
 const Pages = {
+  CategoryManagement: Home.extend("/manageCategories"),
   Home,
   ImportExport: Home.extend("/manageData"),
+  Vehicle: Home.extend(
+    {
+      vehicleId: param.path.ofType<Autos.VehicleId>({
+        stringify: i => i,
+        parse: Autos.VehicleId.make,
+      }),
+    },
+    p => `/vehicle/${p.vehicleId}`,
+  ),
+  Vehicles: Home.extend("/vehicles"),
 };
 
 export const { RouteProvider, useRoute, routes } = createRouter({
@@ -29,7 +41,13 @@ export const { RouteProvider, useRoute, routes } = createRouter({
 
 export const RoutingGroups = {
   Signup: createGroup([routes.Signup, routes.SignupConfirm]),
-  Pages: createGroup([routes.Home, routes.ImportExport]),
+  Pages: createGroup([
+    routes.CategoryManagement,
+    routes.Home,
+    routes.ImportExport,
+    routes.Vehicle,
+    routes.Vehicles,
+  ]),
 } as const;
 
 export type AppRoute = Route<typeof routes>;

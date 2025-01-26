@@ -1,7 +1,7 @@
 import { tz } from "@date-fns/tz";
 import { FileSystem, Path } from "@effect/platform";
 import { SystemError } from "@effect/platform/Error";
-import { AutosApi } from "@guzzler/domain";
+import { AutosModel } from "@guzzler/domain";
 import {
   encodeLocationOpt,
   EventRecord,
@@ -29,7 +29,7 @@ import {
 } from "@guzzler/domain/MiscSchemas";
 import { TimeZone } from "@guzzler/domain/TimeZone";
 import { Username } from "@guzzler/domain/User";
-import { MongoError, NotFound } from "@guzzler/mongodb/Model";
+import { MongoError, DocumentNotFound } from "@guzzler/mongodb/Model";
 import { MongoTransactions } from "@guzzler/mongodb/MongoTransactions";
 import { RandomId } from "@guzzler/utils/RandomId";
 import { parse as parseDate } from "date-fns";
@@ -277,8 +277,8 @@ const importFromACarFullBackup =
     zipPath: string,
   ): Effect.Effect<
     void,
-    | AutosApi.AbpFileCorruptedError
-    | AutosApi.AbpWrongFormatError
+    | AutosModel.AbpFileCorruptedError
+    | AutosModel.AbpWrongFormatError
     | RedactedError,
     RandomId
   > =>
@@ -421,7 +421,7 @@ const importFromACarFullBackup =
         | XmlParsingError
         | ParseError
         | MongoError
-        | NotFound
+        | DocumentNotFound
         | UnexpectedOpeningTag
         | E
       > =>
@@ -441,7 +441,7 @@ const importFromACarFullBackup =
           const parseAndHandleNextVehicle: Effect.Effect<
             void,
             Option.Option<
-              XmlParsingError | ParseError | MongoError | NotFound | E
+              XmlParsingError | ParseError | MongoError | DocumentNotFound | E
             >
           > = gen(function* () {
             const nextIsVehicleStart = pipe(
@@ -593,11 +593,12 @@ const importFromACarFullBackup =
                 const fillups = yield* Effect.forEach(
                   fillupRecords,
                   convertFillup,
-                  {
-                    concurrency: "unbounded",
-                  },
+                  { concurrency: "unbounded" },
                 );
-                yield* autos.insertFillupRecords(username, vehicle.id, fillups);
+                yield* autos.replaceFillupRecords(
+                  { username, vehicleId: vehicle.id },
+                  fillups,
+                );
                 yield* Effect.logInfo(`Added ${fillups.length} fillup records`);
 
                 const convertEvent = (er: ACarEventRecord) =>
@@ -637,7 +638,10 @@ const importFromACarFullBackup =
                   convertEvent,
                   { concurrency: "unbounded" },
                 );
-                yield* autos.insertEventRecords(username, vehicle.id, events);
+                yield* autos.replaceEventRecords(
+                  { username, vehicleId: vehicle.id },
+                  events,
+                );
                 yield* Effect.logInfo(
                   `Added ${eventRecords.length} event records`,
                 );
@@ -702,7 +706,7 @@ const importFromACarFullBackup =
           yield* Effect.logInfo("Replacing settings");
           yield* autos.replaceAllUserTypes(
             UserTypes.make({
-              username,
+              _id: username,
               eventSubtypes: Object.fromEntries(
                 eventSubtypes.map(e => [e.id, e]),
               ),
@@ -720,19 +724,19 @@ const importFromACarFullBackup =
       Effect.tapError(e => Effect.logError(e.message)),
       catchTags({
         UnexpectedOpeningTag: () =>
-          new AutosApi.AbpWrongFormatError({ type: "UnexpectedOpeningTag" }),
+          new AutosModel.AbpWrongFormatError({ type: "UnexpectedOpeningTag" }),
         MissingBackupFile: () =>
-          new AutosApi.AbpWrongFormatError({ type: "MissingBackupFile" }),
+          new AutosModel.AbpWrongFormatError({ type: "MissingBackupFile" }),
         ParseError: () =>
-          new AutosApi.AbpWrongFormatError({ type: "ParseError" }),
+          new AutosModel.AbpWrongFormatError({ type: "ParseError" }),
         UnzipError: () =>
-          new AutosApi.AbpFileCorruptedError({ type: "UnzipError" }),
+          new AutosModel.AbpFileCorruptedError({ type: "UnzipError" }),
         XmlParsingError: () =>
-          new AutosApi.AbpFileCorruptedError({ type: "XmlParsingError" }),
+          new AutosModel.AbpFileCorruptedError({ type: "XmlParsingError" }),
         SystemError: RedactedError.logged,
         MongoError: RedactedError.logged,
         // wow, if we couldn't find a document we literally just inserted...
-        NotFound: RedactedError.logged,
+        DocumentNotFound: RedactedError.logged,
       }),
     );
 

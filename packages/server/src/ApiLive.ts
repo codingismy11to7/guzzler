@@ -16,28 +16,29 @@ import {
   RawSessionAccess_DoNotUse,
 } from "@guzzler/domain/Authentication";
 import { GridFS } from "@guzzler/mongodb/GridFS";
+import { MongoChangeStreams } from "@guzzler/mongodb/MongoChangeStreams";
 import { MongoTransactions } from "@guzzler/mongodb/MongoTransactions";
 import { RandomId } from "@guzzler/utils/RandomId";
 import { Effect, Layer, Option, pipe } from "effect";
 import { ParseError } from "effect/ParseResult";
+import { AccountApiLive } from "./apis/AccountApiLive.js";
+import { AuthApiLive } from "./apis/AuthApiLive.js";
+import { AutosApiLive } from "./apis/AutosApiLive.js";
+import { ImageApiLive } from "./apis/ImageApiLive.js";
+import { SessionApiLive } from "./apis/SessionApiLive.js";
+import { SignupApiLive } from "./apis/SignupApiLive.js";
+import { UIDev } from "./apis/UIDev.js";
+import { UILive } from "./apis/UILive.js";
 import { AppConfig, ProdMode } from "./AppConfig.js";
 import { AutosStorage } from "./AutosStorage.js";
 import { BackupRestore } from "./BackupRestore.js";
+import { FileFetcher } from "./FileFetcher.js";
 import { ACarFullBackup } from "./importers/ACarFullBackup.js";
-import { AccountApiLive } from "./internal/api/impl/AccountApiLive.js";
-import { AuthApiLive } from "./internal/api/impl/AuthApiLive.js";
-import { AutosApiLive } from "./internal/api/impl/AutosApiLive.js";
-import { SessionApiLive } from "./internal/api/impl/SessionApiLive.js";
-import { SignupApiLive } from "./internal/api/impl/SignupApiLive.js";
-import { TodosApiLive } from "./internal/api/impl/TodosApiLive.js";
-import { UIDev } from "./internal/api/impl/UIDev.js";
-import { UILive } from "./internal/api/impl/UILive.js";
 import { CollectionRegistry } from "./internal/database/CollectionRegistry.js";
 import { XmlParser } from "./internal/xml/XmlParser.js";
 import * as OAuth2 from "./OAuth2.js";
 import { ExternalError, InvalidOptions } from "./OAuth2.js";
 import { SessionStorage } from "./SessionStorage.js";
-import { TodosRepository } from "./TodosRepository.js";
 import { Users } from "./Users.js";
 import { Zip } from "./Zip.js";
 import { AuthenticationMiddleware } from "./index.js";
@@ -77,6 +78,7 @@ export const ApiLive: Layer.Layer<
   | FileSystem
   | GridFS
   | HttpPlatform
+  | MongoChangeStreams
   | MongoTransactions
   | Path
   | ProdMode
@@ -85,19 +87,19 @@ export const ApiLive: Layer.Layer<
   Layer.provide(AccountApiLive),
   Layer.provide(AuthApiLive),
   Layer.provide(AutosApiLive),
+  Layer.provide(ImageApiLive),
   Layer.provide(SessionApiLive),
   Layer.provide(SignupApiLive),
-  Layer.provide(TodosApiLive),
   Layer.provide(ACarFullBackup.Default),
   Layer.provide(BackupRestore.Default),
   Layer.provide(AutosStorage.Default),
+  Layer.provide(FileFetcher.Default),
   Layer.provide(Users.Default),
   Layer.provide(UILayer),
   Layer.provide(XmlParser.Default),
   Layer.provide(Zip.Default),
   Layer.provide(AuthLayers),
   Layer.provide(SessionStorage.Default),
-  Layer.provide(TodosRepository.Default),
   Layer.provide(
     OAuth2.make({
       scope: ["profile", "email"],

@@ -225,7 +225,7 @@ const validateOptions = (
   );
 
 export class ExternalError extends Data.TaggedError("ExternalError")<{
-  underlying: Error;
+  cause: Error;
 }> {}
 
 type MethodViaParams = Readonly<{
@@ -415,7 +415,7 @@ export const make = (inputOptions: Omit<OAuth2Options, "credentials">) =>
 
           const obj = yield* Effect.try({
             try: () => JSON.parse(respBody),
-            catch: e => new ExternalError({ underlying: e as Error }),
+            catch: e => new ExternalError({ cause: e as Error }),
           });
           return yield* Schema.decodeUnknown(OAuthUserInfo.OAuthUserInfo)(obj);
         }).pipe(Effect.scoped);
@@ -453,7 +453,7 @@ export const make = (inputOptions: Omit<OAuth2Options, "credentials">) =>
           Effect.andThen(respBody =>
             Effect.try({
               try: () => JSON.parse(respBody),
-              catch: e => new ExternalError({ underlying: e as Error }),
+              catch: e => new ExternalError({ cause: e as Error }),
             }),
           ),
           Effect.andThen(Schema.decodeUnknown(DiscoveredMetadata)),
@@ -712,7 +712,7 @@ export const make = (inputOptions: Omit<OAuth2Options, "credentials">) =>
                 "NoSuchElementException",
                 () =>
                   new ExternalError({
-                    underlying: new Error(
+                    cause: new Error(
                       "No discovered metadata or no userinfo endpoint",
                     ),
                   }),

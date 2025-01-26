@@ -3,94 +3,97 @@ import {
   HttpApiGroup,
   HttpApiSchema,
   Multipart,
+  OpenApi,
 } from "@effect/platform";
+import { BadRequest, NotFound } from "@effect/platform/HttpApiError";
+import { NoContent } from "@effect/platform/HttpApiSchema";
 import { Schema } from "effect";
 import { RequireFullSession } from "../Authentication.js";
-import { RedactedError } from "../Errors.js";
+import {
+  EventRecordsByVehicle,
+  FillupRecordsByVehicle,
+  UserTypes,
+  Vehicle,
+  VehicleId,
+  VehiclesDict,
+} from "../Autos.js";
+import { RedactedError, ServerError } from "../Errors.js";
+import {
+  AbpFileCorruptedError,
+  AbpWrongFormatError,
+  BackupFileCorruptedError,
+  BackupWrongFormatError,
+  ExportBackupCallId,
+  FrontendChangeEvent,
+  SubscribeToChanges,
+  ZipError,
+} from "../models/AutosModel.js";
 import { TimeZone } from "../TimeZone.js";
-
-export const AbpWrongFormatErrorType = Schema.Literal(
-  "UnexpectedOpeningTag",
-  "ParseError",
-  "MissingBackupFile",
-);
-export class AbpWrongFormatError extends Schema.TaggedError<AbpWrongFormatError>(
-  "AbpWrongFormatError",
-)(
-  "AbpWrongFormatError",
-  {
-    type: AbpWrongFormatErrorType,
-  },
-  HttpApiSchema.annotations({
-    status: 400,
-    description: "The file wasn't in the format the server expects",
-  }),
-) {}
-
-export const AbpFileCorruptedErrorType = Schema.Literal(
-  "UnzipError",
-  "XmlParsingError",
-);
-export class AbpFileCorruptedError extends Schema.TaggedError<AbpFileCorruptedError>(
-  "AbpFileCorruptedError",
-)(
-  "AbpFileCorruptedError",
-  { type: AbpFileCorruptedErrorType },
-  HttpApiSchema.annotations({
-    status: 400,
-    description: "The file was corrupted or not a .abp file.",
-  }),
-) {}
-
-export const BackupWrongFormatErrorType = Schema.Literal(
-  "ParseError",
-  "MissingBackupFile",
-  "UnknownBackupVersion",
-);
-export class BackupWrongFormatError extends Schema.TaggedError<BackupWrongFormatError>(
-  "BackupWrongFormatError",
-)(
-  "BackupWrongFormatError",
-  {
-    type: BackupWrongFormatErrorType,
-  },
-  HttpApiSchema.annotations({
-    status: 400,
-    description: "The file wasn't in the format the server expects",
-  }),
-) {}
-
-export const BackupFileCorruptedErrorType = Schema.Literal("UnzipError");
-export class BackupFileCorruptedError extends Schema.TaggedError<BackupFileCorruptedError>(
-  "BackupFileCorruptedError",
-)(
-  "BackupFileCorruptedError",
-  { type: BackupFileCorruptedErrorType },
-  HttpApiSchema.annotations({
-    status: 400,
-    description: "The file was corrupted or not a .abp file.",
-  }),
-) {}
-
-export class ZipError extends Schema.TaggedError<ZipError>("AutosApiZipError")(
-  "AutosApiZipError",
-  {},
-  HttpApiSchema.annotations({
-    status: 500,
-    description: "There was some issue compressing the backup.",
-  }),
-) {}
-
-export type AbpImportError = AbpWrongFormatError | AbpFileCorruptedError;
-export type BackupImportError =
-  | BackupWrongFormatError
-  | BackupFileCorruptedError;
-
-export const ExportBackupCallId = "exportBackup";
 
 export class AutosApi extends HttpApiGroup.make("autos")
   .add(
-    HttpApiEndpoint.get(ExportBackupCallId, "/export/:backupName")
+    HttpApiEndpoint.get("getUserTypes", "/types")
+      .addSuccess(UserTypes)
+      .addError(NotFound),
+  )
+  .add(
+    HttpApiEndpoint.get("getUserVehicle", "/vehicle/:vehicleId")
+      .setPath(Schema.Struct({ vehicleId: VehicleId }))
+      .addSuccess(Vehicle)
+      .addError(NotFound),
+  )
+  .add(
+    HttpApiEndpoint.del("deleteUserVehicle", "/vehicle/:vehicleId")
+      .setPath(Schema.Struct({ vehicleId: VehicleId }))
+      .addSuccess(NoContent)
+      .addError(NotFound)
+      .addError(RedactedError),
+  )
+  .add(
+    HttpApiEndpoint.get("getUserVehicles", "/vehicles")
+      .addSuccess(VehiclesDict)
+      .addError(NotFound),
+  )
+  .add(
+    HttpApiEndpoint.get("getUserFillups", "/fillups").addSuccess(
+      FillupRecordsByVehicle,
+    ),
+  )
+  .add(
+    HttpApiEndpoint.get("getUserEvents", "/events").addSuccess(
+      EventRecordsByVehicle,
+    ),
+  )
+  .add(
+    HttpApiEndpoint.get(SubscribeToChanges, "/changes")
+      .addSuccess(
+        Schema.Union(Schema.Literal("ping"), FrontendChangeEvent).pipe(
+          // TODO this isn't picked up, probably because of the weird allOf
+          //  this gets turned into for the openapi. ask about this some day
+          Schema.annotations({ description: "Pushed messages" }),
+        ),
+      )
+      .addError(BadRequest)
+      .addError(RedactedError)
+      .addError(ServerError)
+      .annotate(OpenApi.Summary, "Change notifications")
+      .annotate(
+        OpenApi.Description,
+        `
+> This endpoint is actually a websocket pushing messages. Don't try to call it
+as the \`GET\` it's advertised as - technically this documentation doesn't
+belong here, but at least it's somewhere.
+ 
+These messages are either a \`ping\` string, or an object with the type of data
+that changed, and an optional ID for an individual piece of data.
+
+The \`ping\` responses must be responded to with \`pong\`.
+`,
+      ),
+  )
+  .prefix("/userData")
+  .add(
+    HttpApiEndpoint.get(ExportBackupCallId, "/data/export/:backupName")
       .setPath(Schema.Struct({ backupName: Schema.Trim }))
       .addSuccess(
         Schema.String.pipe(
@@ -105,7 +108,7 @@ export class AutosApi extends HttpApiGroup.make("autos")
       .addError(RedactedError),
   )
   .add(
-    HttpApiEndpoint.post("importACarBackup", "/aCarBackup")
+    HttpApiEndpoint.post("importACarBackup", "/data/import/aCarBackup")
       .setPayload(
         HttpApiSchema.Multipart(
           Schema.Struct({
@@ -138,7 +141,7 @@ Trying to upload no or more than one file will be rejected.`,
       .addError(RedactedError),
   )
   .add(
-    HttpApiEndpoint.post("importBackup", "/backup")
+    HttpApiEndpoint.post("importBackup", "/data/import/backup")
       .setPayload(
         HttpApiSchema.Multipart(
           Schema.Struct({
@@ -159,6 +162,11 @@ Trying to upload no or more than one file will be rejected.`,
       .addError(BackupFileCorruptedError)
       .addError(RedactedError),
   )
-  .prefix("/import")
+  .prefix("/api/autos")
   .middleware(RequireFullSession)
-  .prefix("/autos") {}
+  .annotateContext(
+    OpenApi.annotations({
+      title: "Vehicles",
+      description: "CRUD for vehicles and associated data",
+    }),
+  ) {}

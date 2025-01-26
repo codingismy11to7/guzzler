@@ -1,11 +1,17 @@
-import type * as HttpClient from "@effect/platform/HttpClient";
-import { BrowserHttpClient } from "@effect/platform-browser";
+import { HttpClient, Socket } from "@effect/platform";
+import { BrowserHttpClient, BrowserSocket } from "@effect/platform-browser";
 import { RandomId } from "@guzzler/utils";
 import { format } from "date-fns/fp";
-import { Effect, Layer, Logger, ManagedRuntime } from "effect";
+import { Effect, Layer, Logger, LogLevel, ManagedRuntime } from "effect";
 
 export const makeRunFunctions = <
-  Layers extends Array<Layer.Layer<never, never, HttpClient.HttpClient>>,
+  Layers extends Array<
+    Layer.Layer<
+      never,
+      never,
+      HttpClient.HttpClient | Socket.WebSocketConstructor
+    >
+  >,
 >(
   ...layers: Layers
 ) => {
@@ -19,6 +25,7 @@ export const makeRunFunctions = <
     | RandomId.RandomId
   > = Layer.mergeAll(RandomId.RandomId.Default, ...layers).pipe(
     Layer.provide(BrowserHttpClient.layerXMLHttpRequest),
+    Layer.provide(BrowserSocket.layerWebSocketConstructor),
     Layer.provide(
       Logger.replace(
         Logger.defaultLogger,
@@ -27,6 +34,11 @@ export const makeRunFunctions = <
           mode: "browser",
           formatDate: format("MM/dd/yyyy hh:mm:ss.SSS aa"),
         }),
+      ),
+    ),
+    Layer.provide(
+      Logger.minimumLogLevel(
+        import.meta.env.DEV ? LogLevel.Debug : LogLevel.Info,
       ),
     ),
   );

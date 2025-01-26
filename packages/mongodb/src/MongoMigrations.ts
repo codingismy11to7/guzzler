@@ -112,7 +112,7 @@ export class MongoMigrationHandler extends Effect.Service<MongoMigrationHandler>
           const appState = yield* appStateColl
             .findOne({ id: AppStateDocId })
             .pipe(
-              Effect.catchTag("NotFound", () =>
+              Effect.catchTag("DocumentNotFound", () =>
                 Effect.succeed(
                   AppState.make({ id: AppStateDocId, migrationVersion: 0 }),
                 ),

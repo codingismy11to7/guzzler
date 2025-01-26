@@ -1,12 +1,19 @@
 interface Resources {
   translation: {
     appName: "Guzzler";
+    categoryManagement: {
+      events: "Events";
+      fuels: "Fuels";
+      title: "Categories";
+      trips: "Trips";
+    };
     common: {
       back: "Back";
       cancel: "Cancel";
       close: "Close";
       loading: "Whipping the hamsters...";
       next: "Next";
+      notes: "Notes";
       thereWasAProblem: "There was a problem";
     };
     createUser: {
@@ -58,6 +65,11 @@ interface Resources {
         settings: "Settings";
       };
     };
+    speedDial: {
+      event: "Add Event";
+      fillup: "Add Fillup";
+      trip: "Add Trip";
+    };
     successDialog: {
       text: "Your data was successfully imported. We imported 342 vehicles with a total fillup record count of 14e46 and event record count of 42.";
       title: "⛽ Success!";
@@ -68,6 +80,12 @@ interface Resources {
     userMenu: {
       import: "Data Management";
       logout: "Logout";
+    };
+    vehicle: {
+      title: "Vehicle";
+    };
+    vehicles: {
+      title: "Vehicles";
     };
   };
 }

@@ -1,17 +1,26 @@
 import { Skeleton } from "@mui/material";
-import { Effect, Match, pipe } from "effect";
+import { Effect, Fiber, Match, Schedule } from "effect";
+import {
+  annotateLogs,
+  catchTags,
+  gen,
+  logDebug,
+  logInfo,
+  logWarning,
+  retry,
+  tapError,
+} from "effect/Effect";
 import React, { lazy, ReactElement, useEffect, useState } from "react";
 import { SessionClient } from "./apiclients/SessionClient.js";
+import Loading from "./components/Loading.js";
 import {
   defaultGlobalContext,
-  Errored,
   GlobalContext,
   Succeeded,
   Unauthenticated,
   useCurrentSessionInfo,
-} from "./GlobalContext.js";
+} from "./contexts/GlobalContext.js";
 import { makeRunFunctions } from "./internal/bootstrap.js";
-import Loading from "./Loading.js";
 import { LoginPage } from "./pages/LoginPage.js";
 import {
   PagesRoute,
@@ -24,7 +33,7 @@ import {
 const SignupPage = lazy(() => import("./pages/SignupPage.js"));
 const LoggedInApp = lazy(() => import("./pages/LoggedInApp.js"));
 
-const { runP } = makeRunFunctions(SessionClient.Default);
+const { runP, runFork } = makeRunFunctions(SessionClient.Default);
 
 const LoggedInAppWrapper = ({ route }: { route: PagesRoute }) => {
   const session = useCurrentSessionInfo();
@@ -71,27 +80,57 @@ const Page = (): ReactElement => {
 
 const App = () => {
   const [globalContext, setGlobalContext] = useState(defaultGlobalContext);
+  const [connected, setConnected] = useState(false);
   const route = useRoute();
 
-  useEffect(
-    () =>
-      void pipe(
-        SessionClient.getSessionInfo,
-        Effect.andThen(si =>
-          setGlobalContext(Succeeded.make({ sessionInfo: si })),
-        ),
-        Effect.catchTag("Unauthorized", () =>
-          Effect.sync(() => setGlobalContext(Unauthenticated.make())),
-        ),
-        Effect.catchAll(e =>
-          Effect.sync(() =>
-            setGlobalContext(Errored.make({ error: e.message })),
+  useEffect(() => {
+    setGlobalContext(old =>
+      old.loading || old._tag !== "Succeeded"
+        ? old
+        : Succeeded.make({ ...old, connected }),
+    );
+  }, [connected]);
+
+  useEffect(() => {
+    if (!connected) {
+      const fiber = runFork(
+        gen(function* () {
+          yield* logDebug("checking for existing session");
+
+          const si = yield* SessionClient.sessionInfo;
+
+          yield* logInfo("Received session").pipe(
+            annotateLogs({ type: si._tag }),
+          );
+
+          setGlobalContext(
+            Succeeded.make({
+              sessionInfo: si,
+              connected,
+              setConnected,
+            }),
+          );
+        }).pipe(
+          catchTags({
+            Unauthorized: () =>
+              Effect.sync(() => setGlobalContext(Unauthenticated.make())),
+          }),
+          tapError(e =>
+            logWarning("Received error while fetching session info", e),
+          ),
+          retry(
+            Schedule.exponential("125 millis").pipe(
+              Schedule.union(Schedule.spaced("5 seconds")),
+            ),
           ),
         ),
-        runP,
-      ),
-    [],
-  );
+      );
+
+      return () => {
+        void runP(Fiber.interruptFork(fiber));
+      };
+    }
+  }, [connected]);
 
   const isUnauthenticated =
     !globalContext.loading && globalContext._tag === "Unauthenticated";
@@ -109,14 +148,7 @@ const App = () => {
 
   return (
     <GlobalContext.Provider value={globalContext}>
-      {globalContext.loading ? (
-        <Loading />
-      ) : (
-        Match.value(globalContext).pipe(
-          Match.tag("Errored", e => <div>Error: {e.error}</div>),
-          Match.orElse(() => <Page />),
-        )
-      )}
+      {globalContext.loading ? <Loading /> : <Page />}
     </GlobalContext.Provider>
   );
 };

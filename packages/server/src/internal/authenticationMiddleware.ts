@@ -15,16 +15,16 @@ import {
 import { Session, SessionId } from "@guzzler/domain/Session";
 import { Effect, HashSet, Layer, Option, pipe } from "effect";
 import { Redacted } from "effect/Redacted";
+import { LoginUrl, NewUserRedirectUrl } from "../apis/AuthApiLive.js";
 import { ProdMode } from "../AppConfig.js";
 import { SessionStorage } from "../SessionStorage.js";
-import { LoginUrl, NewUserRedirectUrl } from "./api/impl/AuthApiLive.js";
 
 const fetchSession =
   ({ getSession }: typeof SessionStorage.Service) =>
   (sessId: Redacted): Effect.Effect<Session, Unauthorized> =>
     pipe(
       getSession(SessionId.make(sessId)),
-      Effect.catchTag("SessionNotFound", () => new Unauthorized()),
+      Effect.catchTag("DocumentNotFound", () => new Unauthorized()),
     );
 
 export const TryToLoadSession_DoNotUseLive = Layer.effect(

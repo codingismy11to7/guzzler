@@ -1,51 +1,82 @@
-import { HttpApiClient } from "@effect/platform";
-import { AppApi, AutosApi } from "@guzzler/domain";
+import { HttpApiClient, Socket } from "@effect/platform";
+import { AppApi, Autos, AutosModel } from "@guzzler/domain";
 import { RedactedError } from "@guzzler/domain/Errors";
 import { TimeZone } from "@guzzler/domain/TimeZone";
-import { Effect, pipe } from "effect";
-import { catchTags } from "effect/Effect";
+import { Effect, Runtime } from "effect";
+import { catchTags, gen } from "effect/Effect";
+import * as internal from "../internal/apiclients/autosClient.js";
 import { dieFromFatal } from "./utils.js";
 
 export class AutosClient extends Effect.Service<AutosClient>()("AutosClient", {
   accessors: true,
-  effect: pipe(
-    HttpApiClient.make(AppApi.AppApi),
-    Effect.andThen(client => {
-      const importACarBackup = (
-        tz: TimeZone,
-        file: File,
-      ): Effect.Effect<
-        void,
-        | AutosApi.AbpFileCorruptedError
-        | AutosApi.AbpWrongFormatError
-        | RedactedError
-      > => {
-        const payload = new FormData();
-        payload.set("tz", tz);
-        payload.set("abpFile", file);
+  effect: gen(function* () {
+    const client = yield* HttpApiClient.make(AppApi.AppApi);
+    const ws = yield* Socket.WebSocketConstructor;
 
-        return client.autos
-          .importACarBackup({ payload })
-          .pipe(Effect.catchTags(dieFromFatal));
-      };
+    const importACarBackup = (
+      tz: TimeZone,
+      file: File,
+    ): Effect.Effect<
+      void,
+      | AutosModel.AbpFileCorruptedError
+      | AutosModel.AbpWrongFormatError
+      | RedactedError
+    > => {
+      const payload = new FormData();
+      payload.set("tz", tz);
+      payload.set("abpFile", file);
 
-      const importGuzzlerBackup = (
-        file: File,
-      ): Effect.Effect<
-        void,
-        | AutosApi.BackupFileCorruptedError
-        | AutosApi.BackupWrongFormatError
-        | RedactedError
-      > => {
-        const payload = new FormData();
-        payload.set("backupFile", file);
+      return client.autos
+        .importACarBackup({ payload })
+        .pipe(Effect.catchTags(dieFromFatal));
+    };
 
-        return client.autos
-          .importBackup({ payload })
-          .pipe(catchTags(dieFromFatal));
-      };
+    const importGuzzlerBackup = (
+      file: File,
+    ): Effect.Effect<
+      void,
+      | AutosModel.BackupFileCorruptedError
+      | AutosModel.BackupWrongFormatError
+      | RedactedError
+    > => {
+      const payload = new FormData();
+      payload.set("backupFile", file);
 
-      return { importACarBackup, importGuzzlerBackup };
-    }),
-  ),
+      return client.autos
+        .importBackup({ payload })
+        .pipe(catchTags(dieFromFatal));
+    };
+
+    const getUserTypes = client.autos.getUserTypes();
+    const getVehicles = client.autos.getUserVehicles();
+    const getFillups = client.autos.getUserFillups();
+    const getEvents = client.autos.getUserEvents();
+
+    const deleteUserVehicle = (vehicleId: Autos.VehicleId) =>
+      client.autos.deleteUserVehicle({ path: { vehicleId } });
+
+    // boy oh boy this is gross, but i fought with websockets enough
+    // revisit later
+    const makeImperativeSocketHandler = gen(function* () {
+      const sock = yield* internal.makeRawChangesSocket.pipe(
+        Effect.provideService(Socket.WebSocketConstructor, ws),
+      );
+
+      return internal.imperativelyHandleSocket(
+        sock,
+        Runtime.runSync(yield* Effect.runtime()),
+      );
+    });
+
+    return {
+      importACarBackup,
+      importGuzzlerBackup,
+      getUserTypes,
+      getVehicles,
+      getFillups,
+      getEvents,
+      deleteUserVehicle,
+      makeImperativeSocketHandler,
+    };
+  }),
 }) {}

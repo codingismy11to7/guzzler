@@ -28,8 +28,10 @@ export * as AuthApi from "./apis/AuthApi.js";
 
 export * as AutosApi from "./apis/AutosApi.js";
 
+export * as ImageApi from "./apis/ImageApi.js";
+
 export * as SessionApi from "./apis/SessionApi.js";
 
 export * as SignupApi from "./apis/SignupApi.js";
 
-export * as TodosApi from "./apis/TodosApi.js";
+export * as AutosModel from "./models/AutosModel.js";
