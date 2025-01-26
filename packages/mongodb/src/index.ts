@@ -13,6 +13,8 @@ export * as MongoClientLayer from "./MongoClientLayer.js";
  */
 export * as MongoCollection from "./MongoCollection.js";
 
+export * as MongoCrypto from "./MongoCrypto.js";
+
 export * as MongoDatabaseLayer from "./MongoDatabaseLayer.js";
 
 /**

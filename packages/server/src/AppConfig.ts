@@ -55,6 +55,11 @@ const MongoConfig = Config.all({
   dbName: Config.string("MONGO_DATABASE"),
   username: redacted("MONGO_USERNAME"),
   password: redacted("MONGO_PASSWORD"),
+  encryptionKey: redacted("MONGO_ENCRYPTION_KEY").pipe(
+    Config.withDescription(
+      "A 32 byte (64 character hex-encoded) string which is used to encrypt some records.",
+    ),
+  ),
 });
 
 const ConfigSchema = {

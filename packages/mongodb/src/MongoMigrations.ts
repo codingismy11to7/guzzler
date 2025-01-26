@@ -1,5 +1,7 @@
-import { Chunk, Effect, Match, pipe } from "effect";
+import { Chunk, Effect, Match, pipe, Stream } from "effect";
+import { gen, logInfo } from "effect/Effect";
 import { CreateIndexesOptions, DropCollectionOptions } from "mongodb";
+import * as internalCollection from "./internal/collection.js";
 import { mongoEff } from "./internal/utils.js";
 import { AppState, AppStateDocId, SortParam, SortParams } from "./Model.js";
 import { AnySchema } from "./MongoCollection.js";
@@ -41,6 +43,11 @@ type DropCollection = Readonly<{
   options?: DropCollectionOptions;
 }>;
 
+type EncryptCollection<
+  CollName extends string,
+  SchemaT extends MongoCollection.AnySchema,
+> = BaseMigration<CollName, SchemaT> & Readonly<{ _tag: "EncryptCollection" }>;
+
 type Migration<
   CollName extends string,
   SchemaT extends AnySchema = AnySchema,
@@ -48,6 +55,7 @@ type Migration<
   | NoOp
   | AddIndex<CollName, SchemaT>
   | DropCollection
+  | EncryptCollection<CollName, SchemaT>
   | ClearCollection<CollName, SchemaT>;
 
 export class MongoMigrationHandler extends Effect.Service<MongoMigrationHandler>()(
@@ -98,12 +106,31 @@ export class MongoMigrationHandler extends Effect.Service<MongoMigrationHandler>
           Effect.andThen(r => Effect.logInfo(` - deleted ${r.deletedCount}`)),
         );
 
+      const encryptCollection = ({
+        collection,
+      }: EncryptCollection<any, AnySchema>) =>
+        gen(function* () {
+          yield* logInfo(`Encrypting collection ${collection.name}`);
+
+          const oldColl = (
+            collection as internalCollection.InternalMongoColl<any, AnySchema>
+          ).unencrypted();
+
+          const cursor = yield* oldColl.find();
+
+          yield* pipe(
+            cursor.stream,
+            Stream.runForEach(d => collection.upsert({ _id: d._id }, d)),
+          );
+        });
+
       const handleMigration = Match.type<Migration<any>>().pipe(
         Match.tagsExhaustive({
           NoOp: () => Effect.void,
           AddIndex: addIndex,
           DropCollection: dropCollection,
           ClearCollection: clearCollection,
+          EncryptCollection: encryptCollection,
         }),
       );
 
@@ -187,6 +214,19 @@ export const dropCollection = (
   collectionName,
   ...(options ? { options } : {}),
 });
+
+export const encryptCollection = <
+  CollName extends string,
+  SchemaT extends MongoCollection.AnySchema,
+>(
+  collection: MongoCollection.MongoCollection<CollName, SchemaT>,
+): Migration<CollName> => {
+  const x: EncryptCollection<CollName, SchemaT> = {
+    collection,
+    _tag: "EncryptCollection",
+  };
+  return x as Migration<CollName>;
+};
 
 export const clearCollection = <
   CollName extends string,

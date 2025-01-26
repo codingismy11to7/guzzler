@@ -25,7 +25,7 @@ export class SessionStorage extends Effect.Service<SessionStorage>()(
       const getSession = (
         sessionId: SessionId,
       ): Effect.Effect<Session, DocumentNotFound> =>
-        sessions.findOne({ id: sessionId });
+        sessions.findOne({ _id: sessionId });
 
       return { addSession, getSession, clearSession };
     }),
