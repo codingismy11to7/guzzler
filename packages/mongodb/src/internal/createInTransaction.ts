@@ -60,7 +60,7 @@ export const createInTransaction =
           e instanceof MongoServerError &&
           e.hasErrorLabel("UnknownTransactionCommitResult")
             ? doCommit
-            : handleCommitErr(new MongoError({ underlying: e })),
+            : handleCommitErr(new MongoError({ cause: e })),
         ),
       );
 
@@ -68,8 +68,7 @@ export const createInTransaction =
         i instanceof MongoServerError &&
         i.hasErrorLabel("TransientTransactionError");
       const isRetryableWrapped = (i: unknown) =>
-        isRetryable(i) ||
-        (i instanceof MongoError && isRetryable(i.underlying));
+        isRetryable(i) || (i instanceof MongoError && isRetryable(i.cause));
 
       const runTxnWithRetry = <A, E, R>(
         e: Effect.Effect<A, E, R>,

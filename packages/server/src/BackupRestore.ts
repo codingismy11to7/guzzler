@@ -1,6 +1,6 @@
 import { FileSystem } from "@effect/platform";
 import { SystemError } from "@effect/platform/Error";
-import { AutosApi, BackupMetadata } from "@guzzler/domain";
+import { AutosModel, BackupMetadata } from "@guzzler/domain";
 import {
   PhotoId,
   UserTypes,
@@ -12,7 +12,7 @@ import {
 import { ContentType } from "@guzzler/domain/ContentType";
 import { RedactedError } from "@guzzler/domain/Errors";
 import { Username } from "@guzzler/domain/User";
-import { MongoError, NotFound } from "@guzzler/mongodb/Model";
+import { MongoError, DocumentNotFound } from "@guzzler/mongodb/Model";
 import { MongoTransactions } from "@guzzler/mongodb/MongoTransactions";
 import { RandomId } from "@guzzler/utils/RandomId";
 import { ObjectId } from "bson";
@@ -50,7 +50,7 @@ const _getBackupStream =
   (
     username: Username,
     backupName: string,
-  ): Stream.Stream<Uint8Array, ZipError | NotFound | MongoError> =>
+  ): Stream.Stream<Uint8Array, ZipError | DocumentNotFound | MongoError> =>
     Stream.unwrap(
       gen(function* () {
         const userTypes = yield* autos.getAllUserTypes(username);
@@ -63,12 +63,12 @@ const _getBackupStream =
             vId: VehicleId;
             pId: PhotoId;
             pInfo: {
-              mimeType: ContentType;
+              contentType: ContentType;
               fileName: string;
               stream: Stream.Stream<Uint8Array, MongoError>;
             };
           },
-          MongoError | NotFound
+          MongoError | DocumentNotFound
         > = pipe(
           Stream.fromIterable(Object.values(vehicles.vehicles)),
           Stream.filterMap(v =>
@@ -93,7 +93,7 @@ const _getBackupStream =
                 fileData: pipe(
                   userTypes,
                   Schema.encodeSync(UserTypes),
-                  Struct.omit("username"),
+                  Struct.omit("_id"),
                   stringifyCircular,
                   Stream.succeed,
                   Stream.encodeText,
@@ -115,7 +115,6 @@ const _getBackupStream =
                 fileData: pipe(
                   eventRecords,
                   Schema.encodeSync(Schema.Array(VehicleEventRecords)),
-                  vers => vers.map(Struct.omit("username")),
                   stringifyCircular,
                   Stream.succeed,
                   Stream.encodeText,
@@ -129,7 +128,6 @@ const _getBackupStream =
                     pipe(
                       fillupRecords,
                       Stream.map(Schema.encodeSync(VehicleFillupRecords)),
-                      Stream.map(Struct.omit("username")),
                       Stream.map(stringifyCircular),
                       Stream.intersperse(",\n"),
                     ),
@@ -149,7 +147,7 @@ const _getBackupStream =
                       (acc, { pId, pInfo }) => ({
                         ...acc,
                         [pId]: {
-                          contentType: pInfo.mimeType,
+                          contentType: pInfo.contentType,
                           fileName: pInfo.fileName,
                         },
                       }),
@@ -242,7 +240,7 @@ const _importFromGuzzlerBackup =
         gen(function* () {
           const json = yield* pipe(data, Stream.decodeText(), Stream.mkString);
           const obj = {
-            username,
+            _id: username,
             ...(yield* Schema.decode(Schema.parseJson(Schema.Struct({})))(
               json,
             )),
@@ -260,7 +258,7 @@ const _importFromGuzzlerBackup =
         gen(function* () {
           const json = yield* pipe(data, Stream.decodeText(), Stream.mkString);
           const obj = {
-            username,
+            _id: username,
             vehicles: yield* Schema.decode(Schema.parseJson(Schema.Struct({})))(
               json,
             ),
@@ -277,12 +275,19 @@ const _importFromGuzzlerBackup =
       ): Effect.Effect<readonly VehicleEventRecords[], ParseError | E> =>
         gen(function* () {
           const json = yield* pipe(data, Stream.decodeText(), Stream.mkString);
-          const arr = (yield* Schema.decode(
-            Schema.parseJson(Schema.Array(Schema.Struct({}))),
-          )(json)).map(ver => ({ username, ...ver }));
-          const ret = yield* Schema.decodeUnknown(
-            Schema.Array(VehicleEventRecords),
-          )(arr);
+          const jsonObj = yield* Schema.decode(Schema.parseJson())(json);
+
+          const Recs = Schema.Array(VehicleEventRecords);
+
+          const entriesWithOldUsername =
+            yield* Schema.decodeUnknown(Recs)(jsonObj);
+
+          const ret = Schema.decodeSync(Recs)(
+            Schema.encodeSync(Recs)(entriesWithOldUsername).map(ver => ({
+              ...ver,
+              _id: { ...ver._id, username },
+            })),
+          );
 
           yield* Effect.logInfo("Finished parsing VehicleEventRecords");
 
@@ -294,12 +299,19 @@ const _importFromGuzzlerBackup =
       ): Effect.Effect<readonly VehicleFillupRecords[], ParseError | E> =>
         gen(function* () {
           const json = yield* pipe(data, Stream.decodeText(), Stream.mkString);
-          const arr = (yield* Schema.decode(
-            Schema.parseJson(Schema.Array(Schema.Struct({}))),
-          )(json)).map(ver => ({ username, ...ver }));
-          const ret = yield* Schema.decodeUnknown(
-            Schema.Array(VehicleFillupRecords),
-          )(arr);
+          const jsonObj = yield* Schema.decode(Schema.parseJson())(json);
+
+          const Recs = Schema.Array(VehicleFillupRecords);
+
+          const entriesWithOldUsername =
+            yield* Schema.decodeUnknown(Recs)(jsonObj);
+
+          const ret = Schema.decodeSync(Recs)(
+            Schema.encodeSync(Recs)(entriesWithOldUsername).map(ver => ({
+              ...ver,
+              _id: { ...ver._id, username },
+            })),
+          );
 
           yield* Effect.logInfo("Finished parsing VehicleFillupRecords");
 
@@ -406,7 +418,7 @@ const _importFromGuzzlerBackup =
           yield* Effect.logInfo("Replacing settings");
           yield* autos.replaceAllUserTypes(userTypes);
 
-          yield* autos.insertUserVehicles(vehicles);
+          yield* autos.replaceUserVehicles(vehicles);
           yield* Effect.logInfo(
             `Wrote ${Object.keys(vehicles.vehicles).length} vehicles`,
           );
@@ -441,13 +453,13 @@ export class BackupRestore extends Effect.Service<BackupRestore>()(
       const getBackupStream = flow(
         _getBackupStream(autos, zip),
         catchTags({
-          NotFound: e => RedactedError.provideLogged(rand)(e.message),
-          MongoError: e => RedactedError.provideLogged(rand)(e.underlying),
+          DocumentNotFound: e => RedactedError.provideLogged(rand)(e.message),
+          MongoError: e => RedactedError.provideLogged(rand)(e.cause),
           ZipError: e =>
             Effect.logError(
               "Error creating backup from archiver",
               e.cause,
-            ).pipe(andThen(new AutosApi.ZipError())),
+            ).pipe(andThen(new AutosModel.ZipError())),
         }),
       );
 
@@ -457,15 +469,17 @@ export class BackupRestore extends Effect.Service<BackupRestore>()(
         Effect.tapError(e => Effect.logError(e.message)),
         Effect.catchTags({
           MissingBackupFile: () =>
-            new AutosApi.BackupWrongFormatError({ type: "MissingBackupFile" }),
+            new AutosModel.BackupWrongFormatError({
+              type: "MissingBackupFile",
+            }),
           ParseError: () =>
-            new AutosApi.BackupWrongFormatError({ type: "ParseError" }),
+            new AutosModel.BackupWrongFormatError({ type: "ParseError" }),
           WrongVersionError: () =>
-            new AutosApi.BackupWrongFormatError({
+            new AutosModel.BackupWrongFormatError({
               type: "UnknownBackupVersion",
             }),
           UnzipError: () =>
-            new AutosApi.BackupFileCorruptedError({ type: "UnzipError" }),
+            new AutosModel.BackupFileCorruptedError({ type: "UnzipError" }),
           SystemError: RedactedError.logged,
           MongoError: RedactedError.logged,
         }),

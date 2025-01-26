@@ -44,7 +44,7 @@ export class FuelType extends Schema.Class<FuelType>("FuelType")({
   category: FuelCategory,
   name: Schema.Trimmed,
   notes: OptionalString,
-  ratingType: FuelRatingType.pipe(Schema.optional),
+  ratingType: Schema.OptionFromUndefinedOr(FuelRatingType),
   rating: OptionalNumber,
 }) {}
 
@@ -117,8 +117,6 @@ export class FillupRecord extends Schema.Class<FillupRecord>("FillupRecord")({
   place: Schema.OptionFromUndefinedOr(Place),
 }) {}
 
-export const encodeFillupRecordSync = Schema.encodeSync(FillupRecord);
-
 /* event record */
 
 export const EventRecordId = Schema.Trimmed.pipe(Schema.brand("EventRecordId"));
@@ -138,11 +136,14 @@ export class EventRecord extends Schema.Class<EventRecord>("EventRecord")({
   subtypes: Schema.Unknown,
 }) {}
 
-export const encodeEventRecordSync = Schema.encodeSync(EventRecord);
-
 /* vehicle */
 
-export const PhotoId = ObjectIdStringSchema.pipe(Schema.brand("PhotoId"));
+export const PhotoId = ObjectIdStringSchema.pipe(
+  Schema.brand("PhotoId"),
+  Schema.annotations({
+    description: "a string suitable for bson.ObjectId.createFromHexString",
+  }),
+);
 export type PhotoId = typeof PhotoId.Type;
 
 export const VehicleId = Schema.Trimmed.pipe(
@@ -153,7 +154,7 @@ export type VehicleId = typeof VehicleId.Type;
 
 export class Vehicle extends Schema.Class<Vehicle>("Vehicle")({
   id: VehicleId,
-  name: Schema.Trimmed,
+  name: Schema.Trim,
   notes: OptionalString,
   type: OptionalString,
   year: Schema.Int.pipe(Schema.positive(), Schema.optional),
@@ -198,28 +199,58 @@ export class Vehicle extends Schema.Class<Vehicle>("Vehicle")({
 export const encodeVehicleSync = Schema.encodeSync(Vehicle);
 
 export const UserTypes = Schema.Struct({
-  username: Username,
+  _id: Username,
   eventSubtypes: Schema.Record({ key: EventSubtypeId, value: EventSubtype }),
   fuelTypes: Schema.Record({ key: FuelTypeId, value: FuelType }),
   tripTypes: Schema.Record({ key: TripTypeId, value: TripType }),
 });
 export type UserTypes = typeof UserTypes.Type;
 
+export const VehiclesDict = Schema.Record({ key: VehicleId, value: Vehicle });
+export type VehiclesDict = typeof VehiclesDict.Type;
+
 export const UserVehicles = Schema.Struct({
-  username: Username,
-  vehicles: Schema.Record({ key: VehicleId, value: Vehicle }),
+  _id: Username,
+  vehicles: VehiclesDict,
 });
 export type UserVehicles = typeof UserVehicles.Type;
 
-export const VehicleFillupRecords = Schema.Struct({
+export const FillupsDict = Schema.Record({
+  key: FillupRecordId,
+  value: FillupRecord,
+});
+
+export const UserVehicleId = Schema.Struct({
   username: Username,
   vehicleId: VehicleId,
-  fillups: Schema.Record({ key: FillupRecordId, value: FillupRecord }),
+});
+export type UserVehicleId = typeof UserVehicleId.Type;
+
+export const VehicleFillupRecords = Schema.Struct({
+  _id: UserVehicleId,
+  fillups: FillupsDict,
 });
 export type VehicleFillupRecords = typeof VehicleFillupRecords.Type;
 
+export const FillupRecordsByVehicle = Schema.Record({
+  key: VehicleId,
+  value: FillupsDict,
+});
+export type FillupRecordsByVehicle = typeof FillupRecordsByVehicle.Type;
+
+export const EventsDict = Schema.Record({
+  key: EventRecordId,
+  value: EventRecord,
+});
+
 export const VehicleEventRecords = Schema.Struct({
   ...Struct.omit(VehicleFillupRecords.fields, "fillups"),
-  events: Schema.Record({ key: EventRecordId, value: EventRecord }),
+  events: EventsDict,
 });
 export type VehicleEventRecords = typeof VehicleEventRecords.Type;
+
+export const EventRecordsByVehicle = Schema.Record({
+  key: VehicleId,
+  value: EventsDict,
+});
+export type EventRecordsByVehicle = typeof EventRecordsByVehicle.Type;

@@ -45,7 +45,7 @@ export const openDownloadStream =
   ): Stream.Stream<Uint8Array, MongoError> =>
     NodeStream.fromReadable(
       () => bucket.openDownloadStream(id, options),
-      e => new MongoError({ underlying: e as RealMongoError }),
+      e => new MongoError({ cause: e as RealMongoError }),
     );
 
 export const openDownloadStreamByName =
@@ -56,7 +56,7 @@ export const openDownloadStreamByName =
   ): Stream.Stream<Uint8Array, MongoError> =>
     NodeStream.fromReadable(
       () => bucket.openDownloadStreamByName(filename, options),
-      e => new MongoError({ underlying: e as RealMongoError }),
+      e => new MongoError({ cause: e as RealMongoError }),
     );
 
 export const openUploadSink =
@@ -67,7 +67,7 @@ export const openUploadSink =
   ): Sink.Sink<void, Uint8Array, never, MongoError> =>
     NodeSink.fromWritable(
       () => bucket.openUploadStream(filename, options),
-      e => new MongoError({ underlying: e as RealMongoError }),
+      e => new MongoError({ cause: e as RealMongoError }),
     );
 
 export const openUploadSinkWithId =
@@ -79,5 +79,5 @@ export const openUploadSinkWithId =
   ): Sink.Sink<void, Uint8Array, never, MongoError> =>
     NodeSink.fromWritable(
       () => bucket.openUploadStreamWithId(id, filename, options),
-      e => new MongoError({ underlying: e as RealMongoError }),
+      e => new MongoError({ cause: e as RealMongoError }),
     );

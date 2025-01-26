@@ -23,7 +23,12 @@ import {
   WithId,
 } from "mongodb";
 import { Model } from "../index.js";
-import { Conflict, MongoError, NotFound, SchemaMismatch } from "../Model.js";
+import {
+  DocumentConflict,
+  MongoError,
+  DocumentNotFound,
+  SchemaMismatch,
+} from "../Model.js";
 import { AnySchema, FindResult, MongoCollection } from "../MongoCollection.js";
 import { MongoTxnCtx } from "./createInTransaction.js";
 import { mongoEff, RealMongoError } from "./utils.js";
@@ -37,7 +42,7 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
   type MemSchema = Schema.Schema.Type<SchemaT>;
 
   const toMismatch = Effect.catchTags({
-    ParseError: (p: ParseError) => new SchemaMismatch({ underlying: p }),
+    ParseError: (p: ParseError) => new SchemaMismatch({ cause: p }),
   });
   const encode = (d: MemSchema) =>
     Schema.encode(schema)(d).pipe(toMismatch) as Effect.Effect<
@@ -60,7 +65,7 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
     ({ [field]: order === "asc" ? 1 : -1 }) as Model.SortParam<MemSchema>;
 
   const dieMongo = {
-    MongoError: (e: MongoError) => Effect.die(e.underlying),
+    MongoError: (e: MongoError) => Effect.die(e.cause),
   } as const;
   const dieSchema = {
     SchemaMismatch: (s: SchemaMismatch) => Effect.die(s),
@@ -104,14 +109,14 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
   const findOne = (
     filter?: Filter<MemSchema>,
     options?: Omit<FindOptions, "timeoutMode">,
-  ): Effect.Effect<MemSchema, NotFound> =>
+  ): Effect.Effect<MemSchema, DocumentNotFound> =>
     pipe(
       findOneRaw(filter, options),
       Effect.andThen(Effect.fromNullable),
       Effect.catchTags({
         ...dieFromFatal,
         NoSuchElementException: () =>
-          new NotFound({ method: "findOne", filter }),
+          new DocumentNotFound({ method: "findOne", filter }),
       }),
     );
 
@@ -125,7 +130,7 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
 
     const streamRaw = Stream.fromAsyncIterable(
       c.stream(),
-      e => new MongoError({ underlying: e as RealMongoError }),
+      e => new MongoError({ cause: e as RealMongoError }),
     ).pipe(Stream.mapEffect(decode));
     const stream = streamRaw.pipe(Stream.catchTags(dieFromFatal));
 
@@ -162,7 +167,7 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
     Effect.catchTag("MongoError", e =>
       Effect.fail(
         e instanceof MongoServerError && e.code === 11000
-          ? new Conflict({ underlying: e })
+          ? new DocumentConflict({ cause: e })
           : e,
       ),
     ),

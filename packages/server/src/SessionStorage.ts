@@ -1,8 +1,7 @@
 import { Session, SessionId } from "@guzzler/domain/Session";
-import { Data, Effect, pipe } from "effect";
+import { DocumentNotFound } from "@guzzler/mongodb/Model";
+import { Effect, pipe } from "effect";
 import { CollectionRegistry } from "./internal/database/CollectionRegistry.js";
-
-export class SessionNotFound extends Data.TaggedError("SessionNotFound") {}
 
 export class SessionStorage extends Effect.Service<SessionStorage>()(
   "SessionStorage",
@@ -12,9 +11,9 @@ export class SessionStorage extends Effect.Service<SessionStorage>()(
       const { sessions } = yield* CollectionRegistry;
 
       const persistSession = (session: Session) =>
-        sessions.upsert({ id: session.id }, session);
+        sessions.upsert({ _id: session._id }, session);
       const clearSession = (sessionId: SessionId) =>
-        sessions.deleteOne({ id: sessionId }).pipe(Effect.asVoid);
+        sessions.deleteOne({ _id: sessionId }).pipe(Effect.asVoid);
 
       const addSession = (session: Session): Effect.Effect<Session> =>
         pipe(
@@ -25,11 +24,8 @@ export class SessionStorage extends Effect.Service<SessionStorage>()(
 
       const getSession = (
         sessionId: SessionId,
-      ): Effect.Effect<Session, SessionNotFound> =>
-        pipe(
-          sessions.findOne({ id: sessionId }),
-          Effect.catchTag("NotFound", () => new SessionNotFound()),
-        );
+      ): Effect.Effect<Session, DocumentNotFound> =>
+        sessions.findOne({ id: sessionId });
 
       return { addSession, getSession, clearSession };
     }),

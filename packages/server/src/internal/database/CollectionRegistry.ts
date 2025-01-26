@@ -1,4 +1,3 @@
-import { Todo } from "@guzzler/domain/apis/TodosApi";
 import {
   UserTypes,
   UserVehicles,
@@ -15,7 +14,6 @@ const collections = pipe(
   Effect.andThen(mcl =>
     mcl.createCollectionRegistry(c => ({
       sessions: c.collection("sessions", Session),
-      todos: c.collection("todos", Todo),
       users: c.collection("users", User),
       userTypes: c.collection("userTypes", UserTypes),
       vehicles: c.collection("vehicles", UserVehicles),

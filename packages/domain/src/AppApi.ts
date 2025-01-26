@@ -8,9 +8,9 @@ import { NotFound } from "@effect/platform/HttpApiError";
 import { AccountApi } from "./apis/AccountApi.js";
 import { AuthApi } from "./apis/AuthApi.js";
 import { AutosApi } from "./apis/AutosApi.js";
+import { ImageApi } from "./apis/ImageApi.js";
 import { SessionApi } from "./apis/SessionApi.js";
 import { SignupApi } from "./apis/SignupApi.js";
-import { TodosApiGroup } from "./apis/TodosApi.js";
 import {
   AuthRedirectMiddleware,
   RawSessionAccess_DoNotUse,
@@ -32,9 +32,9 @@ export class AppApi extends HttpApi.make("Guzzler")
   .add(AccountApi)
   .add(AuthApi)
   .add(AutosApi)
+  .add(ImageApi)
   .add(SessionApi)
   .add(SignupApi)
-  .add(TodosApiGroup)
   .add(UI)
   .annotateContext(
     OpenApi.annotations({ title: "Guzzler", version: "current" }),

@@ -38,9 +38,6 @@
     "types": ["vitest/importMeta"],
 
     "paths": {
-      "@guzzler/cli": ["./packages/cli/src/index.js"],
-      "@guzzler/cli/*": ["./packages/cli/src/*.js"],
-      "@guzzler/cli/test/*": ["./packages/cli/test/*.js"],
       "@guzzler/domain": ["./packages/domain/src/index.js"],
       "@guzzler/domain/*": ["./packages/domain/src/*.js"],
       "@guzzler/domain/test/*": ["./packages/domain/test/*.js"],

@@ -19,7 +19,12 @@ import {
   WithId,
 } from "mongodb";
 import * as internal from "./internal/collection.js";
-import { Conflict, MongoError, NotFound, SchemaMismatch } from "./Model.js";
+import {
+  DocumentConflict,
+  MongoError,
+  DocumentNotFound,
+  SchemaMismatch,
+} from "./Model.js";
 import { MongoDatabaseLayer } from "./MongoDatabaseLayer.js";
 import { Model } from "./index.js";
 
@@ -83,7 +88,7 @@ export type MongoCollection<
   findOne: (
     filter?: Filter<MemSchema<SchemaT>>,
     options?: Omit<FindOptions, "timeoutMode">,
-  ) => Effect.Effect<MemSchema<SchemaT>, NotFound>;
+  ) => Effect.Effect<MemSchema<SchemaT>, DocumentNotFound>;
 
   findRaw: (
     filter?: Filter<MemSchema<SchemaT>>,
@@ -107,7 +112,7 @@ export type MongoCollection<
   insertOne: (
     doc: MemSchema<SchemaT>,
     options?: InsertOneOptions,
-  ) => Effect.Effect<InsertOneResult<DbSchema<SchemaT>>, Conflict>;
+  ) => Effect.Effect<InsertOneResult<DbSchema<SchemaT>>, DocumentConflict>;
 
   insertManyRaw: (
     docs: ReadonlyArray<MemSchema<SchemaT>>,

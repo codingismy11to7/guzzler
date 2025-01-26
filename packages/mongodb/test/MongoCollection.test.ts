@@ -13,7 +13,7 @@ describe("MongoCollection", () => {
         const err = yield* Schema.decodeUnknown(SSS)(encoded).pipe(Effect.flip);
 
         expect(
-          `${new SchemaMismatch({ underlying: err })}`
+          `${new SchemaMismatch({ cause: err })}`
             .replace("SchemaMismatch: ", "")
             .replace(/SchemaMismatch: /, ""),
         ).toEqual(`${err}`);

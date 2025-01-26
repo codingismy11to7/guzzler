@@ -9,9 +9,9 @@ export class SessionClient extends Effect.Service<SessionClient>()(
     effect: pipe(
       HttpApiClient.make(AppApi.AppApi),
       Effect.andThen(client => {
-        const getSessionInfo = client.session.getSessionInfo();
+        const sessionInfo = client.session.getSessionInfo();
 
-        return { getSessionInfo };
+        return { sessionInfo };
       }),
     ),
   },

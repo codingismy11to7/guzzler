@@ -1,4 +1,28 @@
-import { identity, Schema } from "effect";
+import { Either, identity, ParseResult, pipe, Schema } from "effect";
+import { isString } from "effect/String";
+
+export const StringFromSelfOrUint8Array = Schema.transformOrFail(
+  Schema.Union(Schema.Uint8ArrayFromSelf, Schema.String),
+  Schema.String,
+  {
+    strict: true,
+    encode: ParseResult.succeed,
+    decode: (input, _, ast) =>
+      isString(input)
+        ? ParseResult.succeed(input)
+        : pipe(
+            Either.try(() => new TextDecoder().decode(input)),
+            Either.mapLeft(
+              () =>
+                new ParseResult.Type(
+                  ast,
+                  input,
+                  `${input} is not valid utf-8 text`,
+                ),
+            ),
+          ),
+  },
+);
 
 export const OptionalString = Schema.Trim.pipe(Schema.optional);
 export const OptionalNumber = Schema.Number.pipe(Schema.optional);

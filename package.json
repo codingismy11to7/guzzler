@@ -13,6 +13,7 @@
     "check-recursive": "npm run check --workspaces",
     "check:watch": "tsc -b tsconfig.json -w",
     "clean": "tsx scripts/clean.mts",
+    "clean:modules": "tsx scripts/clean.mts -nm",
     "codegen": "npm run codegen --workspaces --if-present",
     "coverage": "vitest run --coverage",
     "coverage:watch": "vitest --coverage",

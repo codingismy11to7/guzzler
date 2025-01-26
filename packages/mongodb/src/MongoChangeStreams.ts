@@ -1,5 +1,5 @@
 import { Document } from "bson";
-import { Effect, pipe, Stream } from "effect";
+import { Effect, pipe, PubSub, Ref, Runtime, Stream } from "effect";
 import { gen } from "effect/Effect";
 import {
   ChangeStream,
@@ -17,6 +17,9 @@ export class MongoChangeStreams extends Effect.Service<MongoChangeStreams>()(
     effect: gen(function* () {
       const db = yield* MongoDatabaseLayer;
 
+      const subscriberAddedToSharedStream = yield* Ref.make(false);
+      const sharedStream = yield* PubSub.bounded<ChangeStreamDocument>(4);
+
       const watchRaw = <
         TSchema extends Document = Document,
         TChange extends Document = ChangeStreamDocument<TSchema>,
@@ -31,7 +34,7 @@ export class MongoChangeStreams extends Effect.Service<MongoChangeStreams>()(
         const stream = pipe(
           Stream.fromAsyncIterable(
             changeStream,
-            e => new MongoError({ underlying: e as RealMongoError }),
+            e => new MongoError({ cause: e as RealMongoError }),
           ),
         );
 
@@ -55,7 +58,28 @@ export class MongoChangeStreams extends Effect.Service<MongoChangeStreams>()(
         return { stream: stream.pipe(Stream.orDie), ...rest };
       };
 
-      return { watchRaw, watch };
+      const watchSharedStream = gen(function* () {
+        yield* Effect.logDebug("adding watcher to shared stream");
+
+        const wasStarted = yield* Ref.getAndUpdate(
+          subscriberAddedToSharedStream,
+          () => true,
+        );
+        if (!wasStarted) {
+          yield* Effect.logInfo("Starting shared database change stream");
+
+          pipe(
+            watch().stream,
+            Stream.ensuring(Ref.set(subscriberAddedToSharedStream, false)),
+            Stream.runForEachChunk(es => PubSub.publishAll(sharedStream, es)),
+            Runtime.runFork(yield* Effect.runtime()),
+          );
+        }
+
+        return yield* PubSub.subscribe(sharedStream);
+      });
+
+      return { watchRaw, watch, watchSharedStream };
     }),
   },
 ) {}

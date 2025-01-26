@@ -1,5 +1,5 @@
-import { OAuthUserInfo } from "@guzzler/domain/OAuthUserInfo";
-import { User, UserId, Username } from "@guzzler/domain/User";
+import { OAuthUserInfo, UserInfoId } from "@guzzler/domain/OAuthUserInfo";
+import { User, Username } from "@guzzler/domain/User";
 import { Effect } from "effect";
 import { CollectionRegistry } from "./internal/database/CollectionRegistry.js";
 
@@ -8,18 +8,24 @@ export class Users extends Effect.Service<Users>()("Users", {
   effect: Effect.gen(function* () {
     const { users } = yield* CollectionRegistry;
 
-    const getUser = (id: UserId) => users.findOne({ id });
+    const getUserById = (id: UserInfoId) => users.findOne({ id });
 
-    const deleteUser = (id: UserId) => users.deleteOne({ id });
+    const deleteUser = (username: Username) => users.deleteOne({ username });
 
     const addUser = (user: User) => users.insertOne(user).pipe(Effect.asVoid);
 
-    const updateUserInfo = (id: UserId, oAuthUserInfo: OAuthUserInfo) =>
-      users.setFieldsOne({ id }, { oAuthUserInfo });
+    const updateUserInfo = (username: Username, oAuthUserInfo: OAuthUserInfo) =>
+      users.setFieldsOne({ username }, { oAuthUserInfo });
 
     const usernameAvailable = (username: Username) =>
       users.count({ username }).pipe(Effect.andThen(c => c === 0));
 
-    return { getUser, deleteUser, addUser, updateUserInfo, usernameAvailable };
+    return {
+      getUserById,
+      deleteUser,
+      addUser,
+      updateUserInfo,
+      usernameAvailable,
+    };
   }),
 }) {}
