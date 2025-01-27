@@ -52,7 +52,7 @@
     "@types/node-expat": "^2.3.5",
     "@types/npmcli__package-json": "^4.0.4",
     "@types/simple-oauth2": "^5.0.7",
-    "@types/slash": "^2.0.0",
+    "@types/slash": "^3.0.0",
     "@types/yauzl": "^2.10.3",
     "nodemon": "^3.1.9"
   },
