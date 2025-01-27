@@ -32,7 +32,7 @@
     "@guzzler/domain": "^0.0.5",
     "@guzzler/utils": "^0.0.2",
     "@mui/icons-material": "^6.4.0",
-    "@mui/lab": "^6.0.0-beta.23",
+    "@mui/lab": "^6.0.0-beta.24",
     "@mui/material": "^6.4.0",
     "@uidotdev/usehooks": "^2.4.1",
     "date-fns": "^4.1.0",
