@@ -10,6 +10,7 @@ import { PagesRoute } from "../router.js";
 const CategoryManagement = lazy(() => import("./CategoryManagement.js"));
 const HomePage = lazy(() => import("./HomePage.js"));
 const ImportPage = lazy(() => import("./ImportPage.js"));
+const SettingsPage = lazy(() => import("./SettingsPage.js"));
 const VehiclePage = lazy(() => import("./VehiclePage.js"));
 const VehiclesPage = lazy(() => import("./VehiclesPage.js"));
 
@@ -25,6 +26,7 @@ const LoggedInApp = ({ route, session }: Props) => (
               CategoryManagement: () => <CategoryManagement />,
               Home: () => <HomePage />,
               ImportExport: () => <ImportPage />,
+              Settings: () => <SettingsPage />,
               Vehicles: () => <VehiclesPage />,
               Vehicle: r => <VehiclePage route={r} />,
             }),

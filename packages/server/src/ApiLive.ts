@@ -25,6 +25,7 @@ import { AccountApiLive } from "./apis/AccountApiLive.js";
 import { AuthApiLive } from "./apis/AuthApiLive.js";
 import { AutosApiLive } from "./apis/AutosApiLive.js";
 import { ImageApiLive } from "./apis/ImageApiLive.js";
+import { PreferencesApiLive } from "./apis/PreferencesApiLive.js";
 import { SessionApiLive } from "./apis/SessionApiLive.js";
 import { SignupApiLive } from "./apis/SignupApiLive.js";
 import { UIDev } from "./apis/UIDev.js";
@@ -88,6 +89,7 @@ export const ApiLive: Layer.Layer<
   Layer.provide(AuthApiLive),
   Layer.provide(AutosApiLive),
   Layer.provide(ImageApiLive),
+  Layer.provide(PreferencesApiLive),
   Layer.provide(SessionApiLive),
   Layer.provide(SignupApiLive),
   Layer.provide(ACarFullBackup.Default),

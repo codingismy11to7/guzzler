@@ -19,4 +19,4 @@ export class SignupApi extends HttpApiGroup.make("signup")
       .addError(Conflict),
   )
   .middleware(RequireNewUserSession)
-  .prefix("/signup") {}
+  .prefix("/api/signup") {}

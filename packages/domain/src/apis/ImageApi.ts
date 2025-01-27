@@ -28,4 +28,4 @@ export class ImageApi extends HttpApiGroup.make("images")
   )
   .prefix("/images")
   .middleware(RequireFullSession)
-  .prefix("/files") {}
+  .prefix("/api/files") {}

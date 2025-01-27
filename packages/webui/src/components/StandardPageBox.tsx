@@ -3,7 +3,12 @@ import React, { useCallback } from "react";
 import { useMainDrawer } from "../hooks/useMainDrawer.js";
 import { SwipeCallback, useOnSwipe } from "../hooks/useOnSwipe.js";
 
-export const StandardPageBox = ({ children }: BoxProps) => {
+export const StandardPageBox = ({
+  children,
+  sx: _sx,
+  ref: _ref,
+  ...rest
+}: BoxProps) => {
   const [, setDrawerOpen] = useMainDrawer();
 
   const onSwipe: SwipeCallback = useCallback(
@@ -18,7 +23,7 @@ export const StandardPageBox = ({ children }: BoxProps) => {
 
   return (
     // take away pb if we get rid of the speed dial
-    <Box sx={{ height: 1, overflow: "auto", p: 2, pb: 4 }} ref={ref}>
+    <Box sx={{ height: 1, overflow: "auto", p: 2, pb: 4 }} ref={ref} {...rest}>
       {children}
     </Box>
   );

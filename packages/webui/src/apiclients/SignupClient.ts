@@ -2,7 +2,10 @@ import { HttpApiClient } from "@effect/platform";
 import { AppApi } from "@guzzler/domain";
 import { Username } from "@guzzler/domain/User";
 import { Effect, pipe } from "effect";
-import { dieFromFatal, dieFromFatalExceptBadInput } from "./utils.js";
+import {
+  dieFromFatal,
+  dieFromFatalExceptBadInput,
+} from "../internal/apiclients/utils.js";
 
 export class SignupClient extends Effect.Service<SignupClient>()(
   "SignupClient",

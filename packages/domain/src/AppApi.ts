@@ -9,6 +9,7 @@ import { AccountApi } from "./apis/AccountApi.js";
 import { AuthApi } from "./apis/AuthApi.js";
 import { AutosApi } from "./apis/AutosApi.js";
 import { ImageApi } from "./apis/ImageApi.js";
+import { PreferencesApi } from "./apis/PreferencesApi.js";
 import { SessionApi } from "./apis/SessionApi.js";
 import { SignupApi } from "./apis/SignupApi.js";
 import {
@@ -33,6 +34,7 @@ export class AppApi extends HttpApi.make("Guzzler")
   .add(AuthApi)
   .add(AutosApi)
   .add(ImageApi)
+  .add(PreferencesApi)
   .add(SessionApi)
   .add(SignupApi)
   .add(UI)

@@ -31,6 +31,8 @@ export * as AutosApiLive from "./apis/AutosApiLive.js";
 
 export * as ImageApiLive from "./apis/ImageApiLive.js";
 
+export * as PreferencesApiLive from "./apis/PreferencesApiLive.js";
+
 export * as SessionApiLive from "./apis/SessionApiLive.js";
 
 export * as SignupApiLive from "./apis/SignupApiLive.js";

@@ -16,6 +16,8 @@ export * as OAuthToken from "./OAuthToken.js";
 
 export * as OAuthUserInfo from "./OAuthUserInfo.js";
 
+export * as SecureUserPreferences from "./SecureUserPreferences.js";
+
 export * as Session from "./Session.js";
 
 export * as TimeZone from "./TimeZone.js";
@@ -29,6 +31,8 @@ export * as AuthApi from "./apis/AuthApi.js";
 export * as AutosApi from "./apis/AutosApi.js";
 
 export * as ImageApi from "./apis/ImageApi.js";
+
+export * as PreferencesApi from "./apis/PreferencesApi.js";
 
 export * as SessionApi from "./apis/SessionApi.js";
 
