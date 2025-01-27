@@ -1,8 +1,8 @@
 import { HttpApiClient } from "@effect/platform";
 import { AppApi } from "@guzzler/domain";
 import { Effect, pipe } from "effect";
+import { dieFromFatal } from "../internal/apiclients/utils.js";
 import { logout } from "../utils/logout.js";
-import { dieFromFatal } from "./utils.js";
 
 export class AccountClient extends Effect.Service<AccountClient>()(
   "AccountClient",

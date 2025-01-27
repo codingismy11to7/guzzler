@@ -31,4 +31,4 @@ export class SessionApi extends HttpApiGroup.make("session")
     }),
   )
   .middleware(RawSessionAccess_DoNotUse)
-  .prefix("/session") {}
+  .prefix("/api/session") {}

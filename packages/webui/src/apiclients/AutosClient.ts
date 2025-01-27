@@ -5,7 +5,7 @@ import { TimeZone } from "@guzzler/domain/TimeZone";
 import { Effect, Runtime } from "effect";
 import { catchTags, gen } from "effect/Effect";
 import * as internal from "../internal/apiclients/autosClient.js";
-import { dieFromFatal } from "./utils.js";
+import { dieFromFatal } from "../internal/apiclients/utils.js";
 
 export class AutosClient extends Effect.Service<AutosClient>()("AutosClient", {
   accessors: true,

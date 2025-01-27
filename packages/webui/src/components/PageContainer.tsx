@@ -40,6 +40,7 @@ export const PageContainer = ({
       CategoryManagement: () => t("categoryManagement.title"),
       Home: () => "Home",
       ImportExport: () => t("importDialog.title"),
+      Settings: () => t("settings.title"),
       Vehicle: () => t("vehicle.title"),
       Vehicles: () => t("vehicles.title"),
     }),

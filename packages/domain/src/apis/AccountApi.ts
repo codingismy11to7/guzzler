@@ -9,4 +9,4 @@ export class AccountApi extends HttpApiGroup.make("account")
     }),
   )
   .middleware(RequireFullSession)
-  .prefix("/account") {}
+  .prefix("/api/account") {}

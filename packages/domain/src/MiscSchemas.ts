@@ -1,6 +1,15 @@
 import { Either, identity, ParseResult, pipe, Schema } from "effect";
 import { isString } from "effect/String";
 
+export const RemoveField = Schema.Struct({
+  remove: Schema.Literal(true),
+}).annotations({
+  identifier: "RemoveField",
+  description:
+    "Include this as the field value to remove it, instead of setting it to another value or blank.",
+});
+export const isRemoveField = Schema.is(RemoveField);
+
 export const StringFromSelfOrUint8Array = Schema.transformOrFail(
   Schema.Union(Schema.Uint8ArrayFromSelf, Schema.String),
   Schema.String,

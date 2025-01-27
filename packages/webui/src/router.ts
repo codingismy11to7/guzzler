@@ -21,6 +21,7 @@ const Pages = {
   CategoryManagement: Home.extend("/manageCategories"),
   Home,
   ImportExport: Home.extend("/manageData"),
+  Settings: Home.extend("/settings"),
   Vehicle: Home.extend(
     {
       vehicleId: param.path.ofType<Autos.VehicleId>({
@@ -45,6 +46,7 @@ export const RoutingGroups = {
     routes.CategoryManagement,
     routes.Home,
     routes.ImportExport,
+    routes.Settings,
     routes.Vehicle,
     routes.Vehicles,
   ]),

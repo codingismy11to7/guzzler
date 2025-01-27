@@ -4,6 +4,7 @@ import {
   VehicleEventRecords,
   VehicleFillupRecords,
 } from "@guzzler/domain/Autos";
+import { SecureUserPreferences } from "@guzzler/domain/SecureUserPreferences";
 import { Session } from "@guzzler/domain/Session";
 import { User } from "@guzzler/domain/User";
 import { MongoCollectionLayer } from "@guzzler/mongodb/MongoCollection";
@@ -21,6 +22,9 @@ const collections = pipe(
       vehicles: c.collection("vehicles", UserVehicles),
       fillupRecords: c.collection("fillupRecords", VehicleFillupRecords),
       eventRecords: c.collection("eventRecords", VehicleEventRecords),
+      secureUserPrefs: c.collection("secureUserPrefs", SecureUserPreferences, {
+        encrypted: { plainTextFields: ["_id"] },
+      }),
     })),
   ),
 );

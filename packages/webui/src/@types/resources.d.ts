@@ -14,6 +14,7 @@ interface Resources {
       loading: "Whipping the hamsters...";
       next: "Next";
       notes: "Notes";
+      save: "Save";
       thereWasAProblem: "There was a problem";
     };
     createUser: {
@@ -64,6 +65,11 @@ interface Resources {
         logout: "Logout";
         settings: "Settings";
       };
+    };
+    settings: {
+      gmapsApiKey: "Google Maps API Key";
+      gmapsApiKeyDescription: "Must be provided to perform location lookups.";
+      title: "Settings";
     };
     speedDial: {
       event: "Add Event";

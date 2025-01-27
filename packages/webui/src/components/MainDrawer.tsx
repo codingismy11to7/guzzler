@@ -19,12 +19,11 @@ import {
   ListItemText,
   MenuItem,
   Toolbar,
-  useTheme,
 } from "@mui/material";
 import { usePrevious } from "@uidotdev/usehooks";
 import { LazyArg } from "effect/Function";
 import { isNotNull } from "effect/Predicate";
-import React, { useCallback, useEffect } from "react";
+import React, { MouseEvent, useCallback, useEffect } from "react";
 import { useCurrentFullSession } from "../contexts/GlobalContext.js";
 import { useMainDrawer } from "../hooks/useMainDrawer.js";
 import { SwipeCallback, useOnSwipe } from "../hooks/useOnSwipe.js";
@@ -38,7 +37,6 @@ const drawerWidth = 270;
 
 export const MainDrawer = () => {
   const { t } = useTranslation();
-  const theme = useTheme();
 
   const [open, setOpen] = useMainDrawer();
 
@@ -51,13 +49,15 @@ export const MainDrawer = () => {
     if (isNotNull(prevRoute) && prevRoute.name !== route.name) setOpen(false);
   }, [prevRoute, route.name, setOpen]);
 
-  const onImportClick = (closeMenu: LazyArg<void>) => () => {
+  const onSettingsClick = (closeMenu: LazyArg<void>) => (e: MouseEvent) => {
+    e.preventDefault();
     closeMenu();
-    setOpen(false);
-    setTimeout(
-      () => routes.ImportExport().push(),
-      theme.transitions.duration.standard,
-    );
+    routes.Settings().push();
+  };
+  const onImportClick = (closeMenu: LazyArg<void>) => (e: MouseEvent) => {
+    e.preventDefault();
+    closeMenu();
+    routes.ImportExport().push();
   };
 
   const onDrawerSwipe: SwipeCallback = useCallback(
@@ -99,13 +99,23 @@ export const MainDrawer = () => {
               <PopupMenuButton
                 aria-label="user menu"
                 menuItems={closeMenu => [
-                  <MenuItem key="settings">
+                  <MenuItem
+                    key="settings"
+                    onClick={onSettingsClick(closeMenu)}
+                    component="a"
+                    href={routes.Settings().href}
+                  >
                     <ListItemIcon>
                       <Settings fontSize="small" color="primary" />
                     </ListItemIcon>
-                    Settings
+                    {t("settings.title")}
                   </MenuItem>,
-                  <MenuItem key="import" onClick={onImportClick(closeMenu)}>
+                  <MenuItem
+                    key="import"
+                    component="a"
+                    href={routes.ImportExport().href}
+                    onClick={onImportClick(closeMenu)}
+                  >
                     <ListItemIcon>
                       <SyncAlt fontSize="small" color="primary" />
                     </ListItemIcon>
