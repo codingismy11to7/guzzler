@@ -1,4 +1,65 @@
-import { useContext } from "react";
+import { VehicleId } from "@guzzler/domain/Autos";
+import { BigDecimal, Chunk, Option, Order } from "effect";
+import { sortWith, unsafeFromArray } from "effect/Chunk";
+import { flatMap, fromNullable, getOrUndefined, map } from "effect/Option";
+import { useContext, useMemo } from "react";
 import * as internal from "../internal/contexts/userDataContext.js";
 
 export const useUserData = () => useContext(internal.UserDataContext);
+
+export const useFillupInformationForVehicle = (
+  vehicleIdOpt: VehicleId | undefined,
+) => {
+  const userData = useUserData();
+
+  return useMemo(() => {
+    if (userData.loading) return userData;
+
+    const fillupInfo = Option.gen(function* () {
+      const vehicleId = yield* fromNullable(vehicleIdOpt);
+
+      const forVehicle = yield* fromNullable(userData.fillups[vehicleId]);
+
+      const allFillups = unsafeFromArray(Object.values(forVehicle));
+
+      const fillupsByDate = sortWith(allFillups, f => f.date, Order.number);
+      const fillupsByOdometer = sortWith(
+        allFillups,
+        f => f.odometerReading,
+        BigDecimal.Order,
+      );
+
+      const odometerOnLastFillup = fillupsByDate.pipe(
+        Chunk.last,
+        map(f => f.odometerReading),
+      );
+      const highestOdometerRecord = fillupsByOdometer.pipe(Chunk.last);
+      const highestOdometer = highestOdometerRecord.pipe(
+        map(f => f.odometerReading),
+      );
+
+      return {
+        fillupsByDate,
+        fillupsByOdometer,
+        odometerOnLastFillup,
+        highestOdometer,
+        highestOdometerRecord,
+      };
+    });
+
+    return {
+      loading: false as const,
+      value: fillupInfo,
+      odometerOnLastFillup: fillupInfo.pipe(
+        flatMap(i => i.odometerOnLastFillup),
+        getOrUndefined,
+      ),
+      highestOdometer: fillupInfo.pipe(
+        flatMap(i => i.highestOdometer),
+        map(BigDecimal.scale(0)),
+        map(BigDecimal.format),
+        getOrUndefined,
+      ),
+    };
+  }, [userData, vehicleIdOpt]);
+};
