@@ -2,7 +2,7 @@ import {
   encodeVehicleSync,
   EventRecord,
   FillupRecord,
-  UserTypes,
+  UserTypesWithId,
   UserVehicleId,
   UserVehicles,
   Vehicle,
@@ -37,8 +37,9 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
       const { openUploadSinkWithId, delete: deleteFile } = yield* GridFS;
       const { getFileById } = yield* FileFetcher;
 
-      const replaceAllUserTypes = (types: UserTypes): Effect.Effect<void> =>
-        userTypes.upsert({ _id: types._id }, types);
+      const replaceAllUserTypes = (
+        types: UserTypesWithId,
+      ): Effect.Effect<void> => userTypes.upsert({ _id: types._id }, types);
 
       const getAllUserTypes = (_id: Username) => userTypes.findOne({ _id });
 
@@ -81,13 +82,14 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
           );
 
           yield* Effect.forEach(
-            [
-              vehicles,
-              fillupRecords,
-              eventRecords,
-              ...(includeUserTypes ? [userTypes] : []),
-            ],
-            db => db.deleteMany({ username }),
+            [vehicles, ...(includeUserTypes ? [userTypes] : [])],
+            db => db.deleteMany({ _id: username }),
+            { discard: true, concurrency: "unbounded" },
+          );
+
+          yield* Effect.forEach(
+            [fillupRecords, eventRecords],
+            db => db.deleteMany({ "_id.username": username }),
             { discard: true, concurrency: "unbounded" },
           );
 
@@ -144,12 +146,12 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
         vehicles.upsert({ _id: vehicleRec._id }, vehicleRec);
 
       const getVehicles = (username: Username) =>
-        vehicles.findOne({ username });
+        vehicles.findOne({ _id: username });
 
       const getSingleVehicle = (username: Username, vehicleId: VehicleId) =>
         gen(function* () {
           const { vehicles: vsDict } = yield* vehicles.findOne(
-            { username },
+            { _id: username },
             { projection: { [`vehicles.${vehicleId}`]: 1 } },
           );
           const vehicle = vsDict[vehicleId];

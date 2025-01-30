@@ -1,5 +1,5 @@
 import {
-  UserTypes,
+  UserTypesWithId,
   UserVehicles,
   VehicleEventRecords,
   VehicleFillupRecords,
@@ -18,7 +18,7 @@ const collections = pipe(
         encrypted: { plainTextFields: ["_id"] },
       }),
       users: c.collection("users", User),
-      userTypes: c.collection("userTypes", UserTypes),
+      userTypes: c.collection("userTypes", UserTypesWithId),
       vehicles: c.collection("vehicles", UserVehicles),
       fillupRecords: c.collection("fillupRecords", VehicleFillupRecords),
       eventRecords: c.collection("eventRecords", VehicleEventRecords),

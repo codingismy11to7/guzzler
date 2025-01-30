@@ -1,18 +1,18 @@
-import { Either, identity, ParseResult, pipe, Schema } from "effect";
+import { Either, identity, ParseResult, pipe, Schema as S } from "effect";
 import { isString } from "effect/String";
 
-export const RemoveField = Schema.Struct({
-  remove: Schema.Literal(true),
+export const RemoveField = S.Struct({
+  remove: S.Literal(true),
 }).annotations({
   identifier: "RemoveField",
   description:
     "Include this as the field value to remove it, instead of setting it to another value or blank.",
 });
-export const isRemoveField = Schema.is(RemoveField);
+export const isRemoveField = S.is(RemoveField);
 
-export const StringFromSelfOrUint8Array = Schema.transformOrFail(
-  Schema.Union(Schema.Uint8ArrayFromSelf, Schema.String),
-  Schema.String,
+export const StringFromSelfOrUint8Array = S.transformOrFail(
+  S.Union(S.Uint8ArrayFromSelf, S.String),
+  S.String,
   {
     strict: true,
     encode: ParseResult.succeed,
@@ -33,33 +33,31 @@ export const StringFromSelfOrUint8Array = Schema.transformOrFail(
   },
 );
 
-export const OptionalString = Schema.Trim.pipe(Schema.optional);
-export const OptionalNumber = Schema.Number.pipe(Schema.optional);
-export const OptionalBigDecimal = Schema.OptionFromUndefinedOr(
-  Schema.BigDecimal,
-);
+export const OptionalString = S.Trim.pipe(S.optional);
+export const OptionalNumber = S.Number.pipe(S.optional);
+export const OptionalBigDecimal = S.OptionFromUndefinedOr(S.BigDecimal);
 
-export const Timestamp = Schema.Int.pipe(Schema.positive());
+export const Timestamp = S.Int.pipe(S.positive());
 
-export const BooleanFromSelfOrString = Schema.transform(
-  Schema.Union(Schema.Boolean, Schema.BooleanFromString),
-  Schema.Boolean,
+export const BooleanFromSelfOrString = S.transform(
+  S.Union(S.Boolean, S.BooleanFromString),
+  S.Boolean,
   { decode: identity, encode: identity },
 );
 
-export const NumberFromSelfOrString = Schema.transform(
-  Schema.Union(Schema.Number, Schema.NumberFromString),
-  Schema.Number,
+export const NumberFromSelfOrString = S.transform(
+  S.Union(S.Number, S.NumberFromString),
+  S.Number,
   {
     decode: identity,
     encode: identity,
   },
 );
 
-export const IntFromSelfOrString = NumberFromSelfOrString.pipe(Schema.int());
+export const IntFromSelfOrString = NumberFromSelfOrString.pipe(S.int());
 
-export const ObjectIdStringSchema = Schema.Trimmed.pipe(
-  Schema.pattern(/[0-9a-fA-F]{24}/, {
+export const ObjectIdStringSchema = S.Trimmed.pipe(
+  S.pattern(/[0-9a-fA-F]{24}/, {
     identifier: "ObjectIdString",
     description: "String representation of a BSON ObjectId",
   }),

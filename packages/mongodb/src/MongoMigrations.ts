@@ -28,7 +28,8 @@ type AddIndex<
 > = BaseMigration<CollName, SchemaT> &
   Readonly<{
     _tag: "AddIndex";
-    indexSpec: SortParams<SchemaT>;
+    // TODO again this stuff doesn't work
+    indexSpec: SortParams<SchemaT> | ReadonlyArray<Record<string, number>>;
     options: CreateIndexesOptions;
   }>;
 
@@ -194,8 +195,9 @@ export const addIndex = <
 >(
   collection: MongoCollection.MongoCollection<CollName, SchemaT>,
   options: CreateIndexesOptions,
-  initial: SortParam<SchemaT>,
-  ...fields: SortParams<SchemaT>
+  // TODO ok this stuff doesn't work
+  initial: SortParam<SchemaT> | Record<string, number>,
+  ...fields: SortParams<SchemaT> | ReadonlyArray<Record<string, number>>
 ): Migration<CollName> => {
   const x: AddIndex<CollName, SchemaT> = {
     collection,
