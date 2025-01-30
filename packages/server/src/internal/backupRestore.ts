@@ -14,7 +14,15 @@ import { Username } from "@guzzler/domain/User";
 import { DocumentNotFound, MongoError } from "@guzzler/mongodb/Model";
 import { MongoTransactions } from "@guzzler/mongodb/MongoTransactions";
 import { ObjectId } from "bson";
-import { Data, Effect, Option, pipe, Schema, Stream, Struct } from "effect";
+import {
+  Data,
+  Effect,
+  Option,
+  pipe,
+  Schema as S,
+  Stream,
+  Struct,
+} from "effect";
 import {
   catchTag,
   forEach,
@@ -79,8 +87,7 @@ export const getBackupStream =
                 metadataPath: "userTypes.json",
                 fileData: pipe(
                   userTypes,
-                  Schema.encodeSync(UserTypes),
-                  Struct.omit("_id"),
+                  S.encodeSync(UserTypes),
                   stringifyCircular,
                   Stream.succeed,
                   Stream.encodeText,
@@ -90,7 +97,7 @@ export const getBackupStream =
                 metadataPath: "vehicles.json",
                 fileData: pipe(
                   vehicles,
-                  Schema.encodeSync(UserVehicles),
+                  S.encodeSync(UserVehicles),
                   uv => uv.vehicles,
                   stringifyCircular,
                   Stream.succeed,
@@ -101,7 +108,7 @@ export const getBackupStream =
                 metadataPath: "eventRecords.json",
                 fileData: pipe(
                   eventRecords,
-                  Schema.encodeSync(Schema.Array(VehicleEventRecords)),
+                  S.encodeSync(S.Array(VehicleEventRecords)),
                   stringifyCircular,
                   Stream.succeed,
                   Stream.encodeText,
@@ -114,7 +121,7 @@ export const getBackupStream =
                   Stream.concat(
                     pipe(
                       fillupRecords,
-                      Stream.map(Schema.encodeSync(VehicleFillupRecords)),
+                      Stream.map(S.encodeSync(VehicleFillupRecords)),
                       Stream.map(stringifyCircular),
                       Stream.intersperse(",\n"),
                     ),
@@ -208,13 +215,11 @@ export const importFromGuzzlerBackup =
           const json = yield* pipe(data, Stream.decodeText(), Stream.mkString);
           const obj = {
             username,
-            ...(yield* Schema.decode(Schema.parseJson(Schema.Struct({})))(
-              json,
-            )),
+            ...(yield* S.decode(S.parseJson(S.Struct({})))(json)),
           };
-          const ret = yield* Schema.decodeUnknown(
-            BackupMetadata.BackupMetadata,
-          )(obj);
+          const ret = yield* S.decodeUnknown(BackupMetadata.BackupMetadata)(
+            obj,
+          );
 
           yield* Effect.logInfo("Finished parsing BackupMetadata");
 
@@ -226,13 +231,8 @@ export const importFromGuzzlerBackup =
       ): Effect.Effect<UserTypes, ParseError | E> =>
         gen(function* () {
           const json = yield* pipe(data, Stream.decodeText(), Stream.mkString);
-          const obj = {
-            _id: username,
-            ...(yield* Schema.decode(Schema.parseJson(Schema.Struct({})))(
-              json,
-            )),
-          };
-          const ret = yield* Schema.decodeUnknown(UserTypes)(obj);
+          const obj = yield* S.decode(S.parseJson(S.Struct({})))(json);
+          const ret = yield* S.decodeUnknown(UserTypes)(obj);
 
           yield* Effect.logInfo("Finished parsing UserTypes");
 
@@ -246,11 +246,9 @@ export const importFromGuzzlerBackup =
           const json = yield* pipe(data, Stream.decodeText(), Stream.mkString);
           const obj = {
             _id: username,
-            vehicles: yield* Schema.decode(Schema.parseJson(Schema.Struct({})))(
-              json,
-            ),
+            vehicles: yield* S.decode(S.parseJson(S.Struct({})))(json),
           };
-          const ret = yield* Schema.decodeUnknown(UserVehicles)(obj);
+          const ret = yield* S.decodeUnknown(UserVehicles)(obj);
 
           yield* Effect.logInfo("Finished parsing UserVehicles");
 
@@ -262,15 +260,14 @@ export const importFromGuzzlerBackup =
       ): Effect.Effect<readonly VehicleEventRecords[], ParseError | E> =>
         gen(function* () {
           const json = yield* pipe(data, Stream.decodeText(), Stream.mkString);
-          const jsonObj = yield* Schema.decode(Schema.parseJson())(json);
+          const jsonObj = yield* S.decode(S.parseJson())(json);
 
-          const Recs = Schema.Array(VehicleEventRecords);
+          const Recs = S.Array(VehicleEventRecords);
 
-          const entriesWithOldUsername =
-            yield* Schema.decodeUnknown(Recs)(jsonObj);
+          const entriesWithOldUsername = yield* S.decodeUnknown(Recs)(jsonObj);
 
-          const ret = Schema.decodeSync(Recs)(
-            Schema.encodeSync(Recs)(entriesWithOldUsername).map(ver => ({
+          const ret = S.decodeSync(Recs)(
+            S.encodeSync(Recs)(entriesWithOldUsername).map(ver => ({
               ...ver,
               _id: { ...ver._id, username },
             })),
@@ -286,15 +283,14 @@ export const importFromGuzzlerBackup =
       ): Effect.Effect<readonly VehicleFillupRecords[], ParseError | E> =>
         gen(function* () {
           const json = yield* pipe(data, Stream.decodeText(), Stream.mkString);
-          const jsonObj = yield* Schema.decode(Schema.parseJson())(json);
+          const jsonObj = yield* S.decode(S.parseJson())(json);
 
-          const Recs = Schema.Array(VehicleFillupRecords);
+          const Recs = S.Array(VehicleFillupRecords);
 
-          const entriesWithOldUsername =
-            yield* Schema.decodeUnknown(Recs)(jsonObj);
+          const entriesWithOldUsername = yield* S.decodeUnknown(Recs)(jsonObj);
 
-          const ret = Schema.decodeSync(Recs)(
-            Schema.encodeSync(Recs)(entriesWithOldUsername).map(ver => ({
+          const ret = S.decodeSync(Recs)(
+            S.encodeSync(Recs)(entriesWithOldUsername).map(ver => ({
               ...ver,
               _id: { ...ver._id, username },
             })),
@@ -403,7 +399,7 @@ export const importFromGuzzlerBackup =
         gen(function* () {
           yield* autos.deleteAllUserData(username, { includeUserTypes: false });
           yield* Effect.logInfo("Replacing settings");
-          yield* autos.replaceAllUserTypes(userTypes);
+          yield* autos.replaceAllUserTypes({ _id: username, ...userTypes });
 
           yield* autos.replaceUserVehicles(vehicles);
           yield* Effect.logInfo(

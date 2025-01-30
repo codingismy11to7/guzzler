@@ -20,7 +20,8 @@ import {
 export const runMigrations = Effect.gen(function* () {
   yield* Effect.logInfo("Running migrations...");
 
-  const { sessions, users } = yield* CollectionRegistry;
+  const { sessions, users, eventRecords, fillupRecords } =
+    yield* CollectionRegistry;
   const mmh = yield* MongoMigrationHandler;
 
   return yield* mmh.handleMigrations(
@@ -40,6 +41,8 @@ export const runMigrations = Effect.gen(function* () {
     noOp(),
     noOp(),
     clearCollection(sessions),
+    addIndex(eventRecords, { name: "username" }, { "_id.username": 1 }),
+    addIndex(fillupRecords, { name: "username" }, { "_id.username": 1 }),
   );
 }).pipe(Effect.withLogSpan("migrations"));
 

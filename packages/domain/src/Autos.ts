@@ -1,4 +1,5 @@
 import { Schema, Struct } from "effect";
+import { propertySignature } from "effect/Schema";
 import {
   IntFromSelfOrString,
   ObjectIdStringSchema,
@@ -199,12 +200,23 @@ export class Vehicle extends Schema.Class<Vehicle>("Vehicle")({
 export const encodeVehicleSync = Schema.encodeSync(Vehicle);
 
 export const UserTypes = Schema.Struct({
-  _id: Username,
-  eventSubtypes: Schema.Record({ key: EventSubtypeId, value: EventSubtype }),
-  fuelTypes: Schema.Record({ key: FuelTypeId, value: FuelType }),
-  tripTypes: Schema.Record({ key: TripTypeId, value: TripType }),
-});
+  eventSubtypes: propertySignature(
+    Schema.Record({ key: EventSubtypeId, value: EventSubtype }),
+  ).pipe(Schema.withConstructorDefault(() => ({}))),
+  fuelTypes: propertySignature(
+    Schema.Record({ key: FuelTypeId, value: FuelType }),
+  ).pipe(Schema.withConstructorDefault(() => ({}))),
+  tripTypes: propertySignature(
+    Schema.Record({ key: TripTypeId, value: TripType }),
+  ).pipe(Schema.withConstructorDefault(() => ({}))),
+}).annotations({ identifier: "UserTypes", title: "UserTypes" });
 export type UserTypes = typeof UserTypes.Type;
+
+export const UserTypesWithId = Schema.Struct({
+  _id: Username,
+  ...UserTypes.fields,
+});
+export type UserTypesWithId = typeof UserTypesWithId.Type;
 
 export const VehiclesDict = Schema.Record({ key: VehicleId, value: Vehicle });
 export type VehiclesDict = typeof VehiclesDict.Type;

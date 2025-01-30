@@ -15,7 +15,7 @@ import {
   Longitude,
   Place,
   TripType,
-  UserTypes,
+  UserTypesWithId,
   Vehicle,
   VehicleId,
 } from "@guzzler/domain/Autos";
@@ -29,7 +29,7 @@ import {
 } from "@guzzler/domain/MiscSchemas";
 import { TimeZone } from "@guzzler/domain/TimeZone";
 import { Username } from "@guzzler/domain/User";
-import { MongoError, DocumentNotFound } from "@guzzler/mongodb/Model";
+import { DocumentNotFound, MongoError } from "@guzzler/mongodb/Model";
 import { MongoTransactions } from "@guzzler/mongodb/MongoTransactions";
 import { RandomId } from "@guzzler/utils/RandomId";
 import { parse as parseDate } from "date-fns";
@@ -705,7 +705,7 @@ const importFromACarFullBackup =
           yield* autos.deleteAllUserData(username, { includeUserTypes: false });
           yield* Effect.logInfo("Replacing settings");
           yield* autos.replaceAllUserTypes(
-            UserTypes.make({
+            UserTypesWithId.make({
               _id: username,
               eventSubtypes: Object.fromEntries(
                 eventSubtypes.map(e => [e.id, e]),
