@@ -37,6 +37,7 @@ export const PageContainer = ({
 
   const title = Match.value(route).pipe(
     Match.discriminatorsExhaustive("name")({
+      AddFillup: () => "Add Fillup",
       CategoryManagement: () => t("categoryManagement.title"),
       Home: () => "Home",
       ImportExport: () => t("importDialog.title"),
