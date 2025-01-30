@@ -7,6 +7,7 @@ import { MainDrawerContextProvider } from "../contexts/MainDrawerContext.js";
 import { UserDataContextProvider } from "../contexts/UserDataContext.js";
 import { PagesRoute } from "../router.js";
 
+const AddFillup = lazy(() => import("./AddFillup.js"));
 const CategoryManagement = lazy(() => import("./CategoryManagement.js"));
 const HomePage = lazy(() => import("./HomePage.js"));
 const ImportPage = lazy(() => import("./ImportPage.js"));
@@ -23,6 +24,7 @@ const LoggedInApp = ({ route, session }: Props) => (
         <PageContainer route={route}>
           {Match.value(route).pipe(
             Match.discriminatorsExhaustive("name")({
+              AddFillup: r => <AddFillup route={r} />,
               CategoryManagement: () => <CategoryManagement />,
               Home: () => <HomePage />,
               ImportExport: () => <ImportPage />,

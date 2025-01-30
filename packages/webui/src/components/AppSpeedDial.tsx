@@ -7,18 +7,22 @@ import {
   Backdrop,
   SpeedDial,
   SpeedDialAction,
+  SpeedDialActionProps,
   SpeedDialIcon,
   Typography,
 } from "@mui/material";
 import React, { ReactNode, useState } from "react";
 import { useIsTouch } from "../hooks/useIsTouch.js";
 import { useTranslation } from "../i18n.js";
+import { AppRoute, routes } from "../router.js";
 
 type AppSpeedDialActionProps = Readonly<{
   isTouch: boolean;
   icon: ReactNode;
   label: string;
-}>;
+}> &
+  SpeedDialActionProps;
+
 const AppSpeedDialAction = ({
   isTouch,
   icon,
@@ -48,15 +52,24 @@ export const AppSpeedDial = () => {
 
   const isTouch = useIsTouch();
 
+  const nav = (route: AppRoute) => () => {
+    route.push();
+    if (isTouch) setOpen(false);
+  };
+
   return (
     <>
       <Backdrop open={open} />
       <SpeedDial
+        {...(isTouch ? { open } : {})}
         onOpen={() => setOpen(true)}
         onClose={() => setOpen(false)}
         ariaLabel="add items"
         icon={<SpeedDialIcon />}
-        FabProps={{ color: "secondary" }}
+        FabProps={{
+          color: "secondary",
+          ...(isTouch ? { onClick: () => setOpen(o => !o) } : {}),
+        }}
         sx={{
           position: "absolute",
           zIndex: 1,
@@ -70,6 +83,7 @@ export const AppSpeedDial = () => {
           isTouch={isTouch}
           icon={<LocalGasStationTwoTone color="primary" />}
           label={t("speedDial.fillup")}
+          onClick={nav(routes.AddFillup())}
         />
         <AppSpeedDialAction
           isTouch={isTouch}

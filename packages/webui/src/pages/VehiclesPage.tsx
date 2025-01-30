@@ -1,6 +1,5 @@
 import { PhotoId } from "@guzzlerapp/domain/Autos";
 import {
-  Avatar,
   List,
   ListItem,
   ListItemAvatar,
@@ -9,43 +8,12 @@ import {
   Skeleton,
 } from "@mui/material";
 import { Chunk, Option } from "effect";
-import { isNotNullable, isNotUndefined } from "effect/Predicate";
 import { ReactNode } from "react";
-import { imageUrl } from "../apiclients/ImageClient.js";
 import { AppLink } from "../components/AppLink.js";
 import { StandardPageBox } from "../components/StandardPageBox.js";
+import { VehicleAvatar } from "../components/VehicleAvatar.js";
 import { useUserData } from "../hooks/useUserData.js";
 import { AppRoute, routes } from "../router.js";
-
-const stringToColor = (string: string) => {
-  let hash = 0;
-  let i;
-
-  /* eslint-disable no-bitwise */
-  for (i = 0; i < string.length; i += 1) {
-    hash = string.charCodeAt(i) + ((hash << 5) - hash);
-  }
-
-  let color = "#";
-
-  for (i = 0; i < 3; i += 1) {
-    const value = (hash >> (i * 8)) & 0xff;
-    color += `00${value.toString(16)}`.slice(-2);
-  }
-  /* eslint-enable no-bitwise */
-
-  return color;
-};
-
-const StringAvatar = ({ s }: Readonly<{ s: string }>) => (
-  <Avatar sx={{ bgcolor: stringToColor(s) }}>
-    {s
-      .split(" ", 2)
-      .map(s => s[0])
-      .filter(isNotNullable)
-      .join("")}
-  </Avatar>
-);
 
 type VehicleListItemProps = Readonly<{
   displayName?: ReactNode;
@@ -62,15 +30,7 @@ const VehicleListItem = ({
   <ListItem disablePadding>
     <ListItemButton {...(!route ? {} : { component: AppLink, route })}>
       <ListItemAvatar>
-        {!stringName ? (
-          <Skeleton variant="circular">
-            <Avatar />
-          </Skeleton>
-        ) : isNotUndefined(imageId) && Option.isSome(imageId) ? (
-          <Avatar alt={stringName} src={imageUrl(imageId)} />
-        ) : (
-          <StringAvatar s={stringName} />
-        )}
+        <VehicleAvatar name={stringName} imageId={imageId} />
       </ListItemAvatar>
       <ListItemText primary={displayName ?? <Skeleton />} />
     </ListItemButton>
