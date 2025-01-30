@@ -231,6 +231,7 @@ export const FillupsDict = Schema.Record({
   key: FillupRecordId,
   value: FillupRecord,
 });
+export type FillupsDict = typeof FillupsDict.Type;
 
 export const UserVehicleId = Schema.Struct({
   username: Username,

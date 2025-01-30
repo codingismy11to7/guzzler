@@ -6,6 +6,7 @@ import {
 import { BadRequest, NotFound } from "@effect/platform/HttpApiError";
 import { AppApi } from "@guzzlerapp/domain/AppApi";
 import { currentSessionUsername } from "@guzzlerapp/domain/Authentication";
+import { UserTypes, UserVehicles } from "@guzzlerapp/domain/Autos";
 import { RedactedError, ServerError } from "@guzzlerapp/domain/Errors";
 import {
   ExportBackupCallId,
@@ -13,7 +14,7 @@ import {
 } from "@guzzlerapp/domain/models/AutosModel";
 import { MongoChangeStreams } from "@guzzlerapp/mongodb/MongoChangeStreams";
 import { RandomId } from "@guzzlerapp/utils/RandomId";
-import { Chunk, pipe, Stream } from "effect";
+import { Chunk, Effect, pipe, Stream } from "effect";
 import { catchTags, gen, logTrace, logWarning } from "effect/Effect";
 import { AutosStorage } from "../AutosStorage.js";
 import { BackupRestore } from "../BackupRestore.js";
@@ -59,7 +60,11 @@ export const AutosApiLive = HttpApiBuilder.group(AppApi, "autos", handlers =>
         gen(function* () {
           return yield* autos
             .getAllUserTypes(yield* currentSessionUsername)
-            .pipe(catchTags(notFound));
+            .pipe(
+              catchTags({
+                DocumentNotFound: () => Effect.sync(UserTypes.make),
+              }),
+            );
         }),
       )
       .handle("getUserVehicle", ({ path: { vehicleId } }) =>
@@ -79,10 +84,9 @@ export const AutosApiLive = HttpApiBuilder.group(AppApi, "autos", handlers =>
       )
       .handle("getUserVehicles", () =>
         gen(function* () {
-          return (yield* autos
-            .getVehicles(yield* currentSessionUsername)
-            .pipe(catchTags(notFound))).vehicles;
-        }),
+          return (yield* autos.getVehicles(yield* currentSessionUsername))
+            .vehicles;
+        }).pipe(catchTags({ DocumentNotFound: () => Effect.succeed({}) })),
       )
       .handle("getUserFillups", () =>
         gen(function* () {
