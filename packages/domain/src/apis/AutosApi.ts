@@ -31,11 +31,7 @@ import {
 import { TimeZone } from "../TimeZone.js";
 
 export class AutosApi extends HttpApiGroup.make("autos")
-  .add(
-    HttpApiEndpoint.get("getUserTypes", "/types")
-      .addSuccess(UserTypes)
-      .addError(NotFound),
-  )
+  .add(HttpApiEndpoint.get("getUserTypes", "/types").addSuccess(UserTypes))
   .add(
     HttpApiEndpoint.get("getUserVehicle", "/vehicle/:vehicleId")
       .setPath(Schema.Struct({ vehicleId: VehicleId }))
@@ -50,9 +46,9 @@ export class AutosApi extends HttpApiGroup.make("autos")
       .addError(RedactedError),
   )
   .add(
-    HttpApiEndpoint.get("getUserVehicles", "/vehicles")
-      .addSuccess(VehiclesDict)
-      .addError(NotFound),
+    HttpApiEndpoint.get("getUserVehicles", "/vehicles").addSuccess(
+      VehiclesDict,
+    ),
   )
   .add(
     HttpApiEndpoint.get("getUserFillups", "/fillups").addSuccess(
