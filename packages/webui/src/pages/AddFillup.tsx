@@ -1,4 +1,5 @@
 import { Autos } from "@guzzler/domain";
+import { VehicleId } from "@guzzler/domain/Autos";
 import { Add, CarCrashTwoTone, SyncAlt } from "@mui/icons-material";
 import {
   Alert,
@@ -12,10 +13,11 @@ import {
   Stack,
 } from "@mui/material";
 import { useLocalStorage } from "@uidotdev/usehooks";
-import { Array, Option, Struct } from "effect";
-import { useEffect } from "react";
+import { Array, flow, Option, Struct } from "effect";
+import { SetStateAction, useEffect, useState } from "react";
 import { StandardPageBox } from "../components/StandardPageBox.js";
 import { VehicleAvatar } from "../components/VehicleAvatar.js";
+import { VehicleChooserDialog } from "../components/VehicleChooserDialog.js";
 import {
   useFillupInformationForVehicle,
   useUserData,
@@ -60,13 +62,28 @@ type Props = Readonly<{ route: ReturnType<typeof routes.AddFillup> }>;
 const AddFillup = ({ route }: Props) => {
   const { t } = useTranslation();
 
-  const { vehicleId } = route.params;
+  const { vehicleId, switchingVehicle } = route.params;
+
+  const setSwitchOpen = (open: boolean) =>
+    routes
+      .AddFillup({
+        ...(vehicleId ? { vehicleId } : {}),
+        ...(open ? { switchingVehicle: true } : {}),
+      })
+      .replace();
 
   const data = useUserData();
 
-  const [defaultVehicle, setDefaultVehicle] = useLocalStorage<
+  const [defaultVehicle, _setDefaultVehicle] = useLocalStorage<
     Autos.VehicleId | undefined
   >("guzzler-default-vehicle");
+
+  const setDefaultVehicle = (
+    value: SetStateAction<Autos.VehicleId | undefined>,
+  ) => {
+    console.log("yo setDefa;ult", value);
+    return _setDefaultVehicle(value);
+  };
 
   useEffect(() => {
     if (!data.loading && !vehicleId) {
@@ -82,9 +99,13 @@ const AddFillup = ({ route }: Props) => {
       const vehicleIdOpt = Array.head(Struct.keys(vehicles));
       if (Option.isSome(vehicleIdOpt)) {
         const vehicleId = vehicleIdOpt.value;
+        console.log("hey here", vehicleId);
         setDefaultVehicle(vehicleId);
         routes.AddFillup({ vehicleId }).replace();
       }
+    } else if (vehicleId) {
+      // save this as default for next time
+      setDefaultVehicle(vehicleId);
     }
   }, [data, data.loading, defaultVehicle, setDefaultVehicle, vehicleId]);
 
@@ -126,9 +147,20 @@ const AddFillup = ({ route }: Props) => {
                 ) : undefined
               }
               slotProps={{ action: { sx: { alignSelf: "center" } } }}
-              action={<Button>Switch</Button>}
+              action={
+                <Button onClick={() => setSwitchOpen(true)}>Switch</Button>
+              }
             />
           </Card>
+          {switchingVehicle && (
+            <VehicleChooserDialog
+              onClose={() => setSwitchOpen(false)}
+              onVehicleSelect={vehicleId =>
+                routes.AddFillup({ vehicleId }).replace()
+              }
+              open
+            />
+          )}
         </Stack>
       )}
     </StandardPageBox>
