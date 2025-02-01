@@ -25,7 +25,10 @@ const vehicleId: ValueSerializer<Autos.VehicleId> = {
 const Home = defineRoute("/");
 const Pages = {
   AddFillup: Home.extend(
-    { vehicleId: param.path.optional.ofType(vehicleId) },
+    {
+      vehicleId: param.path.optional.ofType(vehicleId),
+      switchingVehicle: param.query.optional.boolean,
+    },
     p => `/fillups/add/${p.vehicleId}`,
   ),
   CategoryManagement: Home.extend("/manageCategories"),
