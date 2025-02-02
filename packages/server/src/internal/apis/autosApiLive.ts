@@ -14,7 +14,6 @@ import {
   PlaceType,
 } from "@guzzlerapp/domain/models/GooglePlace";
 import { Location } from "@guzzlerapp/domain/models/Location";
-import { Place } from "@guzzlerapp/domain/models/Place";
 import { Username } from "@guzzlerapp/domain/User";
 import { RandomId } from "@guzzlerapp/utils/RandomId";
 import {
@@ -26,9 +25,8 @@ import {
   Option,
   ParseResult,
   pipe,
-  Redacted,
   Schedule,
-  Schema,
+  Schema as S,
   Stream,
 } from "effect";
 import { gen, mapError } from "effect/Effect";
@@ -54,7 +52,7 @@ const createFrontendChangeStreamForUser = (
       const opType = Match.discriminator("operationType");
 
       const decodeEvtOp = (_id: unknown, collectionName: string) =>
-        Schema.decodeUnknown(ChangeEvent)({
+        S.decodeUnknown(ChangeEvent)({
           _id,
           collectionName,
         }).pipe(Effect.option);
@@ -92,7 +90,7 @@ const createFrontendChangeStreamForUser = (
         Stream.groupedWithin(500, "500 millis"),
         Stream.map(changeEventsToFrontend),
         Stream.flattenIterables,
-        Stream.map(Schema.encodeSync(FrontendChangeEvent)),
+        Stream.map(S.encodeSync(FrontendChangeEvent)),
         Stream.map(stringifyCircular),
       );
     }),
@@ -142,7 +140,10 @@ const extractComponents = (cs: readonly AddressComponent[]) => {
   };
 };
 
-const ConvertedPlace = Schema.transformOrFail(GooglePlace, Place, {
+const ConvertTo = GasStationResponsePlace.pipe(
+  S.omit("distanceFromSearchLocation"),
+);
+const ConvertedPlace = S.transformOrFail(GooglePlace, ConvertTo, {
   strict: true,
   encode: (input, _, ast) =>
     ParseResult.fail(
@@ -153,15 +154,17 @@ const ConvertedPlace = Schema.transformOrFail(GooglePlace, Place, {
     name,
     googleMapsUri,
     formattedAddress,
+    shortFormattedAddress,
     location,
     addressComponents,
   }) =>
-    Schema.encode(Place)({
+    S.encode(ConvertTo)({
       name: displayName.text,
-      googleMapsUri: Option.some(googleMapsUri),
+      googleMapsUri,
       googlePlacesId: name,
       fullAddress: formattedAddress,
-      location: Option.some(location),
+      shortAddress: shortFormattedAddress,
+      location,
       ...extractComponents(addressComponents),
     }).pipe(mapError(e => e.issue)),
 });
@@ -176,23 +179,12 @@ export const getGasStations =
       if (Option.isNone(googleMapsApiKey)) return yield* new NoMapsApiKeySet();
 
       const apiKey = googleMapsApiKey.value;
-      // const include = [
-      //   ...((includeGasStations ?? true) ? ["gas_station"] : []),
-      //   ...(includeEVChargingStations
-      //     ? ["electric_vehicle_charging_station"]
-      //     : []),
-      // ];
 
       const res = yield* gPlaces.queryForPlaces(apiKey, location, mode, 5000);
 
-      console.log(apiKey, Redacted.value(apiKey), res);
-
       return res.places.map(p =>
         GasStationResponsePlace.make({
-          // eslint-disable-next-line @typescript-eslint/no-misused-spread
-          ...Schema.decodeSync(ConvertedPlace)(
-            Schema.encodeSync(GooglePlace)(p),
-          ),
+          ...S.decodeSync(ConvertedPlace)(S.encodeSync(GooglePlace)(p)),
           distanceFromSearchLocation: pipe(
             geolib.getDistance(location, p.location),
             d => {
