@@ -1,4 +1,4 @@
-import { AutosModel } from "@guzzlerapp/domain";
+import { AutosApiModel } from "@guzzlerapp/domain";
 import {
   Effect,
   Match,
@@ -67,7 +67,7 @@ export class AutosDataRepository extends Effect.Service<AutosDataRepository>()(
         internal.startListeningToWebsocketInBackground(
           autos,
           connected,
-          Match.type<AutosModel.FrontendChangeEvent>().pipe(
+          Match.type<AutosApiModel.FrontendChangeEvent>().pipe(
             Match.discriminatorsExhaustive("type")({
               eventRecords: () => refetchEvents,
               fillupRecords: () => refetchFillups,

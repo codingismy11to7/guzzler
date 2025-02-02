@@ -6,28 +6,34 @@ import {
 import { BadRequest, NotFound } from "@effect/platform/HttpApiError";
 import { AppApi } from "@guzzlerapp/domain/AppApi";
 import { currentSessionUsername } from "@guzzlerapp/domain/Authentication";
-import { UserTypes, UserVehicles } from "@guzzlerapp/domain/Autos";
 import { RedactedError, ServerError } from "@guzzlerapp/domain/Errors";
+import { UserTypes, UserVehicles } from "@guzzlerapp/domain/models/Autos";
 import {
   ExportBackupCallId,
+  NoMapsApiKeySet,
   SubscribeToChanges,
-} from "@guzzlerapp/domain/models/AutosModel";
+} from "@guzzlerapp/domain/models/AutosApiModel";
 import { MongoChangeStreams } from "@guzzlerapp/mongodb/MongoChangeStreams";
 import { RandomId } from "@guzzlerapp/utils/RandomId";
-import { Chunk, Effect, pipe, Stream } from "effect";
+import { Chunk, Effect, Option, pipe, Redacted, Stream } from "effect";
 import { catchTags, gen, logTrace, logWarning } from "effect/Effect";
 import { AutosStorage } from "../AutosStorage.js";
 import { BackupRestore } from "../BackupRestore.js";
+import { GooglePlaces } from "../GooglePlaces.js";
 import { ACarFullBackup } from "../importers/ACarFullBackup.js";
 import * as internal from "../internal/apis/autosApiLive.js";
+import * as preferencesApiLive from "../internal/apis/preferencesApiLive.js";
+import { CollectionRegistry } from "../internal/database/CollectionRegistry.js";
 
 const notFound = { DocumentNotFound: () => new NotFound() } as const;
 
 export const AutosApiLive = HttpApiBuilder.group(AppApi, "autos", handlers =>
   gen(function* () {
     const aCar = yield* ACarFullBackup;
-    const { getBackupStream, importFromGuzzlerBackup } = yield* BackupRestore;
     const autos = yield* AutosStorage;
+    const { getBackupStream, importFromGuzzlerBackup } = yield* BackupRestore;
+    const colls = yield* CollectionRegistry;
+    const gPlaces = yield* GooglePlaces;
     const { watchSharedStream } = yield* MongoChangeStreams;
     const random = yield* RandomId;
 
@@ -106,6 +112,17 @@ export const AutosApiLive = HttpApiBuilder.group(AppApi, "autos", handlers =>
           );
           return Object.fromEntries(
             items.map(i => [i._id.vehicleId, i.events]),
+          );
+        }),
+      )
+      .handle("getGasStations", ({ payload: { mode, ...location } }) =>
+        gen(function* () {
+          const username = yield* currentSessionUsername;
+
+          return yield* internal.getGasStations(colls, gPlaces)(
+            username,
+            mode,
+            location,
           );
         }),
       )
