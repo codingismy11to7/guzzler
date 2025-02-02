@@ -1,5 +1,5 @@
 import { FileSystem } from "@effect/platform";
-import { AutosModel } from "@guzzlerapp/domain";
+import { AutosApiModel } from "@guzzlerapp/domain";
 import { RedactedError } from "@guzzlerapp/domain/Errors";
 import { MongoTransactions } from "@guzzlerapp/mongodb/MongoTransactions";
 import { RandomId } from "@guzzlerapp/utils/RandomId";
@@ -30,7 +30,7 @@ export class BackupRestore extends Effect.Service<BackupRestore>()(
             Effect.logError(
               "Error creating backup from archiver",
               e.cause,
-            ).pipe(andThen(new AutosModel.ZipError())),
+            ).pipe(andThen(new AutosApiModel.ZipError())),
         }),
       );
 
@@ -40,17 +40,17 @@ export class BackupRestore extends Effect.Service<BackupRestore>()(
         Effect.tapError(e => Effect.logError(e.message)),
         Effect.catchTags({
           MissingBackupFile: () =>
-            new AutosModel.BackupWrongFormatError({
+            new AutosApiModel.BackupWrongFormatError({
               type: "MissingBackupFile",
             }),
           ParseError: () =>
-            new AutosModel.BackupWrongFormatError({ type: "ParseError" }),
+            new AutosApiModel.BackupWrongFormatError({ type: "ParseError" }),
           WrongVersionError: () =>
-            new AutosModel.BackupWrongFormatError({
+            new AutosApiModel.BackupWrongFormatError({
               type: "UnknownBackupVersion",
             }),
           UnzipError: () =>
-            new AutosModel.BackupFileCorruptedError({ type: "UnzipError" }),
+            new AutosApiModel.BackupFileCorruptedError({ type: "UnzipError" }),
           SystemError: RedactedError.logged,
           MongoError: RedactedError.logged,
         }),

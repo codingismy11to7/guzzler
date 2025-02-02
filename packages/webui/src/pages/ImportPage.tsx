@@ -1,4 +1,4 @@
-import { AutosApi, AutosModel, TimeZone } from "@guzzlerapp/domain";
+import { AutosApi, AutosApiModel, TimeZone } from "@guzzlerapp/domain";
 import { RedactedError } from "@guzzlerapp/domain/Errors";
 import { Check, Close, CloudUpload, ContentCopy } from "@mui/icons-material";
 import {
@@ -49,7 +49,7 @@ const MobileInfoIconP = () => import("../components/MobileInfoIcon.js");
 const MobileInfoIcon = lazy(MobileInfoIconP);
 
 type AbpErrorDialogProps = Readonly<{
-  error: AutosModel.AbpImportError | RedactedError;
+  error: AutosApiModel.AbpImportError | RedactedError;
   onClose: LazyArg<void>;
 }>;
 const AbpErrorDialog = ({ error, onClose }: AbpErrorDialogProps) => {
@@ -90,7 +90,7 @@ const AbpErrorDialog = ({ error, onClose }: AbpErrorDialogProps) => {
             </Stack>
           ),
           AbpFileCorruptedError:
-            Match.type<AutosModel.AbpFileCorruptedError>().pipe(
+            Match.type<AutosApiModel.AbpFileCorruptedError>().pipe(
               discriminatorsExhaustive("type")({
                 UnzipError: () =>
                   "The file is corrupted, or it's not an actual .abp file from aCar.",
@@ -99,7 +99,7 @@ const AbpErrorDialog = ({ error, onClose }: AbpErrorDialogProps) => {
               }),
             ),
           AbpWrongFormatError:
-            Match.type<AutosModel.AbpWrongFormatError>().pipe(
+            Match.type<AutosApiModel.AbpWrongFormatError>().pipe(
               discriminatorsExhaustive("type")({
                 UnexpectedOpeningTag: () =>
                   "Something in the data didn't match what we expected.",
@@ -142,7 +142,7 @@ const AbpErrorDialog = ({ error, onClose }: AbpErrorDialogProps) => {
 
 // TODO remove copypasta
 type BackupErrorDialogProps = Readonly<{
-  error: AutosModel.BackupImportError | RedactedError;
+  error: AutosApiModel.BackupImportError | RedactedError;
   onClose: LazyArg<void>;
 }>;
 const BackupErrorDialog = ({ error, onClose }: BackupErrorDialogProps) => {
@@ -183,7 +183,7 @@ const BackupErrorDialog = ({ error, onClose }: BackupErrorDialogProps) => {
             </Stack>
           ),
           BackupFileCorruptedError:
-            Match.type<AutosModel.BackupFileCorruptedError>().pipe(
+            Match.type<AutosApiModel.BackupFileCorruptedError>().pipe(
               discriminatorsExhaustive("type")({
                 UnzipError: () =>
                   "The file is corrupted, or it's not an actual backup file" +
@@ -191,7 +191,7 @@ const BackupErrorDialog = ({ error, onClose }: BackupErrorDialogProps) => {
               }),
             ),
           BackupWrongFormatError:
-            Match.type<AutosModel.BackupWrongFormatError>().pipe(
+            Match.type<AutosApiModel.BackupWrongFormatError>().pipe(
               discriminatorsExhaustive("type")({
                 ParseError: () =>
                   "Something in the data didn't match what we expected.",
@@ -318,10 +318,10 @@ const ACarUpload = ({ setCloseDisabled }: UploadProps) => {
   const [importing, setImporting] = useState(false);
 
   const [error, setErrorSync] = useState<
-    RedactedError | AutosModel.AbpImportError
+    RedactedError | AutosApiModel.AbpImportError
   >();
   const setError = useCallback(
-    (e: RedactedError | AutosModel.AbpImportError) =>
+    (e: RedactedError | AutosApiModel.AbpImportError) =>
       Effect.sync(() => setErrorSync(e)),
     [],
   );
@@ -439,10 +439,10 @@ const BackupUpload = ({ setCloseDisabled }: UploadProps) => {
   const [importing, setImporting] = useState(false);
 
   const [error, setErrorSync] = useState<
-    RedactedError | AutosModel.BackupImportError
+    RedactedError | AutosApiModel.BackupImportError
   >();
   const setError = useCallback(
-    (e: RedactedError | AutosModel.BackupImportError) =>
+    (e: RedactedError | AutosApiModel.BackupImportError) =>
       Effect.sync(() => setErrorSync(e)),
     [],
   );
@@ -597,7 +597,7 @@ const ImportPage = () => {
         const link = document.createElement("a");
         link.download = `${name}.${backupExtension(t)}`;
         link.href = AutosApi.AutosApi.endpoints[
-          AutosModel.ExportBackupCallId
+          AutosApiModel.ExportBackupCallId
         ].path.replace(":backupName", name);
         document.body.appendChild(link);
         link.click();
