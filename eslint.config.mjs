@@ -300,6 +300,7 @@ export default tseslint.config([
           "enableDangerousAutofixThisMayCauseInfiniteLoops": true
         }
       ],
+      "require-yield": "warn",
       "space-before-function-paren": "off",
       "spaced-comment": "off",
       "use-isnan": "error",

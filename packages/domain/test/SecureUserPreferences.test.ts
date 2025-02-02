@@ -1,6 +1,9 @@
 import { describe, expect, it } from "@effect/vitest";
-import { Option, Redacted, Schema } from "effect";
-import { SecureUserPreferencesPatch } from "../src/SecureUserPreferences.js";
+import { Option, Schema } from "effect";
+import {
+  GoogleMapsApiKey,
+  SecureUserPreferencesPatch,
+} from "../src/SecureUserPreferences.js";
 
 describe("SecureUserPreferences", () => {
   describe("SecureUserPreferencesPatch", () => {
@@ -20,7 +23,9 @@ describe("SecureUserPreferences", () => {
       expect(withMissing).toEqual({ googleMapsApiKey: Option.none() });
       expect(withStr).toEqual(
         SecureUserPreferencesPatch.make({
-          googleMapsApiKey: Option.some(Redacted.make("key")),
+          googleMapsApiKey: Option.some(
+            Schema.decodeSync(GoogleMapsApiKey)("key"),
+          ),
         }),
       );
       expect(Schema.encodeSync(SecureUserPreferencesPatch)(withStr)).toEqual({

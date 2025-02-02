@@ -1,6 +1,7 @@
 import { FileSystem } from "@effect/platform";
 import { SystemError } from "@effect/platform/Error";
 import { BackupMetadata } from "@guzzlerapp/domain";
+import { ContentType } from "@guzzlerapp/domain/ContentType";
 import {
   PhotoId,
   UserTypes,
@@ -8,8 +9,7 @@ import {
   VehicleEventRecords,
   VehicleFillupRecords,
   VehicleId,
-} from "@guzzlerapp/domain/Autos";
-import { ContentType } from "@guzzlerapp/domain/ContentType";
+} from "@guzzlerapp/domain/models/Autos";
 import { Username } from "@guzzlerapp/domain/User";
 import { DocumentNotFound, MongoError } from "@guzzlerapp/mongodb/Model";
 import { MongoTransactions } from "@guzzlerapp/mongodb/MongoTransactions";

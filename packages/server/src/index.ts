@@ -13,6 +13,8 @@ export * as BackupRestore from "./BackupRestore.js";
 
 export * as FileFetcher from "./FileFetcher.js";
 
+export * as GooglePlaces from "./GooglePlaces.js";
+
 export * as HttpLive from "./HttpLive.js";
 
 export * as OAuth2 from "./OAuth2.js";
