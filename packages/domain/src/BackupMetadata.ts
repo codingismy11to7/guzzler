@@ -1,6 +1,6 @@
 import { Schema } from "effect";
-import { PhotoId } from "./Autos.js";
 import { ContentType } from "./ContentType.js";
+import { PhotoId } from "./models/Autos.js";
 
 export const PhotoMetadata = Schema.Struct({
   contentType: ContentType,

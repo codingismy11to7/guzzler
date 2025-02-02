@@ -2,8 +2,6 @@ export * as AppApi from "./AppApi.js";
 
 export * as Authentication from "./Authentication.js";
 
-export * as Autos from "./Autos.js";
-
 export * as BackupMetadata from "./BackupMetadata.js";
 
 export * as ContentType from "./ContentType.js";
@@ -38,4 +36,12 @@ export * as SessionApi from "./apis/SessionApi.js";
 
 export * as SignupApi from "./apis/SignupApi.js";
 
-export * as AutosModel from "./models/AutosModel.js";
+export * as Autos from "./models/Autos.js";
+
+export * as AutosApiModel from "./models/AutosApiModel.js";
+
+export * as GooglePlace from "./models/GooglePlace.js";
+
+export * as Location from "./models/Location.js";
+
+export * as Place from "./models/Place.js";

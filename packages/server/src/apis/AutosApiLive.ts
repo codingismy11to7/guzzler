@@ -1,26 +1,27 @@
 import {
-    HttpApiBuilder,
-    HttpServerRequest,
-    HttpServerResponse,
+  HttpApiBuilder,
+  HttpServerRequest,
+  HttpServerResponse,
 } from "@effect/platform";
 import { BadRequest, NotFound } from "@effect/platform/HttpApiError";
 import { AppApi } from "@guzzlerapp/domain/AppApi";
 import { currentSessionUsername } from "@guzzlerapp/domain/Authentication";
-import { UserTypes } from "@guzzlerapp/domain/Autos";
 import { RedactedError, ServerError } from "@guzzlerapp/domain/Errors";
+import { UserTypes } from "@guzzlerapp/domain/models/Autos";
 import {
-    ExportBackupCallId,
-    SubscribeToChanges,
-} from "@guzzlerapp/domain/models/AutosModel";
+  ExportBackupCallId,
+  SubscribeToChanges,
+} from "@guzzlerapp/domain/models/AutosApiModel";
 import { MongoChangeStreams } from "@guzzlerapp/mongodb/MongoChangeStreams";
 import { RandomId } from "@guzzlerapp/utils/RandomId";
 import { Chunk, Effect, pipe, Stream } from "effect";
-import { catchTags, fn, gen, logTrace, logWarning } from "effect/Effect";
-import { runCollect } from "effect/Stream";
+import { catchTags, gen, logTrace, logWarning } from "effect/Effect";
 import { AutosStorage } from "../AutosStorage.js";
 import { BackupRestore } from "../BackupRestore.js";
+import { GooglePlaces } from "../GooglePlaces.js";
 import { ACarFullBackup } from "../importers/ACarFullBackup.js";
 import * as internal from "../internal/apis/autosApiLive.js";
+import { CollectionRegistry } from "../internal/database/CollectionRegistry.js";
 
 const notFound = { DocumentNotFound: () => new NotFound() } as const;
 
@@ -29,8 +30,10 @@ export const AutosApiLive = HttpApiBuilder.group(
   "autos",
   fn(function* (handlers) {
     const aCar = yield* ACarFullBackup;
-    const { getBackupStream, importFromGuzzlerBackup } = yield* BackupRestore;
     const autos = yield* AutosStorage;
+    const { getBackupStream, importFromGuzzlerBackup } = yield* BackupRestore;
+    const colls = yield* CollectionRegistry;
+    const gPlaces = yield* GooglePlaces;
     const { watchSharedStream } = yield* MongoChangeStreams;
     const random = yield* RandomId;
 
@@ -109,6 +112,17 @@ export const AutosApiLive = HttpApiBuilder.group(
           );
           return Object.fromEntries(
             items.map(i => [i._id.vehicleId, i.events]),
+          );
+        }),
+      )
+      .handle("getGasStations", ({ payload: { mode, ...location } }) =>
+        gen(function* () {
+          const username = yield* currentSessionUsername;
+
+          return yield* internal.getGasStations(colls, gPlaces)(
+            username,
+            mode,
+            location,
           );
         }),
       )

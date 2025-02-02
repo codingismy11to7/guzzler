@@ -1,5 +1,5 @@
 import { Socket } from "@effect/platform";
-import { AutosModel } from "@guzzlerapp/domain";
+import { AutosApiModel } from "@guzzlerapp/domain";
 import { Effect, pipe, Ref, Runtime, Schedule } from "effect";
 import {
   gen,
@@ -31,7 +31,7 @@ export const fetchWithRetries = <A, E>(
 export const startListeningToWebsocketInBackground = (
   autos: AutosClient,
   connected: Ref.Ref<boolean>,
-  handlePush: (e: AutosModel.FrontendChangeEvent) => Effect.Effect<void>,
+  handlePush: (e: AutosApiModel.FrontendChangeEvent) => Effect.Effect<void>,
 ): Effect.Effect<void, never, Scope> =>
   gen(function* () {
     const runP = Runtime.runPromise(yield* Effect.runtime<Scope>());
@@ -64,7 +64,7 @@ export const startListeningToWebsocketInBackground = (
       reset(logError("Websocket error", e));
     const onCloseEvent = (e: Socket.SocketCloseError) =>
       reset(logInfo("Websocket close", e));
-    const onMessage = (e: AutosModel.FrontendChangeEvent) =>
+    const onMessage = (e: AutosApiModel.FrontendChangeEvent) =>
       void runP(handlePush(e));
 
     const startHandler = yield* autos.makeImperativeSocketHandler;

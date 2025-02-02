@@ -37,21 +37,26 @@ export const OptionalString = S.Trim.pipe(S.optional);
 export const OptionalNumber = S.Number.pipe(S.optional);
 export const OptionalBigDecimal = S.OptionFromUndefinedOr(S.BigDecimal);
 
-export const Timestamp = S.Int.pipe(S.positive());
+export const Timestamp = S.transform(
+  S.Union(S.Date, S.DateFromNumber),
+  S.Date,
+  {
+    strict: true,
+    decode: input => input.toISOString(),
+    encode: (_, input) => input,
+  },
+);
 
 export const BooleanFromSelfOrString = S.transform(
   S.Union(S.Boolean, S.BooleanFromString),
   S.Boolean,
-  { decode: identity, encode: identity },
+  { strict: true, decode: identity, encode: identity },
 );
 
 export const NumberFromSelfOrString = S.transform(
   S.Union(S.Number, S.NumberFromString),
   S.Number,
-  {
-    decode: identity,
-    encode: identity,
-  },
+  { strict: true, decode: identity, encode: identity },
 );
 
 export const IntFromSelfOrString = NumberFromSelfOrString.pipe(S.int());

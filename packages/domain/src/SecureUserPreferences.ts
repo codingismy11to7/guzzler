@@ -1,23 +1,23 @@
-import { Schema, Struct } from "effect";
+import { Schema as S, Struct } from "effect";
 import { RemoveField } from "./MiscSchemas.js";
 import { Username } from "./User.js";
 
-export const SecureUserPreferencesFields = Schema.Struct({
-  googleMapsApiKey: Schema.Trim.pipe(
-    Schema.Redacted,
-    Schema.OptionFromUndefinedOr,
-  ),
+export const GoogleMapsApiKey = S.Trim.pipe(S.Redacted, S.brand("GMapsApiKey"));
+export type GoogleMapsApiKey = typeof GoogleMapsApiKey.Type;
+
+export const SecureUserPreferencesFields = S.Struct({
+  googleMapsApiKey: S.OptionFromUndefinedOr(GoogleMapsApiKey),
 });
 export type SecureUserPreferencesFields =
   typeof SecureUserPreferencesFields.Type;
 
-export const SecureUserPreferences = Schema.Struct({
+export const SecureUserPreferences = S.Struct({
   _id: Username,
   ...SecureUserPreferencesFields.fields,
 });
 export type SecureUserPreferences = typeof SecureUserPreferences.Type;
 
-export const SecureUserPreferencesPatch = Schema.Struct({
+export const SecureUserPreferencesPatch = S.Struct({
   ...Object.fromEntries(
     Struct.keys(SecureUserPreferencesFields.fields).map(k => [
       k,
@@ -25,9 +25,7 @@ export const SecureUserPreferencesPatch = Schema.Struct({
       // the field just doesn't exist after decoding...but if it exists but
       // is explicitly set to undefined, then it'll be an Option.None. this
       // gives us a three-way operation for patches
-      SecureUserPreferencesFields.fields[k].pipe(v =>
-        Schema.Union(v, RemoveField),
-      ),
+      SecureUserPreferencesFields.fields[k].pipe(v => S.Union(v, RemoveField)),
     ]),
   ),
 });

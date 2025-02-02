@@ -9,10 +9,13 @@ import { MongoTransactions } from "@guzzlerapp/mongodb/MongoTransactions";
 import { Context, Effect, Schema, Struct } from "effect";
 import { catchTags, gen } from "effect/Effect";
 import { isString } from "effect/String";
-import { CollectionRegistry } from "../database/CollectionRegistry.js";
+import {
+  AppCollections,
+  CollectionRegistry,
+} from "../database/CollectionRegistry.js";
 
 export const getSecurePreferences = (
-  { secureUserPrefs }: Context.Tag.Service<CollectionRegistry>,
+  { secureUserPrefs }: AppCollections,
   username: Username,
 ) =>
   gen(function* () {

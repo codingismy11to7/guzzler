@@ -1,5 +1,5 @@
 import { Socket } from "@effect/platform";
-import { AutosApi, AutosModel, MiscSchemas } from "@guzzlerapp/domain";
+import { AutosApi, AutosApiModel, MiscSchemas } from "@guzzlerapp/domain";
 import { Duration, Effect, Either, Schema } from "effect";
 import { logTrace, logWarning } from "effect/Effect";
 import { LazyArg } from "effect/Function";
@@ -12,7 +12,7 @@ export const makeRawChangesSocket: Effect.Effect<
   Socket.WebSocketConstructor | Scope
 > = Effect.acquireRelease(
   Effect.map(Socket.WebSocketConstructor, f =>
-    f(AutosApi.AutosApi.endpoints[AutosModel.SubscribeToChanges].path),
+    f(AutosApi.AutosApi.endpoints[AutosApiModel.SubscribeToChanges].path),
   ),
   ws => Effect.sync(() => ws.close(1000)),
 );
@@ -30,7 +30,7 @@ export const imperativelyHandleSocket =
     onOpen: LazyArg<void>,
     onErrorEvent: (e: Socket.SocketGenericError) => void,
     onCloseEvent: (e: Socket.SocketCloseError) => void,
-    onPushEvent: (e: AutosModel.FrontendChangeEvent) => void,
+    onPushEvent: (e: AutosApiModel.FrontendChangeEvent) => void,
   ) => {
     let open = false;
 
@@ -42,7 +42,7 @@ export const imperativelyHandleSocket =
     const schedulePingTimeout = () => {
       stopPingTimeout();
 
-      const timeout = Duration.times(AutosModel.HeartbeatInterval, 3);
+      const timeout = Duration.times(AutosApiModel.HeartbeatInterval, 3);
 
       timer = setTimeout(() => {
         runSync(
@@ -113,7 +113,7 @@ export const imperativelyHandleSocket =
 
 const parseEvent = (
   data: string | Uint8Array,
-): Either.Either<"ping" | AutosModel.FrontendChangeEvent, ParseError> =>
+): Either.Either<"ping" | AutosApiModel.FrontendChangeEvent, ParseError> =>
   Either.gen(function* () {
     const str = yield* Schema.decodeEither(
       MiscSchemas.StringFromSelfOrUint8Array,
@@ -122,7 +122,7 @@ const parseEvent = (
     if (str === "ping") return str;
 
     const obj = yield* Schema.decodeEither(Schema.parseJson())(str);
-    return yield* Schema.decodeUnknownEither(AutosModel.FrontendChangeEvent)(
+    return yield* Schema.decodeUnknownEither(AutosApiModel.FrontendChangeEvent)(
       obj,
     );
   });

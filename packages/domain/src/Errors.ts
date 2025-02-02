@@ -3,6 +3,16 @@ import { RandomId } from "@guzzlerapp/utils";
 import { Effect, Schema } from "effect";
 import { gen } from "effect/Effect";
 
+export class BadGateway extends HttpApiSchema.EmptyError<BadGateway>()({
+  tag: "BadGateway",
+  status: 502,
+}) {}
+
+export class GatewayTimeout extends HttpApiSchema.EmptyError<GatewayTimeout>()({
+  tag: "GatewayTimeout",
+  status: 504,
+}) {}
+
 export class ServerError extends Schema.TaggedError<ServerError>()(
   "ServerError",
   { message: Schema.String },

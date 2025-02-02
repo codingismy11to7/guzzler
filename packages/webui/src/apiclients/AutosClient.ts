@@ -1,5 +1,5 @@
 import { HttpApiClient, Socket } from "@effect/platform";
-import { AppApi, Autos, AutosModel } from "@guzzlerapp/domain";
+import { AppApi, Autos, AutosApiModel, Location } from "@guzzlerapp/domain";
 import { RedactedError } from "@guzzlerapp/domain/Errors";
 import { TimeZone } from "@guzzlerapp/domain/TimeZone";
 import { Effect, Runtime } from "effect";
@@ -18,8 +18,8 @@ export class AutosClient extends Effect.Service<AutosClient>()("AutosClient", {
       file: File,
     ): Effect.Effect<
       void,
-      | AutosModel.AbpFileCorruptedError
-      | AutosModel.AbpWrongFormatError
+      | AutosApiModel.AbpFileCorruptedError
+      | AutosApiModel.AbpWrongFormatError
       | RedactedError
     > => {
       const payload = new FormData();
@@ -35,8 +35,8 @@ export class AutosClient extends Effect.Service<AutosClient>()("AutosClient", {
       file: File,
     ): Effect.Effect<
       void,
-      | AutosModel.BackupFileCorruptedError
-      | AutosModel.BackupWrongFormatError
+      | AutosApiModel.BackupFileCorruptedError
+      | AutosApiModel.BackupWrongFormatError
       | RedactedError
     > => {
       const payload = new FormData();
@@ -51,6 +51,14 @@ export class AutosClient extends Effect.Service<AutosClient>()("AutosClient", {
     const getVehicles = client.autos.getUserVehicles();
     const getFillups = client.autos.getUserFillups();
     const getEvents = client.autos.getUserEvents();
+
+    const getGasStations = (
+      mode: AutosApiModel.GasStationQueryMode,
+      { latitude, longitude }: Location.Location,
+    ) =>
+      client.autos
+        .getGasStations({ payload: { mode, latitude, longitude } })
+        .pipe(catchTags(dieFromFatal));
 
     const deleteUserVehicle = (vehicleId: Autos.VehicleId) =>
       client.autos.deleteUserVehicle({ path: { vehicleId } });
@@ -75,6 +83,7 @@ export class AutosClient extends Effect.Service<AutosClient>()("AutosClient", {
       getVehicles,
       getFillups,
       getEvents,
+      getGasStations,
       deleteUserVehicle,
       makeImperativeSocketHandler,
     };

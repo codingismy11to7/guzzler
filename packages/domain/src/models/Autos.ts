@@ -2,13 +2,16 @@ import { Schema, Struct } from "effect";
 import { propertySignature } from "effect/Schema";
 import {
   IntFromSelfOrString,
+  NumberFromSelfOrString,
   ObjectIdStringSchema,
   OptionalBigDecimal,
   OptionalNumber,
   OptionalString,
   Timestamp,
-} from "./MiscSchemas.js";
-import { Username } from "./User.js";
+} from "../MiscSchemas.js";
+import { Username } from "../User.js";
+import { Location } from "./Location.js";
+import { Place } from "./Place.js";
 
 /* event subtype */
 
@@ -61,32 +64,6 @@ export class TripType extends Schema.Class<TripType>("TripType")({
   defaultTaxDeductionRate: OptionalNumber,
 }) {}
 
-/* place */
-
-export const Latitude = Schema.BigDecimal.pipe(Schema.brand("latitude"));
-export type Latitude = typeof Latitude.Type;
-export const Longitude = Schema.BigDecimal.pipe(Schema.brand("longitude"));
-export type Longitude = typeof Longitude.Type;
-
-export class Location extends Schema.Class<Location>("Location")({
-  latitude: Latitude,
-  longitude: Longitude,
-}) {}
-const OptionalLocation = Schema.OptionFromUndefinedOr(Location);
-export const encodeLocationOpt = Schema.encodeSync(OptionalLocation);
-
-export class Place extends Schema.Class<Place>("Place")({
-  name: OptionalString,
-  fullAddress: OptionalString,
-  street: OptionalString,
-  city: OptionalString,
-  state: OptionalString,
-  country: OptionalString,
-  postalCode: OptionalString,
-  googlePlacesId: OptionalString,
-  location: OptionalLocation,
-}) {}
-
 /* fillup record */
 
 export const FillupRecordId = Schema.Trimmed.pipe(
@@ -97,7 +74,7 @@ export type FillupRecordId = typeof FillupRecordId.Type;
 export class FillupRecord extends Schema.Class<FillupRecord>("FillupRecord")({
   id: FillupRecordId,
   date: Timestamp,
-  fuelEfficiency: OptionalBigDecimal,
+  fuelEfficiency: Schema.OptionFromUndefinedOr(NumberFromSelfOrString),
   fuelTypeId: FuelTypeId,
   notes: OptionalString,
   odometerReading: Schema.BigDecimal,
@@ -111,8 +88,8 @@ export class FillupRecord extends Schema.Class<FillupRecord>("FillupRecord")({
   hasFuelAdditive: Schema.Boolean,
   fuelAdditiveName: OptionalString,
   drivingMode: OptionalString,
-  cityDrivingPercentage: Schema.BigDecimal,
-  highwayDrivingPercentage: Schema.BigDecimal,
+  cityDrivingPercentage: NumberFromSelfOrString,
+  highwayDrivingPercentage: NumberFromSelfOrString,
   averageSpeed: OptionalBigDecimal,
   deviceLocation: Schema.OptionFromUndefinedOr(Location),
   place: Schema.OptionFromUndefinedOr(Place),

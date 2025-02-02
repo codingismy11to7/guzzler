@@ -6,7 +6,7 @@ import {
   FrontendUserVehicleChange,
   isUserChange,
   UserVehicleChange,
-} from "../../models/AutosModel.js";
+} from "../../models/AutosApiModel.js";
 
 export const changeEventsToFrontend = (
   ce: Chunk.Chunk<ChangeEvent>,

@@ -34,6 +34,7 @@ import { AppConfig, ProdMode } from "./AppConfig.js";
 import { AutosStorage } from "./AutosStorage.js";
 import { BackupRestore } from "./BackupRestore.js";
 import { FileFetcher } from "./FileFetcher.js";
+import { GooglePlaces } from "./GooglePlaces.js";
 import { ACarFullBackup } from "./importers/ACarFullBackup.js";
 import { CollectionRegistry } from "./internal/database/CollectionRegistry.js";
 import { XmlParser } from "./internal/xml/XmlParser.js";
@@ -96,6 +97,7 @@ export const ApiLive: Layer.Layer<
   Layer.provide(BackupRestore.Default),
   Layer.provide(AutosStorage.Default),
   Layer.provide(FileFetcher.Default),
+  Layer.provide(GooglePlaces.Default),
   Layer.provide(Users.Default),
   Layer.provide(UILayer),
   Layer.provide(XmlParser.Default),

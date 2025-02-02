@@ -3,7 +3,7 @@ import {
   UserVehicles,
   VehicleEventRecords,
   VehicleFillupRecords,
-} from "@guzzlerapp/domain/Autos";
+} from "@guzzlerapp/domain/models/Autos";
 import { SecureUserPreferences } from "@guzzlerapp/domain/SecureUserPreferences";
 import { Session } from "@guzzlerapp/domain/Session";
 import { User } from "@guzzlerapp/domain/User";
@@ -29,9 +29,11 @@ const collections = pipe(
   ),
 );
 
+export type AppCollections = Effect.Effect.Success<typeof collections>;
+
 export class CollectionRegistry extends Context.Tag("CollectionRegistry")<
   CollectionRegistry,
-  Effect.Effect.Success<typeof collections>
+  AppCollections
 >() {}
 
 export const CollectionRegistryLive = Layer.effect(

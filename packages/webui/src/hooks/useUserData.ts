@@ -1,4 +1,4 @@
-import { VehicleId } from "@guzzler/domain/Autos";
+import { VehicleId } from "@guzzler/domain/models/Autos";
 import { BigDecimal, Chunk, Option, Order } from "effect";
 import { sortWith, unsafeFromArray } from "effect/Chunk";
 import { flatMap, fromNullable, getOrUndefined, map } from "effect/Option";
@@ -22,15 +22,15 @@ export const useFillupInformationForVehicle = (
 
       const allFillups = unsafeFromArray(Object.values(forVehicle));
 
-      const fillupsByDate = sortWith(allFillups, f => f.date, Order.number);
+      const fillupsByDate = sortWith(allFillups, f => f.date, Order.Date);
       const fillupsByOdometer = sortWith(
         allFillups,
         f => f.odometerReading,
         BigDecimal.Order,
       );
 
-      const odometerOnLastFillup = fillupsByDate.pipe(
-        Chunk.last,
+      const lastFillupRecord = fillupsByDate.pipe(Chunk.last);
+      const odometerOnLastFillup = lastFillupRecord.pipe(
         map(f => f.odometerReading),
       );
       const highestOdometerRecord = fillupsByOdometer.pipe(Chunk.last);
@@ -41,6 +41,7 @@ export const useFillupInformationForVehicle = (
       return {
         fillupsByDate,
         fillupsByOdometer,
+        lastFillupRecord,
         odometerOnLastFillup,
         highestOdometer,
         highestOdometerRecord,
@@ -56,7 +57,7 @@ export const useFillupInformationForVehicle = (
       ),
       highestOdometer: fillupInfo.pipe(
         flatMap(i => i.highestOdometer),
-        map(BigDecimal.scale(0)),
+        map(BigDecimal.scale(1)),
         map(BigDecimal.format),
         getOrUndefined,
       ),
