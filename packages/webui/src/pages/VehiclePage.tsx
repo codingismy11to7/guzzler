@@ -1,4 +1,4 @@
-import type { Vehicle } from "@guzzlerapp/domain/Autos";
+import type { Vehicle } from "@guzzlerapp/domain/models/Autos";
 import { NoteTwoTone } from "@mui/icons-material";
 import { Box, Button, Paper, Skeleton, Stack, Typography } from "@mui/material";
 import { Chunk, Match, Option, pipe } from "effect";
