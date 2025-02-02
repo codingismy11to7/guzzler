@@ -1,5 +1,5 @@
 import { HttpApiSchema } from "@effect/platform";
-import { Schema as S } from "effect";
+import { Schema as S, Struct } from "effect";
 import { DurationInput } from "effect/Duration";
 import * as internal from "../internal/models/autosModel.js";
 import { Username } from "../User.js";
@@ -48,8 +48,22 @@ export const GasStationQuery = S.Struct({
 
 export const GasStationResponsePlace = S.Struct({
   distanceFromSearchLocation: S.String,
-  ...Place.fields,
+  name: S.String,
+  fullAddress: S.String,
+  shortAddress: S.String,
+  googlePlacesId: S.String,
+  googleMapsUri: S.URL,
+  location: Location,
+  ...Struct.pick(
+    Place.fields,
+    "street",
+    "city",
+    "state",
+    "country",
+    "postalCode",
+  ),
 });
+export type GasStationResponsePlace = typeof GasStationResponsePlace.Type;
 
 /* aCar backups */
 

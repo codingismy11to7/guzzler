@@ -1,13 +1,4 @@
-import {
-  FormControl,
-  FormLabel,
-  Input,
-  InputAdornment,
-  InputProps,
-  TextField,
-  TextFieldProps,
-  useFormControl,
-} from "@mui/material";
+import { InputAdornment, TextField, TextFieldProps } from "@mui/material";
 import { ReactNode } from "react";
 
 type UnitsProps = Readonly<{
@@ -23,10 +14,11 @@ export const UnitsTextField = ({
   ...props
 }: Props) => (
   <TextField
+    fullWidth
     size="small"
     {...props}
     slotProps={{
-      htmlInput: { inputMode: "numeric" },
+      htmlInput: { inputMode: "decimal" },
       input: {
         autoComplete: "off",
         [`${position}Adornment`]: (

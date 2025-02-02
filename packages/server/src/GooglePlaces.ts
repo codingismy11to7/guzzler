@@ -16,7 +16,6 @@ import {
   annotateLogs,
   catchTags,
   gen,
-  logDebug,
   logInfo,
   logWarning,
   orDie,
@@ -88,7 +87,7 @@ export class GooglePlaces extends Effect.Service<GooglePlaces>()(
 
           const requestBody = S.decodeSync(NearbySearchRequest)({
             includedTypes,
-            maxResultCount: 10,
+            maxResultCount: 20,
             locationRestriction: {
               circle: {
                 center: location,
@@ -109,6 +108,7 @@ export class GooglePlaces extends Effect.Service<GooglePlaces>()(
             "places.id",
             "places.location",
             "places.name",
+            "places.shortFormattedAddress",
           ];
 
           const httpRes = yield* httpClient

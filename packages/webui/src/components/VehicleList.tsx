@@ -1,5 +1,7 @@
 import { PhotoId, VehicleId } from "@guzzler/domain/models/Autos";
+import { MoreArray } from "@guzzler/utils";
 import {
+  Divider,
   List,
   ListItem,
   ListItemAvatar,
@@ -7,7 +9,7 @@ import {
   ListItemText,
   Skeleton,
 } from "@mui/material";
-import { Chunk, Option } from "effect";
+import { Array, Chunk, Option, pipe } from "effect";
 import { LazyArg } from "effect/Function";
 import { ReactNode } from "react";
 import { useUserData } from "../hooks/useUserData.js";
@@ -52,22 +54,26 @@ export const VehicleList = (props: Props) => {
     <List>
       {userData.loading
         ? Chunk.makeBy(10, i => <VehicleListItem key={i} />)
-        : Object.values(userData.vehicles)
+        : pipe(
+            Object.values(userData.vehicles),
             /*
               .filter(v => v.active)
 */
-            .map(v => (
-              <VehicleListItem
-                key={v.id}
-                stringName={v.name}
-                displayName={v.name}
-                imageId={v.photoId}
-                {...("routeForVehicle" in props
-                  ? { route: props.routeForVehicle(v.id) }
-                  : { onClick: () => props.onVehicleClick(v.id) })}
-                route={routes.Vehicle({ vehicleId: v.id })}
-              />
-            ))}
+            vs =>
+              vs.map(v => (
+                <VehicleListItem
+                  key={v.id}
+                  stringName={v.name}
+                  displayName={v.name}
+                  imageId={v.photoId}
+                  {...("routeForVehicle" in props
+                    ? { route: props.routeForVehicle(v.id) }
+                    : { onClick: () => props.onVehicleClick(v.id) })}
+                  route={routes.Vehicle({ vehicleId: v.id })}
+                />
+              )),
+            MoreArray.intersperse(i => <Divider component="li" key={i} />),
+          )}
     </List>
   );
 };

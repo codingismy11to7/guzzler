@@ -188,12 +188,12 @@ export const GooglePlace = S.Struct({
   id: S.String,
   displayName: S.Struct({ text: S.String, languageCode: S.String }),
   formattedAddress: S.String,
+  shortFormattedAddress: S.String,
   addressComponents: S.Array(AddressComponent),
   location: Location,
   googleMapsUri: S.URL,
 
   /* the rest; TODO look into Schema.partial with Schema.extend */
-  shortFormattedAddress: OptionalString,
   nationalPhoneNumber: OptionalString,
   internationalPhoneNumber: OptionalString,
   plusCode: PlusCode.pipe(S.optional),
@@ -225,6 +225,7 @@ to be accurate, these must be the chosen fields:
 - places.id
 - places.location
 - places.name
+- places.shortFormattedAddress
 `,
 });
 
