@@ -30,11 +30,9 @@ import {
 import { PreferencesClient } from "../apiclients/PreferencesClient.js";
 import { StandardPageBox } from "../components/StandardPageBox.js";
 import { useTranslation } from "../i18n.js";
-import { makeRunFunctions } from "../internal/bootstrap.js";
+import { runP } from "../internal/bootstrap.js";
 import SecureUserPreferencesFields = SecureUserPreferences.SecureUserPreferencesFields;
 import SecureUserPreferencesPatch = SecureUserPreferences.SecureUserPreferencesPatch;
-
-const { runP } = makeRunFunctions(PreferencesClient.Default);
 
 type GMapsDialogProps = Readonly<{
   open: boolean;

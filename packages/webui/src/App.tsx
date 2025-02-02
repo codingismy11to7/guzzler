@@ -20,7 +20,7 @@ import {
   Unauthenticated,
   useCurrentSessionInfo,
 } from "./contexts/GlobalContext.js";
-import { makeRunFunctions } from "./internal/bootstrap.js";
+import { runFork, runP } from "./internal/bootstrap.js";
 import { LoginPage } from "./pages/LoginPage.js";
 import {
   PagesRoute,
@@ -32,8 +32,6 @@ import {
 
 const SignupPage = lazy(() => import("./pages/SignupPage.js"));
 const LoggedInApp = lazy(() => import("./pages/LoggedInApp.js"));
-
-const { runP, runFork } = makeRunFunctions(SessionClient.Default);
 
 const LoggedInAppWrapper = ({ route }: { route: PagesRoute }) => {
   const session = useCurrentSessionInfo();
