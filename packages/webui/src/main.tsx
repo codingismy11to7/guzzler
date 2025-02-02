@@ -4,6 +4,8 @@ import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
 import { green, orange } from "@mui/material/colors";
+import { LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFnsV3";
 import { lazy, StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import "./i18n.js";
@@ -32,12 +34,14 @@ const theme = createTheme({
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Suspense fallback={<Loading />}>
-        <RouteProvider>
-          <App />
-        </RouteProvider>
-      </Suspense>
+      <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <CssBaseline />
+        <Suspense fallback={<Loading />}>
+          <RouteProvider>
+            <App />
+          </RouteProvider>
+        </Suspense>
+      </LocalizationProvider>
     </ThemeProvider>
   </StrictMode>,
 );

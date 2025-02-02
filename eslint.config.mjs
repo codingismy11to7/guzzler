@@ -239,6 +239,7 @@ export default tseslint.config([
       "no-caller": "error",
       "no-cond-assign": "error",
       "no-console": "warn",
+      "no-constant-binary-expression":"warn",
       "no-constant-condition":"warn",
       "no-debugger": "error",
       "no-empty": "warn",
