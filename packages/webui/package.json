@@ -35,6 +35,7 @@
     "@mui/icons-material": "^6.4.0",
     "@mui/lab": "^6.0.0-beta.24",
     "@mui/material": "^6.4.2",
+    "@mui/x-date-pickers": "^7.25.0",
     "@uidotdev/usehooks": "^2.4.1",
     "date-fns": "^4.1.0",
     "effect": "^3.12.7",
