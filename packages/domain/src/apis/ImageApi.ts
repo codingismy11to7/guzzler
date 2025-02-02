@@ -2,8 +2,8 @@ import { HttpApiEndpoint, HttpApiGroup, HttpApiSchema } from "@effect/platform";
 import { NotFound } from "@effect/platform/HttpApiError";
 import { Schema } from "effect";
 import { RequireFullSession } from "../Authentication.js";
-import { PhotoId } from "../Autos.js";
 import { RedactedError } from "../Errors.js";
+import { PhotoId } from "../models/Autos.js";
 
 export const GetImageById = "getImageById";
 

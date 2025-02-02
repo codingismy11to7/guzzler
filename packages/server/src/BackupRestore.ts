@@ -1,5 +1,5 @@
 import { FileSystem } from "@effect/platform";
-import { AutosModel } from "@guzzlerapp/domain";
+import { AutosApiModel } from "@guzzlerapp/domain";
 import { RedactedError } from "@guzzlerapp/domain/Errors";
 import { Username } from "@guzzlerapp/domain/User";
 import { MongoTransactions } from "@guzzlerapp/mongodb/MongoTransactions";
@@ -29,7 +29,7 @@ export class BackupRestore extends Effect.Service<BackupRestore>()(
           MongoError: e => RedactedError.provideLogged(rand)(e.cause),
           ZipError: e =>
             logError("Error creating backup from archiver", e.cause).pipe(
-              andThen(new AutosModel.ZipError()),
+              andThen(new AutosApiModel.ZipError()),
             ),
         }),
       );
@@ -39,8 +39,8 @@ export class BackupRestore extends Effect.Service<BackupRestore>()(
         filePath: string,
       ) => Effect.Effect<
         void,
-        | AutosModel.BackupWrongFormatError
-        | AutosModel.BackupFileCorruptedError
+        | AutosApiModel.BackupWrongFormatError
+        | AutosApiModel.BackupFileCorruptedError
         | RedactedError,
         RandomId
       > = flow(
@@ -49,17 +49,17 @@ export class BackupRestore extends Effect.Service<BackupRestore>()(
         tapError(e => logError(e.message)),
         Effect.catchTags({
           MissingBackupFile: () =>
-            new AutosModel.BackupWrongFormatError({
+            new AutosApiModel.BackupWrongFormatError({
               type: "MissingBackupFile",
             }),
           ParseError: () =>
-            new AutosModel.BackupWrongFormatError({ type: "ParseError" }),
+            new AutosApiModel.BackupWrongFormatError({ type: "ParseError" }),
           WrongVersionError: () =>
-            new AutosModel.BackupWrongFormatError({
+            new AutosApiModel.BackupWrongFormatError({
               type: "UnknownBackupVersion",
             }),
           UnzipError: () =>
-            new AutosModel.BackupFileCorruptedError({ type: "UnzipError" }),
+            new AutosApiModel.BackupFileCorruptedError({ type: "UnzipError" }),
           SystemError: RedactedError.logged,
           MongoError: RedactedError.logged,
         }),

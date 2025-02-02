@@ -1,24 +1,7 @@
 import { tz } from "@date-fns/tz";
 import { FileSystem, Path } from "@effect/platform";
 import { SystemError } from "@effect/platform/Error";
-import { AutosModel } from "@guzzlerapp/domain";
-import {
-  encodeLocationOpt,
-  EventRecord,
-  EventRecordId,
-  EventSubtype,
-  FillupRecord,
-  FillupRecordId,
-  FuelType,
-  Latitude,
-  Location,
-  Longitude,
-  Place,
-  TripType,
-  UserTypesWithId,
-  Vehicle,
-  VehicleId,
-} from "@guzzlerapp/domain/Autos";
+import { AutosApiModel } from "@guzzlerapp/domain";
 import { RedactedError } from "@guzzlerapp/domain/Errors";
 import {
   BooleanFromSelfOrString,
@@ -27,6 +10,25 @@ import {
   OptionalBigDecimal,
   OptionalString,
 } from "@guzzlerapp/domain/MiscSchemas";
+import {
+  EventRecord,
+  EventRecordId,
+  EventSubtype,
+  FillupRecord,
+  FillupRecordId,
+  FuelType,
+  TripType,
+  UserTypesWithId,
+  Vehicle,
+  VehicleId,
+} from "@guzzlerapp/domain/models/Autos";
+import {
+  encodeLocationOpt,
+  Latitude,
+  Location,
+  Longitude,
+} from "@guzzlerapp/domain/models/Location";
+import { Place } from "@guzzlerapp/domain/models/Place";
 import { TimeZone } from "@guzzlerapp/domain/TimeZone";
 import { Username } from "@guzzlerapp/domain/User";
 import { DocumentNotFound, MongoError } from "@guzzlerapp/mongodb/Model";
@@ -245,6 +247,7 @@ const parsePlaceFields = (fields: typeof PlaceFieldsSchema.Type) =>
         ? undefined
         : yield* Schema.encode(Place, { onExcessProperty: "error" })({
             location: placeLocation,
+            googleMapsUri: Option.none(),
             ...Object.fromEntries(
               Object.entries(placeFields).map(([k, v]) => [removePlace(k), v]),
             ),
@@ -297,8 +300,8 @@ const importFromACarFullBackup =
     zipPath: string,
   ): Effect.Effect<
     void,
-    | AutosModel.AbpFileCorruptedError
-    | AutosModel.AbpWrongFormatError
+    | AutosApiModel.AbpFileCorruptedError
+    | AutosApiModel.AbpWrongFormatError
     | RedactedError,
     RandomId
   > =>
@@ -725,15 +728,17 @@ const importFromACarFullBackup =
       tapError(e => logError(e.message)),
       catchTags({
         UnexpectedOpeningTag: () =>
-          new AutosModel.AbpWrongFormatError({ type: "UnexpectedOpeningTag" }),
+          new AutosApiModel.AbpWrongFormatError({
+            type: "UnexpectedOpeningTag",
+          }),
         MissingBackupFile: () =>
-          new AutosModel.AbpWrongFormatError({ type: "MissingBackupFile" }),
+          new AutosApiModel.AbpWrongFormatError({ type: "MissingBackupFile" }),
         ParseError: () =>
-          new AutosModel.AbpWrongFormatError({ type: "ParseError" }),
+          new AutosApiModel.AbpWrongFormatError({ type: "ParseError" }),
         UnzipError: () =>
-          new AutosModel.AbpFileCorruptedError({ type: "UnzipError" }),
+          new AutosApiModel.AbpFileCorruptedError({ type: "UnzipError" }),
         XmlParsingError: () =>
-          new AutosModel.AbpFileCorruptedError({ type: "XmlParsingError" }),
+          new AutosApiModel.AbpFileCorruptedError({ type: "XmlParsingError" }),
         SystemError: RedactedError.logged,
         MongoError: RedactedError.logged,
         // wow, if we couldn't find a document we literally just inserted...

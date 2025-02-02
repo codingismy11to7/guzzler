@@ -69,10 +69,8 @@ const GMapsDialog = ({ open, onClose, prefs }: GMapsDialogProps) => {
     if (isNotUndefined(key)) {
       pipe(
         PreferencesClient.updateSecurePreferences(
-          SecureUserPreferencesPatch.make({
-            googleMapsApiKey: !key
-              ? { remove: true }
-              : Option.some(Redacted.make(key)),
+          Schema.decodeSync(SecureUserPreferencesPatch)({
+            googleMapsApiKey: !key ? { remove: true } : key,
           }),
         ),
         andThen(doClose),

@@ -9,7 +9,7 @@ import {
   VehicleEventRecords,
   VehicleFillupRecords,
   VehicleId,
-} from "@guzzlerapp/domain/Autos";
+} from "@guzzlerapp/domain/models/Autos";
 import { Username } from "@guzzlerapp/domain/User";
 import { GridFS } from "@guzzlerapp/mongodb/GridFS";
 import { DocumentNotFound, MongoError } from "@guzzlerapp/mongodb/Model";

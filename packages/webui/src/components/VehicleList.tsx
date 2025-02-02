@@ -1,4 +1,4 @@
-import { PhotoId, VehicleId } from "@guzzler/domain/Autos";
+import { PhotoId, VehicleId } from "@guzzler/domain/models/Autos";
 import {
   List,
   ListItem,
