@@ -1,9 +1,6 @@
-import { PhotoId, VehicleId } from "@guzzler/domain/Autos";
-import { Dialog, DialogContent, Paper, Slide } from "@mui/material";
-import { TransitionProps } from "@mui/material/transitions";
+import { VehicleId } from "@guzzler/domain/models/Autos";
 import { LazyArg } from "effect/Function";
-import { forwardRef, PropsWithChildren, ReactElement } from "react";
-import { useTranslation } from "../i18n.js";
+import { FullScreenDialog } from "./FullScreenDialog.js";
 import { VehicleList } from "./VehicleList.js";
 
 type Props = Readonly<{
@@ -16,35 +13,8 @@ export const VehicleChooserDialog = ({
   open,
   onClose,
   onVehicleSelect,
-}: Props) => {
-  const { t } = useTranslation();
-
-  return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      fullScreen
-      slots={{
-        transition: forwardRef(function Transition(
-          props: TransitionProps & { children: ReactElement },
-          ref,
-        ) {
-          return (
-            <Slide
-              direction="up"
-              ref={ref}
-              {...props}
-              appear={props.appear ?? false}
-            />
-          );
-        }),
-      }}
-    >
-      <DialogContent sx={{ overflow: "auto", p: 0 }}>
-        <Paper>
-          <VehicleList onVehicleClick={onVehicleSelect} />
-        </Paper>
-      </DialogContent>
-    </Dialog>
-  );
-};
+}: Props) => (
+  <FullScreenDialog open={open} onClose={onClose}>
+    <VehicleList onVehicleClick={onVehicleSelect} />
+  </FullScreenDialog>
+);
