@@ -14,18 +14,18 @@ permissions: {}
 
 jobs:
   compile:
-    name: Compile
+    name: Lint and Typecheck
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
         uses: ./.github/actions/setup
-      - run: npm run codegen
-      - run: npm run check
       - name: Lint
         shell: bash
         run: npm run lint:fix && git add packages/*/src && git diff-index --cached HEAD --exit-code packages/*/src
+      - name: Typecheck
+        run: npm run check
 
   test:
     name: Build Docker image
