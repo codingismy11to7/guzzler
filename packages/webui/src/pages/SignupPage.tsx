@@ -33,12 +33,10 @@ import React, {
 import { SignupClient } from "../apiclients/SignupClient.js";
 import { useCountdown } from "../hooks/useCountdown.js";
 import { useTranslation } from "../i18n.js";
-import { makeRunFunctions } from "../internal/bootstrap.js";
+import { runP } from "../internal/bootstrap.js";
 import { routes, SignupRoute } from "../router.js";
 import { logout } from "../utils/logout.js";
 import { onEnterKey } from "../utils/onEnterKey.js";
-
-const { runP } = makeRunFunctions(SignupClient.Default);
 
 type CreateUserCardProps = Pick<Props, "userInfo"> &
   Readonly<{

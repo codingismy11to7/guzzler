@@ -3,10 +3,8 @@ import { AccountClient } from "../apiclients/AccountClient.js";
 import reactLogo from "../assets/react.svg";
 import { StandardPageBox } from "../components/StandardPageBox.js";
 import { useTranslation } from "../i18n.js";
-import { makeRunFunctions } from "../internal/bootstrap.js";
 import viteLogo from "/vite.svg";
-
-const { runP } = makeRunFunctions(AccountClient.Default);
+import { runP } from "../internal/bootstrap.js";
 
 const HomePage = () => {
   const { t } = useTranslation();

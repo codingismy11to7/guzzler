@@ -41,14 +41,12 @@ import GPlayLogo from "../assets/Google_Play_2022_logo.svg?react";
 import { StandardPageBox } from "../components/StandardPageBox.js";
 import { VisuallyHiddenInput } from "../components/VisuallyHiddenInput.js";
 import { TFunction, useTranslation } from "../i18n.js";
-import { makeRunFunctions } from "../internal/bootstrap.js";
+import { runP } from "../internal/bootstrap.js";
 import { routes } from "../router.js";
 import { onEnterKey } from "../utils/onEnterKey.js";
 
 const MobileInfoIconP = () => import("../components/MobileInfoIcon.js");
 const MobileInfoIcon = lazy(MobileInfoIconP);
-
-const { runP } = makeRunFunctions(AutosClient.Default);
 
 type AbpErrorDialogProps = Readonly<{
   error: AutosModel.AbpImportError | RedactedError;

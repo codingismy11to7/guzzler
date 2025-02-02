@@ -1,61 +1,46 @@
-import { HttpClient, Socket } from "@effect/platform";
 import { BrowserHttpClient, BrowserSocket } from "@effect/platform-browser";
 import { RandomId } from "@guzzler/utils";
 import { format } from "date-fns/fp";
 import { Effect, Layer, Logger, LogLevel, ManagedRuntime } from "effect";
+import { AccountClient } from "../apiclients/AccountClient.js";
+import { AutosClient } from "../apiclients/AutosClient.js";
+import { PreferencesClient } from "../apiclients/PreferencesClient.js";
+import { SessionClient } from "../apiclients/SessionClient.js";
+import { SignupClient } from "../apiclients/SignupClient.js";
+import { AutosDataRepository } from "../data/AutosDataRepository.js";
 
-export const makeRunFunctions = <
-  Layers extends Array<
-    Layer.Layer<
-      never,
-      never,
-      HttpClient.HttpClient | Socket.WebSocketConstructor
-    >
-  >,
->(
-  ...layers: Layers
-) => {
-  // ok i've specified that the layers coming in can't have an E and can only
-  // have an R of HttpClient, then i'm calling merge on them and providing
-  // the HttpClient layer (which can't error) and replacing the logger (which
-  // can't error)...so this type should be right? try to figure out later
-  // @ts-expect-error
-  const layer: Layer.Layer<
-    | { [k in keyof Layers]: Layer.Layer.Success<Layers[k]> }[number]
-    | RandomId.RandomId
-  > = Layer.mergeAll(RandomId.RandomId.Default, ...layers).pipe(
-    Layer.provide(BrowserHttpClient.layerXMLHttpRequest),
-    Layer.provide(BrowserSocket.layerWebSocketConstructor),
-    Layer.provide(
-      Logger.replace(
-        Logger.defaultLogger,
-        Logger.prettyLogger({
-          colors: "auto",
-          mode: "browser",
-          formatDate: format("MM/dd/yyyy hh:mm:ss.SSS aa"),
-        }),
-      ),
+const MainLive = Layer.mergeAll(
+  AccountClient.Default,
+  AutosDataRepository.Default.pipe(Layer.provideMerge(AutosClient.Default)),
+  PreferencesClient.Default,
+  SessionClient.Default,
+  SignupClient.Default,
+).pipe(
+  Layer.provideMerge(RandomId.RandomId.Default),
+  Layer.provide(BrowserHttpClient.layerXMLHttpRequest),
+  Layer.provide(BrowserSocket.layerWebSocketConstructor),
+  Layer.provide(
+    Logger.replace(
+      Logger.defaultLogger,
+      Logger.prettyLogger({
+        colors: "auto",
+        mode: "browser",
+        formatDate: format("MM/dd/yyyy hh:mm:ss.SSS aa"),
+      }),
     ),
-    Layer.provide(
-      Logger.minimumLogLevel(
-        import.meta.env.DEV ? LogLevel.Debug : LogLevel.Info,
-      ),
+  ),
+  Layer.provide(
+    Logger.minimumLogLevel(
+      import.meta.env.DEV ? LogLevel.Debug : LogLevel.Info,
     ),
-  );
-
-  const runtime = ManagedRuntime.make(layer);
-
-  const runPromise = runtime.runPromise;
-  const runP = <A>(
-    e: Effect.Effect<A, never, Layer.Layer.Success<typeof layer>>,
-  ) => runPromise(e);
-  const runSync = runtime.runSync;
-  const runFork = runtime.runFork;
-
-  const randomId = (seedTime?: number) =>
-    runSync(RandomId.RandomId.randomIdSync(seedTime));
-
-  return { runPromise, runP, runSync, runFork, randomId };
-};
-
-export const { randomId } = makeRunFunctions();
+  ),
+);
+const MainLiveRuntime = ManagedRuntime.make(MainLive);
+export const runPromise = MainLiveRuntime.runPromise;
+export const runP = <A>(
+  e: Effect.Effect<A, never, Layer.Layer.Success<typeof MainLive>>,
+) => MainLiveRuntime.runPromise(e);
+export const runSync = MainLiveRuntime.runSync;
+export const runFork = MainLiveRuntime.runFork;
+export const randomId = (seedTime?: number) =>
+  runSync(RandomId.RandomId.randomIdSync(seedTime));
