@@ -10,9 +10,9 @@ import { Place } from "./Place.js";
 /* gas station query */
 
 export class NoMapsApiKeySet extends S.TaggedError<NoMapsApiKeySet>(
-  "AutosApiNoMapsApiKeySet",
+  "NoMapsApiKeySet",
 )(
-  "AutosApiNoMapsApiKeySet",
+  "NoMapsApiKeySet",
   {},
   HttpApiSchema.annotations({
     status: 400,
