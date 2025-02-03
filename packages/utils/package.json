@@ -33,7 +33,7 @@
     "ulid": "^2.3.0"
   },
   "peerDependencies": {
-    "effect": "^3.12.1"
+    "effect": "^3.12.7"
   },
 
   "effect": {

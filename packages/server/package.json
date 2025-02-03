@@ -31,7 +31,7 @@
   "dependencies": {
     "@date-fns/tz": "^1.2.0",
     "@effect/platform": "^0.74.0",
-    "@effect/platform-node": "^0.71.1",
+    "@effect/platform-node": "^0.70.0",
     "@guzzler/domain": "^0.0.5",
     "@guzzler/mongodb": "^0.0.3",
     "@guzzler/utils": "^0.0.2",
@@ -39,7 +39,7 @@
     "archiver": "^7.0.1",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
-    "effect": "^3.12.1",
+    "effect": "^3.12.7",
     "file-type": "^20.0.1",
     "immer": "^10.1.1",
     "node-expat": "^2.4.1",
@@ -52,7 +52,6 @@
     "@types/node-expat": "^2.3.5",
     "@types/npmcli__package-json": "^4.0.4",
     "@types/simple-oauth2": "^5.0.7",
-    "@types/slash": "^3.0.0",
     "@types/yauzl": "^2.10.3",
     "nodemon": "^3.1.9"
   },
