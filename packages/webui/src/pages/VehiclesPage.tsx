@@ -3,7 +3,7 @@ import { VehicleList } from "../components/VehicleList.js";
 import { routes } from "../router.js";
 
 const VehiclesPage = () => (
-  <StandardPageBox disablePadding>
+  <StandardPageBox pOverride={0}>
     <VehicleList routeForVehicle={vehicleId => routes.Vehicle({ vehicleId })} />
   </StandardPageBox>
 );
