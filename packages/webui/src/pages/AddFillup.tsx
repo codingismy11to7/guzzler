@@ -1,6 +1,4 @@
-import { Autos, Location } from "@guzzler/domain";
-import { GasStationQueryMode } from "@guzzler/domain/models/AutosApiModel";
-import { Place } from "@guzzler/domain/models/Place";
+import { Autos } from "@guzzler/domain";
 import {
   Add,
   CarCrashTwoTone,
@@ -9,45 +7,31 @@ import {
 } from "@mui/icons-material";
 import {
   Alert,
-  Divider,
   AlertTitle,
-  Box,
   Button,
   Card,
   CardActionArea,
   CardHeader,
-  Link,
-  Skeleton,
-  Stack,
-  TextFieldVariants,
-  Typography,
+  Checkbox,
+  Divider,
+  FormControl,
+  FormControlLabel,
   InputLabel,
+  MenuItem,
+  Paper,
   Select,
   SelectProps,
-  FormControl,
-  TextFieldProps,
+  Skeleton,
+  Stack,
   TextField,
-  FormControlLabel,
-  Checkbox,
-  MenuItem,
+  TextFieldProps,
+  TextFieldVariants,
+  Typography,
 } from "@mui/material";
 import { DateTimePicker } from "@mui/x-date-pickers";
-import { useGeolocation, useLocalStorage } from "@uidotdev/usehooks";
-import {
-  Array,
-  Boolean,
-  Option,
-  Order,
-  pipe,
-  Schema,
-  String,
-  Struct,
-} from "effect";
-import { andThen, catchAll, logError } from "effect/Effect";
-import { stringifyCircular } from "effect/Inspectable";
-import { isNotNullable } from "effect/Predicate";
-import { PropsWithChildren, useEffect, useMemo, useRef, useState } from "react";
-import { AutosClient } from "../apiclients/AutosClient.js";
+import { useLocalStorage } from "@uidotdev/usehooks";
+import { Array, Option, Order, pipe, String, Struct } from "effect";
+import { PropsWithChildren, useEffect, useMemo, useRef } from "react";
 import MobileInfoIcon from "../components/MobileInfoIcon.js";
 import { PlaceChooserDialog } from "../components/PlaceChooserDialog.js";
 import { StandardPageBox } from "../components/StandardPageBox.js";
@@ -59,7 +43,7 @@ import {
   useUserData,
 } from "../hooks/useUserData.js";
 import { useTranslation } from "../i18n.js";
-import { randomId, runP } from "../internal/bootstrap.js";
+import { randomId } from "../internal/bootstrap.js";
 import { routes } from "../router.js";
 
 const NeedAVehicle = () => {
@@ -120,19 +104,36 @@ const FormTextField = (props: TextFieldProps) => (
   <TextField size="small" fullWidth {...props} />
 );
 
-const AddFillupLocation = ({ variant }: { variant: TextFieldVariants }) => {
+const SectionStack = ({ children }: PropsWithChildren) => (
+  <Stack direction="column" spacing={1} component={Paper} padding={1}>
+    {children}
+  </Stack>
+);
+
+const AddFillupLocation = ({
+  variant,
+  route,
+}: { variant: TextFieldVariants } & Props) => {
   const { t } = useTranslation();
 
-  const [searchOpen, setSearchOpen] = useState(false);
+  const searchOpen = route.params.searchingNearby;
+
+  const setSearchOpen = (open: boolean) =>
+    routes
+      .AddFillup({
+        ...Struct.omit(route.params, "searchingNearby"),
+        ...(open ? { searchingNearby: true } : {}),
+      })
+      .push();
 
   return (
-    <>
+    <SectionStack>
       <Button
         variant="outlined"
         fullWidth
         startIcon={<NearMeTwoTone />}
         color="secondary"
-        onClick={() => setSearchOpen(Boolean.not)}
+        onClick={() => setSearchOpen(true)}
       >
         Search...
       </Button>
@@ -152,11 +153,11 @@ const AddFillupLocation = ({ variant }: { variant: TextFieldVariants }) => {
           open
         />
       )}
-    </>
+    </SectionStack>
   );
 };
 
-const AddFillupForm = () => {
+const AddFillupForm = ({ route }: Props) => {
   const { t } = useTranslation();
 
   const userData = useUserData();
@@ -191,83 +192,92 @@ const AddFillupForm = () => {
   return (
     <>
       <FormSectionHeader>Fillup Information</FormSectionHeader>
-      <Stack direction="row" spacing={1}>
-        <UnitsTextField
-          units="mi"
-          size="small"
-          variant={variant}
-          label="Trip distance"
-        />
-        <UnitsTextField
-          units="mi"
-          size="small"
-          variant={variant}
-          label="Current odometer"
-        />
-      </Stack>
-      <UnitsTextField
-        units="$"
-        position="start"
-        variant={variant}
-        label="Price per gallon"
-      />
-      <UnitsTextField units="gal" variant={variant} label="Volume" />
-      <UnitsTextField
-        units="$"
-        position="start"
-        variant={variant}
-        label="Total cost"
-      />
-      <Stack direction="row" justifyContent="space-between" flexWrap="wrap">
-        <Stack direction="row" spacing={1} alignItems="center">
-          <FormControlLabel
-            control={<Checkbox />}
-            label="Partial fillup"
-            slotProps={{ typography: { noWrap: true } }}
+      <SectionStack>
+        <Stack direction="row" spacing={1}>
+          <UnitsTextField
+            units="mi"
+            size="small"
+            variant={variant}
+            label="Trip distance"
           />
-          <MobileInfoIcon tooltip="Check this box if you did not completely fill the tank, so we know not to attempt efficiency calculation." />
-        </Stack>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <FormControlLabel
-            control={<Checkbox />}
-            label="Missed fillup(s)"
-            slotProps={{ typography: { noWrap: true } }}
+          <UnitsTextField
+            units="mi"
+            size="small"
+            variant={variant}
+            label="Current odometer"
           />
-          <MobileInfoIcon tooltip="Check this box if you did not record a fillup (or multiple) that happened before this one. Efficiency will be calculated from the last complete fillup." />
         </Stack>
-      </Stack>
-      <DateTimePicker
-        defaultValue={new Date()}
-        slotProps={{ textField: { variant, label: "Fillup time" } }}
-      />
+        <UnitsTextField
+          units="$"
+          position="start"
+          variant={variant}
+          label="Price per gallon"
+        />
+        <UnitsTextField units="gal" variant={variant} label="Volume" />
+        <UnitsTextField
+          units="$"
+          position="start"
+          variant={variant}
+          label="Total cost"
+        />
+        <Stack direction="row" justifyContent="space-between" flexWrap="wrap">
+          <Stack direction="row" spacing={1} alignItems="center">
+            <FormControlLabel
+              control={<Checkbox />}
+              label="Partial fillup"
+              slotProps={{ typography: { noWrap: true } }}
+            />
+            <MobileInfoIcon tooltip="Check this box if you did not completely fill the tank, so we know not to attempt efficiency calculation." />
+          </Stack>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <FormControlLabel
+              control={<Checkbox />}
+              label="Missed fillup(s)"
+              slotProps={{ typography: { noWrap: true } }}
+            />
+            <MobileInfoIcon tooltip="Check this box if you did not record a fillup (or multiple) that happened before this one. Efficiency will be calculated from the last complete fillup." />
+          </Stack>
+        </Stack>
+        <DateTimePicker
+          defaultValue={new Date()}
+          slotProps={{ textField: { variant, label: "Fillup time" } }}
+        />
+      </SectionStack>
+
       <FormSectionHeader>Fuel Information</FormSectionHeader>
-      <Stack direction="row" spacing={1} alignItems="center">
-        <LabeledSelect
-          fullWidth
-          variant={variant}
-          size="small"
-          label="Category"
-        >
-          {fuelCategories.map(c => (
-            <MenuItem key={c} value={c}>
-              {String.capitalize(c)}
-            </MenuItem>
-          ))}
-        </LabeledSelect>
-        <LabeledSelect fullWidth variant={variant} size="small" label="Type">
-          {userData.loading
-            ? []
-            : fuelTypes.map(f => (
-                <MenuItem key={f.id} value={f.id}>
-                  {f.displayName}
-                </MenuItem>
-              ))}
-        </LabeledSelect>
-      </Stack>
+      <SectionStack>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ pt: 1 }}>
+          <LabeledSelect
+            fullWidth
+            variant={variant}
+            size="small"
+            label="Category"
+          >
+            {fuelCategories.map(c => (
+              <MenuItem key={c} value={c}>
+                {String.capitalize(c)}
+              </MenuItem>
+            ))}
+          </LabeledSelect>
+          <LabeledSelect fullWidth variant={variant} size="small" label="Type">
+            {userData.loading
+              ? []
+              : fuelTypes.map(f => (
+                  <MenuItem key={f.id} value={f.id}>
+                    {f.displayName}
+                  </MenuItem>
+                ))}
+          </LabeledSelect>
+        </Stack>
+      </SectionStack>
+
       <FormSectionHeader>Location Information</FormSectionHeader>
-      <AddFillupLocation variant={variant} />
+      <AddFillupLocation variant={variant} route={route} />
+
       <FormSectionHeader>Notes</FormSectionHeader>
-      <TextField variant="outlined" size="small" multiline />
+      <SectionStack>
+        <TextField variant={variant} size="small" multiline fullWidth />
+      </SectionStack>
     </>
   );
 };
@@ -282,10 +292,10 @@ const AddFillup = ({ route }: Props) => {
   const setSwitchOpen = (open: boolean) =>
     routes
       .AddFillup({
-        ...(vehicleId ? { vehicleId } : {}),
+        ...Struct.omit(route.params, "switchingVehicle"),
         ...(open ? { switchingVehicle: true } : {}),
       })
-      .replace();
+      .push();
 
   const data = useUserData();
 
@@ -307,7 +317,6 @@ const AddFillup = ({ route }: Props) => {
       const vehicleIdOpt = Array.head(Struct.keys(vehicles));
       if (Option.isSome(vehicleIdOpt)) {
         const vehicleId = vehicleIdOpt.value;
-        console.log("hey here", vehicleId);
         setDefaultVehicle(vehicleId);
         routes.AddFillup({ vehicleId }).replace();
       }
@@ -329,7 +338,7 @@ const AddFillup = ({ route }: Props) => {
   }, [fillupInfo]);
 
   return (
-    <StandardPageBox>
+    <StandardPageBox pOverride={1}>
       {!data.loading && !Object.keys(data.vehicles).length ? (
         <NeedAVehicle />
       ) : (
@@ -375,7 +384,7 @@ const AddFillup = ({ route }: Props) => {
               open
             />
           )}
-          <AddFillupForm />
+          <AddFillupForm route={route} />
         </Stack>
       )}
     </StandardPageBox>

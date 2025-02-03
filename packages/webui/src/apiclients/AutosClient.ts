@@ -7,6 +7,10 @@ import { catchTags, gen } from "effect/Effect";
 import * as internal from "../internal/apiclients/autosClient.js";
 import { dieFromFatal } from "../internal/apiclients/utils.js";
 
+export type GasStationFetchError = Effect.Effect.Error<
+  ReturnType<typeof AutosClient.getGasStations>
+>;
+
 export class AutosClient extends Effect.Service<AutosClient>()("AutosClient", {
   accessors: true,
   effect: gen(function* () {

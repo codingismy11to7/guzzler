@@ -38,6 +38,7 @@ import {
 } from "react";
 import { AutosClient } from "../apiclients/AutosClient.js";
 import GPlayLogo from "../assets/Google_Play_2022_logo.svg?react";
+import { RedactedErrorInfoPanel } from "../components/RedactedErrorInfoPanel.js";
 import { StandardPageBox } from "../components/StandardPageBox.js";
 import { VisuallyHiddenInput } from "../components/VisuallyHiddenInput.js";
 import { TFunction, useTranslation } from "../i18n.js";
@@ -57,38 +58,12 @@ const AbpErrorDialog = ({ error, onClose }: AbpErrorDialogProps) => {
 
   const [showDetails, setShowDetails] = useState(false);
 
-  const [, copyToClipboard] = useCopyToClipboard();
-
   const getDetails = useCallback(
     () =>
       Match.value(error).pipe(
         Match.tagsExhaustive({
-          RedactedError: e => (
-            <Stack direction="column" spacing={1}>
-              <div>
-                Something went wrong on the server. We&apos;ll redouble the
-                whipping of the hamsters.
-              </div>
-              <Stack
-                direction="row"
-                spacing={1}
-                justifyContent="center"
-                onClick={() => copyToClipboard(e.id)}
-              >
-                <Typography
-                  variant="inherit"
-                  fontSize="smaller"
-                  color="textDisabled"
-                >
-                  {`Error id: ${e.id}`}
-                </Typography>
-                <ContentCopy
-                  fontSize="inherit"
-                  sx={{ color: theme => theme.palette.text.disabled }}
-                />
-              </Stack>
-            </Stack>
-          ),
+          RedactedError: e => <RedactedErrorInfoPanel e={e} />,
+
           AbpFileCorruptedError:
             Match.type<AutosApiModel.AbpFileCorruptedError>().pipe(
               discriminatorsExhaustive("type")({
@@ -98,6 +73,7 @@ const AbpErrorDialog = ({ error, onClose }: AbpErrorDialogProps) => {
                   "An xml file in the backup is corrupted. Or the hamsters are rebelling.",
               }),
             ),
+
           AbpWrongFormatError:
             Match.type<AutosApiModel.AbpWrongFormatError>().pipe(
               discriminatorsExhaustive("type")({
@@ -111,7 +87,7 @@ const AbpErrorDialog = ({ error, onClose }: AbpErrorDialogProps) => {
             ),
         }),
       ),
-    [copyToClipboard, error],
+    [error],
   );
 
   return (
