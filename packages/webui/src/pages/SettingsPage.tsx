@@ -126,9 +126,9 @@ const GMapsDialog = ({ open, onClose, prefs }: GMapsDialogProps) => {
             variant="outlined"
             component="a"
             target="_blank"
-            href="https://developers.google.com/maps/documentation/javascript/get-api-key"
+            href={t("settings.setKey.keyUrl")}
           >
-            API Key?
+            {t("settings.setKey.explanationButton")}
           </Button>
           <Button
             variant="contained"

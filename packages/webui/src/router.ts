@@ -28,6 +28,7 @@ const Pages = {
     {
       vehicleId: param.path.optional.ofType(vehicleId),
       switchingVehicle: param.query.optional.boolean,
+      searchingNearby: param.query.optional.boolean,
     },
     p => `/fillups/add/${p.vehicleId}`,
   ),

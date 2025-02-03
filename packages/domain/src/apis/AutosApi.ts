@@ -31,8 +31,6 @@ import {
   SubscribeToChanges,
   ZipError,
 } from "../models/AutosApiModel.js";
-import { GooglePlace } from "../models/GooglePlace.js";
-import { Place } from "../models/Place.js";
 import { TimeZone } from "../TimeZone.js";
 
 export class AutosApi extends HttpApiGroup.make("autos")

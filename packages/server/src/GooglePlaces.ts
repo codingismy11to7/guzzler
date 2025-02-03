@@ -20,7 +20,6 @@ import {
   logWarning,
   orDie,
 } from "effect/Effect";
-import { stringifyCircular } from "effect/Inspectable";
 
 const NearbySearchRequest = S.Struct({
   includedTypes: S.Array(FilterablePlaceType),
@@ -140,7 +139,7 @@ export class GooglePlaces extends Effect.Service<GooglePlaces>()(
 
           const j = yield* httpRes.json.pipe(catchTags(responseError));
 
-          const res = yield* S.decodeUnknown(PlacesResponse)(j).pipe(
+          return yield* S.decodeUnknown(PlacesResponse)(j).pipe(
             catchTags({
               ParseError: e =>
                 gen(function* () {
@@ -149,10 +148,6 @@ export class GooglePlaces extends Effect.Service<GooglePlaces>()(
                 }),
             }),
           );
-
-          console.log("ok got something", stringifyCircular(res, 2));
-
-          return res;
         }).pipe(Effect.scoped);
 
       return { queryForPlaces };

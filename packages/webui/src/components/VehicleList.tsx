@@ -9,7 +9,7 @@ import {
   ListItemText,
   Skeleton,
 } from "@mui/material";
-import { Array, Chunk, Option, pipe } from "effect";
+import { Chunk, Option, pipe } from "effect";
 import { LazyArg } from "effect/Function";
 import { ReactNode } from "react";
 import { useUserData } from "../hooks/useUserData.js";
