@@ -1,0 +1,13 @@
+diff --git a/node_modules/@uidotdev/usehooks/index.js b/node_modules/@uidotdev/usehooks/index.js
+index f6e4fe2..1d40223 100644
+--- a/node_modules/@uidotdev/usehooks/index.js
++++ b/node_modules/@uidotdev/usehooks/index.js
+@@ -157,7 +157,7 @@ export function useCopyToClipboard() {
+       }
+     };
+ 
+-    handleCopy();
++    return handleCopy();
+   }, []);
+ 
+   return [state, copyToClipboard];

@@ -1,8 +1,20 @@
 import { Location } from "@guzzler/domain";
 import { GasStationResponsePlace } from "@guzzler/domain/models/AutosApiModel";
 import { MoreArray } from "@guzzler/utils";
-import { LocalGasStationTwoTone } from "@mui/icons-material";
 import {
+  ArrowRightTwoTone,
+  CloudOffTwoTone,
+  ErrorTwoTone,
+  HelpTwoTone,
+  LocalGasStationTwoTone,
+  NearMeDisabledTwoTone,
+  OpenInNewTwoTone,
+} from "@mui/icons-material";
+import {
+  Alert,
+  AlertTitle,
+  Box,
+  Button,
   Divider,
   List,
   ListItem,
@@ -10,18 +22,33 @@ import {
   ListItemButton,
   ListItemText,
   Skeleton,
+  Snackbar,
   Stack,
   Typography,
 } from "@mui/material";
-import { useGeolocation } from "@uidotdev/usehooks";
-import { Chunk, Option, pipe, Schema } from "effect";
-import { andThen, catchAll, ensuring, logError, sync } from "effect/Effect";
+import { GeolocationState, useGeolocation } from "@uidotdev/usehooks";
+import {
+  Chunk,
+  Effect,
+  Match as M,
+  Option as O,
+  pipe,
+  Schema as S,
+} from "effect";
+import { andThen, catchAll, ensuring, sync } from "effect/Effect";
 import { LazyArg } from "effect/Function";
 import { isNotNullable } from "effect/Predicate";
-import { ReactNode, useEffect, useState } from "react";
-import { AutosClient } from "../apiclients/AutosClient.js";
+import { ReactNode, useEffect, useMemo, useState } from "react";
+import {
+  AutosClient,
+  GasStationFetchError,
+} from "../apiclients/AutosClient.js";
+import { useTranslation } from "../i18n.js";
 import { runP } from "../internal/bootstrap.js";
+import { routes } from "../router.js";
+import { AppLink } from "./AppLink.js";
 import { FullScreenDialog } from "./FullScreenDialog.js";
+import { RedactedErrorInfoPanel } from "./RedactedErrorInfoPanel.js";
 
 type PlaceListItemProps = Readonly<{
   displayName?: ReactNode;
@@ -43,21 +70,115 @@ const PlaceListItem = ({
   </ListItem>
 );
 
-const PlaceList = ({ onLocationSelect }: Pick<Props, "onLocationSelect">) => {
-  const locationState = useGeolocation({ enableHighAccuracy: true });
+type DisplayErrorProps = Readonly<{
+  locStateError: GeolocationState["error"];
+  fetchError: GasStationFetchError | undefined;
+  onClose: LazyArg<void>;
+}>;
+const DisplayError = ({
+  locStateError,
+  fetchError,
+  onClose,
+}: DisplayErrorProps) => {
+  const { t } = useTranslation();
 
-  const error = isNotNullable(locationState.error);
+  return (
+    <Snackbar
+      open={!!locStateError || !!fetchError}
+      anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      onClose={onClose}
+    >
+      <Alert
+        color="error"
+        icon={
+          fetchError ? (
+            M.value(fetchError).pipe(
+              M.tagsExhaustive({
+                BadGateway: () => <CloudOffTwoTone />,
+                RedactedError: () => <ErrorTwoTone />,
+                NoMapsApiKeySet: () => <HelpTwoTone />,
+              }),
+            )
+          ) : (
+            <NearMeDisabledTwoTone />
+          )
+        }
+        onClose={onClose}
+      >
+        <AlertTitle>{t("addFillups.nearbySearch.errorTitle")}</AlertTitle>
+        {locStateError
+          ? t("addFillups.nearbySearch.locationDisabled")
+          : fetchError
+            ? M.value(fetchError).pipe(
+                M.tagsExhaustive({
+                  BadGateway: () => t("addFillups.nearbySearch.badGateway"),
 
-  const loadingOrError = locationState.loading || error;
+                  RedactedError: e => <RedactedErrorInfoPanel e={e} />,
+
+                  NoMapsApiKeySet: () => (
+                    <>
+                      <Box>
+                        {t("addFillups.nearbySearch.noMapsKey.text01Preamble")}
+                      </Box>
+                      <Button
+                        size="large"
+                        endIcon={<OpenInNewTwoTone />}
+                        target="_blank"
+                        href={t("settings.setKey.keyUrl")}
+                        component="a"
+                      >
+                        {t(
+                          "addFillups.nearbySearch.noMapsKey.text02CreateButton",
+                        )}
+                      </Button>
+                      <Box>
+                        {t("addFillups.nearbySearch.noMapsKey.text03AndThen")}
+                      </Box>
+                      <Button
+                        size="large"
+                        endIcon={<ArrowRightTwoTone />}
+                        component={AppLink}
+                        route={routes.Settings()}
+                      >
+                        {t(
+                          "addFillups.nearbySearch.noMapsKey.text04ProvideItButton",
+                        )}
+                      </Button>
+                      <Box>
+                        {t("addFillups.nearbySearch.noMapsKey.text05Fin")}
+                      </Box>
+                    </>
+                  ),
+                }),
+              )
+            : ""}
+      </Alert>
+    </Snackbar>
+  );
+};
+
+const PlaceList = ({
+  onLocationSelect,
+  onClose,
+}: Pick<Props, "onLocationSelect" | "onClose">) => {
+  const locState = useGeolocation({ enableHighAccuracy: true });
+
+  const locError = isNotNullable(locState.error);
+
+  const loadingOrError = locState.loading || locError;
 
   const [places, setPlaces] = useState(
     MoreArray.empty<GasStationResponsePlace>(),
   );
   const [fetching, setFetching] = useState(false);
 
-  const currentLocation = Schema.decodeUnknownOption(Location.Location)(
-    locationState,
-  ).pipe(Option.getOrUndefined);
+  const currentLocation = useMemo(
+    () =>
+      S.decodeUnknownOption(Location.Location)(locState).pipe(O.getOrUndefined),
+    [locState],
+  );
+
+  const [fetchError, setFetchError] = useState<GasStationFetchError>();
 
   useEffect(() => {
     if (!loadingOrError && currentLocation && !places.length) {
@@ -66,41 +187,44 @@ const PlaceList = ({ onLocationSelect }: Pick<Props, "onLocationSelect">) => {
         AutosClient.getGasStations("GasStations", currentLocation),
         ensuring(sync(() => setFetching(false))),
         andThen(x => setPlaces(x)),
-        catchAll(e => logError("handle this better", e)),
+        catchAll(e => Effect.sync(() => setFetchError(e))),
         runP,
       );
     }
   }, [currentLocation, loadingOrError, places.length]);
 
-  useEffect(() => {
-    console.log(locationState);
-  }, [locationState]);
-
   return (
-    <List>
-      {pipe(
-        locationState.loading || fetching
-          ? Chunk.makeBy(20, i => <PlaceListItem key={i} />)
-          : places.map((p, idx) => (
-              <PlaceListItem
-                key={idx}
-                displayName={
-                  <Stack direction="row" justifyContent="space-between">
-                    <Typography>{p.name}</Typography>
-                    <Typography variant="caption">
-                      {p.distanceFromSearchLocation}
-                    </Typography>
-                  </Stack>
-                }
-                secondaryText={p.shortAddress}
-                onClick={() => onLocationSelect(currentLocation, p)}
-              />
-            )),
-        MoreArray.intersperse(i => (
-          <Divider component="li" key={`divider${i}`} />
-        )),
-      )}
-    </List>
+    <>
+      <List>
+        {pipe(
+          locState.loading || fetching || locState.error || fetchError
+            ? Chunk.makeBy(20, i => <PlaceListItem key={i} />)
+            : places.map((p, idx) => (
+                <PlaceListItem
+                  key={idx}
+                  displayName={
+                    <Stack direction="row" justifyContent="space-between">
+                      <Typography>{p.name}</Typography>
+                      <Typography variant="caption">
+                        {p.distanceFromSearchLocation}
+                      </Typography>
+                    </Stack>
+                  }
+                  secondaryText={p.shortAddress}
+                  onClick={() => onLocationSelect(currentLocation, p)}
+                />
+              )),
+          MoreArray.intersperse(i => (
+            <Divider component="li" key={`divider${i}`} />
+          )),
+        )}
+      </List>
+      <DisplayError
+        fetchError={fetchError}
+        locStateError={locState.error}
+        onClose={onClose}
+      />
+    </>
   );
 };
 
@@ -119,6 +243,6 @@ export const PlaceChooserDialog = ({
   onLocationSelect,
 }: Props) => (
   <FullScreenDialog open={open} onClose={onClose}>
-    <PlaceList onLocationSelect={onLocationSelect} />
+    <PlaceList onLocationSelect={onLocationSelect} onClose={onClose} />
   </FullScreenDialog>
 );
