@@ -29,7 +29,7 @@
   },
 
   "dependencies": {
-    "@effect/platform": "^0.74.0",
+    "@effect/platform": "^0.75.1",
     "@guzzler/utils": "^0.0.2",
     "effect": "^3.12.7"
   },
