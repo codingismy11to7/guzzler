@@ -28,11 +28,11 @@
     "test:watch": "vitest"
   },
 
-  "peerDependencies": {
+  "dependencies": {
     "@effect/platform": "^0.74.0",
     "@effect/platform-node": "^0.70.0",
     "@guzzler/utils": "^0.0.2",
-    "effect": "^3.12.0",
+    "effect": "^3.12.7",
     "mongodb": "^6.12.0"
   },
 

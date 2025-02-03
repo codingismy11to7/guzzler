@@ -1,6 +1,7 @@
 coverage/
 *.tsbuildinfo
 node_modules/
+.eslintcache
 .DS_Store
 tmp/
 dist/

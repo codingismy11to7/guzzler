@@ -6,6 +6,7 @@ const deleteNodeModules = process.argv.includes("-nm");
 const dirs = [".", ...Glob.sync("packages/*/")];
 dirs.forEach(pkg => {
   const files = [
+    ".eslintcache",
     ".tsbuildinfo",
     "build",
     "dist",
