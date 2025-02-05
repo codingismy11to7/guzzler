@@ -44,7 +44,7 @@ import {
   Struct,
 } from "effect";
 import { catchTags, gen } from "effect/Effect";
-import { fromNullable } from "effect/Option";
+import { fromNullable, isNone } from "effect/Option";
 import React, {
   PropsWithChildren,
   useEffect,
@@ -69,6 +69,7 @@ import { useTranslation } from "../i18n.js";
 import { randomId, runSync } from "../internal/bootstrap.js";
 import { routes } from "../router.js";
 import GasStationResponsePlace = AutosApiModel.GasStationResponsePlace;
+import { useAppState } from "../AppStore.js";
 
 const NeedAVehicle = () => {
   const { t } = useTranslation();
@@ -252,12 +253,24 @@ const AddFillupForm = ({
   const { t } = useTranslation();
 
   const userData = useUserData();
+  const setPageAction = useAppState(s => s.setPageAction);
 
   const [tripDistance, setTripDistance] = useState("");
+  const tripDistanceBD = useMemo(
+    () => BD.fromString(tripDistance),
+    [tripDistance],
+  );
   const [currOdometer, setCurrOdometer] = useState("");
+  const currOdometerBD = useMemo(
+    () => BD.fromString(currOdometer),
+    [currOdometer],
+  );
   const [ppg, setPpg] = useState("");
+  const ppgBD = useMemo(() => BD.fromString(ppg), [ppg]);
   const [volume, setVolume] = useState("");
+  const volumeBD = useMemo(() => BD.fromString(volume), [volume]);
   const [total, setTotal] = useState("");
+  const totalBD = useMemo(() => BD.fromString(total), [total]);
   const [partial, setPartial] = useState(false);
   const [missedFillups, setMissedFillups] = useState(false);
   const [fillupTime, setFillupTime] = useState(new Date());
@@ -287,6 +300,25 @@ const AddFillupForm = ({
     }
   };
 
+  const saveDisabled = useMemo(
+    () =>
+      [tripDistanceBD, currOdometerBD, ppgBD, volumeBD, totalBD].some(
+        bd =>
+          isNone(bd) || BD.lessThanOrEqualTo(bd.value, BD.unsafeFromNumber(0)),
+      ),
+    [currOdometerBD, ppgBD, totalBD, tripDistanceBD, volumeBD],
+  );
+
+  const action = useMemo(
+    () => <Button disabled={saveDisabled}>{t("common.save")}</Button>,
+    [saveDisabled, t],
+  );
+  useEffect(() => {
+    setPageAction(action);
+
+    return () => setPageAction(undefined);
+  }, [action, setPageAction]);
+
   useEffect(
     () =>
       runSync(
@@ -309,24 +341,24 @@ const AddFillupForm = ({
 
   const onDistanceBlur = () => {
     if (!fillupInfo.loading) {
-      const dist = BD.fromString(tripDistance);
-      if (O.isNone(dist)) setTripDistance("");
+      if (O.isNone(tripDistanceBD)) setTripDistance("");
       else {
         const lastOdom = fillupInfo.highestOdometer;
         if (O.isSome(lastOdom))
-          setCurrOdometer(BD.format(lastOdom.value.pipe(BD.sum(dist.value))));
+          setCurrOdometer(
+            BD.format(lastOdom.value.pipe(BD.sum(tripDistanceBD.value))),
+          );
       }
     }
   };
   const onCurrOdomBlur = () => {
     if (!fillupInfo.loading) {
-      const currOdom = BD.fromString(currOdometer);
-      if (O.isNone(currOdom)) setCurrOdometer("");
+      if (O.isNone(currOdometerBD)) setCurrOdometer("");
       else {
         const lastOdom = fillupInfo.highestOdometer;
         if (O.isSome(lastOdom))
           setTripDistance(
-            BD.format(currOdom.value.pipe(BD.subtract(lastOdom.value))),
+            BD.format(currOdometerBD.value.pipe(BD.subtract(lastOdom.value))),
           );
       }
     }
@@ -335,8 +367,8 @@ const AddFillupForm = ({
   const onPpgOrVolumeBlur = () =>
     runSync(
       gen(function* () {
-        const price = yield* BD.fromString(ppg);
-        const vol = yield* BD.fromString(volume);
+        const price = yield* ppgBD;
+        const vol = yield* volumeBD;
 
         setTotal(
           BD.format(price.pipe(BD.multiply(vol), MoreBigDecimal.round(2))),
@@ -347,8 +379,8 @@ const AddFillupForm = ({
   const onTotalBlur = () =>
     runSync(
       gen(function* () {
-        const tot = yield* BD.fromString(total);
-        const price = yield* BD.fromString(ppg);
+        const tot = yield* totalBD;
+        const price = yield* ppgBD;
 
         const vol = tot.pipe(BD.divide(price));
 
