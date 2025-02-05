@@ -36,11 +36,12 @@ const MainLive = Layer.mergeAll(
   ),
 );
 const MainLiveRuntime = ManagedRuntime.make(MainLive);
-export const runPromise = MainLiveRuntime.runPromise;
 export const runP = <A>(
   e: Effect.Effect<A, never, Layer.Layer.Success<typeof MainLive>>,
 ) => MainLiveRuntime.runPromise(e);
-export const runSync = MainLiveRuntime.runSync;
+export const runSync = <A>(
+  e: Effect.Effect<A, never, Layer.Layer.Success<typeof MainLive>>,
+) => MainLiveRuntime.runSync(e);
 export const runFork = MainLiveRuntime.runFork;
 export const randomId = (seedTime?: number) =>
   runSync(RandomId.RandomId.randomIdSync(seedTime));
