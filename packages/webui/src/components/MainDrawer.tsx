@@ -24,8 +24,8 @@ import { usePrevious } from "@uidotdev/usehooks";
 import { LazyArg } from "effect/Function";
 import { isNotNull } from "effect/Predicate";
 import React, { MouseEvent, useCallback, useEffect } from "react";
-import { useCurrentFullSession } from "../contexts/GlobalContext.js";
-import { useMainDrawer } from "../hooks/useMainDrawer.js";
+import { useAppState } from "../AppStore.js";
+import { useCurrentFullSession_Unsafe } from "../hooks/sessionHooks.js";
 import { SwipeCallback, useOnSwipe } from "../hooks/useOnSwipe.js";
 import { useTranslation } from "../i18n.js";
 import { AppRoute, routes, useRoute } from "../router.js";
@@ -38,9 +38,10 @@ const drawerWidth = 270;
 export const MainDrawer = () => {
   const { t } = useTranslation();
 
-  const [open, setOpen] = useMainDrawer();
+  const open = useAppState(s => s.mainDrawerOpen);
+  const setOpen = useAppState(s => s.setMainDrawerOpen);
 
-  const { userInfo, user } = useCurrentFullSession();
+  const { userInfo, user } = useCurrentFullSession_Unsafe();
 
   const route = useRoute();
   const prevRoute: AppRoute | null = usePrevious(route);
