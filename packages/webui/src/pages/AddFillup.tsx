@@ -1,4 +1,7 @@
-import { Autos } from "@guzzler/domain";
+import { Autos, AutosApiModel } from "@guzzler/domain";
+import { FuelCategory, FuelTypeId } from "@guzzler/domain/models/Autos";
+import { type Location } from "@guzzler/domain/models/Location";
+import { MoreBigDecimal } from "@guzzler/utils";
 import {
   Add,
   CarCrashTwoTone,
@@ -30,10 +33,30 @@ import {
 } from "@mui/material";
 import { DateTimePicker } from "@mui/x-date-pickers";
 import { useLocalStorage } from "@uidotdev/usehooks";
-import { Array, Option, Order, pipe, String, Struct } from "effect";
-import { PropsWithChildren, useEffect, useMemo, useRef } from "react";
+import {
+  Array,
+  BigDecimal as BD,
+  Effect,
+  Option as O,
+  Order,
+  pipe,
+  String,
+  Struct,
+} from "effect";
+import { catchTags, gen } from "effect/Effect";
+import { fromNullable } from "effect/Option";
+import React, {
+  PropsWithChildren,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import MobileInfoIcon from "../components/MobileInfoIcon.js";
-import { PlaceChooserDialog } from "../components/PlaceChooserDialog.js";
+import {
+  type OnLocationSelect,
+  PlaceChooserDialog,
+} from "../components/PlaceChooserDialog.js";
 import { StandardPageBox } from "../components/StandardPageBox.js";
 import { UnitsTextField } from "../components/UnitsTextField.js";
 import { VehicleAvatar } from "../components/VehicleAvatar.js";
@@ -43,8 +66,9 @@ import {
   useUserData,
 } from "../hooks/useUserData.js";
 import { useTranslation } from "../i18n.js";
-import { randomId } from "../internal/bootstrap.js";
+import { randomId, runSync } from "../internal/bootstrap.js";
 import { routes } from "../router.js";
+import GasStationResponsePlace = AutosApiModel.GasStationResponsePlace;
 
 const NeedAVehicle = () => {
   const { t } = useTranslation();
@@ -86,16 +110,17 @@ const FormSectionHeader = ({ children }: PropsWithChildren) => (
   </Divider>
 );
 
-const LabeledSelect = ({
+const LabeledSelect = <Value,>({
   fullWidth,
   ...props
-}: Omit<SelectProps, "label"> & Pick<Required<SelectProps>, "label">) => {
+}: Omit<SelectProps<Value>, "label"> &
+  Pick<Required<SelectProps<Value>>, "label">) => {
   const labelId = useRef(randomId());
 
   return (
     <FormControl fullWidth={fullWidth ?? false}>
       <InputLabel id={labelId.current}>{props.label}</InputLabel>
-      <Select {...props} labelId={labelId.current} />
+      <Select<Value> {...props} labelId={labelId.current} />
     </FormControl>
   );
 };
@@ -112,8 +137,36 @@ const SectionStack = ({ children }: PropsWithChildren) => (
 
 const AddFillupLocation = ({
   variant,
+  onLocationSelect,
   route,
-}: { variant: TextFieldVariants } & Props) => {
+  name,
+  onNameChange,
+  street,
+  onStreetChange,
+  city,
+  onCityChange,
+  state,
+  onStateChange,
+  zip,
+  onZipChange,
+  country,
+  onCountryChange,
+}: {
+  variant: TextFieldVariants;
+  onLocationSelect: OnLocationSelect;
+  name: string;
+  onNameChange: (s: string) => void;
+  street: string;
+  onStreetChange: (s: string) => void;
+  city: string;
+  onCityChange: (s: string) => void;
+  state: string;
+  onStateChange: (s: string) => void;
+  zip: string;
+  onZipChange: (s: string) => void;
+  country: string;
+  onCountryChange: (s: string) => void;
+} & Props) => {
   const { t } = useTranslation();
 
   const searchOpen = route.params.searchingNearby;
@@ -137,18 +190,48 @@ const AddFillupLocation = ({
       >
         Search...
       </Button>
-      <FormTextField variant={variant} label="Name" />
-      <FormTextField variant={variant} label="Street" />
-      <FormTextField variant={variant} label="City" />
-      <FormTextField variant={variant} label="State" />
-      <FormTextField variant={variant} label="Zip Code" />
-      <FormTextField variant={variant} label="Country" />
+      <FormTextField
+        variant={variant}
+        label="Name"
+        value={name}
+        onChange={e => onNameChange(e.target.value)}
+      />
+      <FormTextField
+        variant={variant}
+        label="Street"
+        value={street}
+        onChange={e => onStreetChange(e.target.value)}
+      />
+      <FormTextField
+        variant={variant}
+        label="City"
+        value={city}
+        onChange={e => onCityChange(e.target.value)}
+      />
+      <FormTextField
+        variant={variant}
+        label="State"
+        value={state}
+        onChange={e => onStateChange(e.target.value)}
+      />
+      <FormTextField
+        variant={variant}
+        label="Zip Code"
+        value={zip}
+        onChange={e => onZipChange(e.target.value)}
+      />
+      <FormTextField
+        variant={variant}
+        label="Country"
+        value={country}
+        onChange={e => onCountryChange(e.target.value)}
+      />
       {searchOpen && (
         <PlaceChooserDialog
           onClose={() => setSearchOpen(false)}
-          onLocationSelect={(x, y) => {
-            console.log(x, y);
+          onLocationSelect={(loc, place) => {
             setSearchOpen(false);
+            onLocationSelect(loc, place);
           }}
           open
         />
@@ -157,10 +240,121 @@ const AddFillupLocation = ({
   );
 };
 
-const AddFillupForm = ({ route }: Props) => {
+const ignoreNone = { NoSuchElementException: () => Effect.void };
+
+const AddFillupForm = ({
+  route,
+  fillupInfo,
+}: Props &
+  Readonly<{
+    fillupInfo: ReturnType<typeof useFillupInformationForVehicle>;
+  }>) => {
   const { t } = useTranslation();
 
   const userData = useUserData();
+
+  const [tripDistance, setTripDistance] = useState("");
+  const [currOdometer, setCurrOdometer] = useState("");
+  const [ppg, setPpg] = useState("");
+  const [volume, setVolume] = useState("");
+  const [total, setTotal] = useState("");
+  const [partial, setPartial] = useState(false);
+  const [missedFillups, setMissedFillups] = useState(false);
+  const [fillupTime, setFillupTime] = useState(new Date());
+  const [fuelCategory, setFuelCategory] = useState<FuelCategory | "">("");
+  const [fuelTypeId, setFuelTypeId] = useState<FuelTypeId | "">("");
+  const [deviceLoc, setDeviceLoc] = useState<Location>();
+  const [place, _setPlace] = useState<GasStationResponsePlace>();
+
+  const [pName, setPName] = useState("");
+  const [pStreet, setPStreet] = useState("");
+  const [pCity, setPCity] = useState("");
+  const [pState, setPState] = useState("");
+  const [pZip, setPZip] = useState("");
+  const [pCountry, setPCountry] = useState("");
+
+  const [notes, setNotes] = useState("");
+
+  const setPlace = (p: GasStationResponsePlace | undefined) => {
+    _setPlace(p);
+    if (p) {
+      setPName(p.name);
+      if (p.street) setPStreet(p.street);
+      if (p.city) setPCity(p.city);
+      if (p.state) setPState(p.state);
+      if (p.postalCode) setPZip(p.postalCode);
+      if (p.country) setPCountry(p.country);
+    }
+  };
+
+  useEffect(
+    () =>
+      runSync(
+        gen(function* () {
+          if (!fillupInfo.loading && !userData.loading) {
+            const info = yield* fillupInfo.value;
+            const lastRec = yield* info.lastFillupRecord;
+
+            if (!fuelTypeId) setFuelTypeId(lastRec.fuelTypeId);
+
+            const lastFuelType = yield* fromNullable(
+              userData.types.fuelTypes[lastRec.fuelTypeId],
+            );
+            if (!fuelCategory) setFuelCategory(lastFuelType.category);
+          }
+        }).pipe(catchTags(ignoreNone)),
+      ),
+    [fillupInfo, fuelCategory, fuelTypeId, userData],
+  );
+
+  const onDistanceBlur = () => {
+    if (!fillupInfo.loading) {
+      const dist = BD.fromString(tripDistance);
+      if (O.isNone(dist)) setTripDistance("");
+      else {
+        const lastOdom = fillupInfo.highestOdometer;
+        if (O.isSome(lastOdom))
+          setCurrOdometer(BD.format(lastOdom.value.pipe(BD.sum(dist.value))));
+      }
+    }
+  };
+  const onCurrOdomBlur = () => {
+    if (!fillupInfo.loading) {
+      const currOdom = BD.fromString(currOdometer);
+      if (O.isNone(currOdom)) setCurrOdometer("");
+      else {
+        const lastOdom = fillupInfo.highestOdometer;
+        if (O.isSome(lastOdom))
+          setTripDistance(
+            BD.format(currOdom.value.pipe(BD.subtract(lastOdom.value))),
+          );
+      }
+    }
+  };
+
+  const onPpgOrVolumeBlur = () =>
+    runSync(
+      gen(function* () {
+        const price = yield* BD.fromString(ppg);
+        const vol = yield* BD.fromString(volume);
+
+        setTotal(
+          BD.format(price.pipe(BD.multiply(vol), MoreBigDecimal.round(2))),
+        );
+      }).pipe(catchTags(ignoreNone)),
+    );
+
+  const onTotalBlur = () =>
+    runSync(
+      gen(function* () {
+        const tot = yield* BD.fromString(total);
+        const price = yield* BD.fromString(ppg);
+
+        const vol = tot.pipe(BD.divide(price));
+
+        if (O.isSome(vol)) setVolume(BD.format(vol.value.pipe(BD.scale(4))));
+      }).pipe(catchTags(ignoreNone)),
+    );
 
   const variant: TextFieldVariants = "standard";
 
@@ -199,12 +393,18 @@ const AddFillupForm = ({ route }: Props) => {
             size="small"
             variant={variant}
             label="Trip distance"
+            value={tripDistance}
+            onChange={e => setTripDistance(e.target.value)}
+            onBlur={onDistanceBlur}
           />
           <UnitsTextField
             units="mi"
             size="small"
             variant={variant}
             label="Current odometer"
+            value={currOdometer}
+            onChange={e => setCurrOdometer(e.target.value)}
+            onBlur={onCurrOdomBlur}
           />
         </Stack>
         <UnitsTextField
@@ -212,18 +412,36 @@ const AddFillupForm = ({ route }: Props) => {
           position="start"
           variant={variant}
           label="Price per gallon"
+          value={ppg}
+          onChange={e => setPpg(e.target.value)}
+          onBlur={onPpgOrVolumeBlur}
         />
-        <UnitsTextField units="gal" variant={variant} label="Volume" />
+        <UnitsTextField
+          units="gal"
+          variant={variant}
+          label="Volume"
+          value={volume}
+          onChange={e => setVolume(e.target.value)}
+          onBlur={onPpgOrVolumeBlur}
+        />
         <UnitsTextField
           units="$"
           position="start"
           variant={variant}
           label="Total cost"
+          value={total}
+          onChange={e => setTotal(e.target.value)}
+          onBlur={onTotalBlur}
         />
         <Stack direction="row" justifyContent="space-between" flexWrap="wrap">
           <Stack direction="row" spacing={1} alignItems="center">
             <FormControlLabel
-              control={<Checkbox />}
+              control={
+                <Checkbox
+                  checked={partial}
+                  onChange={e => setPartial(e.target.checked)}
+                />
+              }
               label="Partial fillup"
               slotProps={{ typography: { noWrap: true } }}
             />
@@ -231,7 +449,12 @@ const AddFillupForm = ({ route }: Props) => {
           </Stack>
           <Stack direction="row" spacing={1} alignItems="center">
             <FormControlLabel
-              control={<Checkbox />}
+              control={
+                <Checkbox
+                  checked={missedFillups}
+                  onChange={e => setMissedFillups(e.target.checked)}
+                />
+              }
               label="Missed fillup(s)"
               slotProps={{ typography: { noWrap: true } }}
             />
@@ -239,7 +462,10 @@ const AddFillupForm = ({ route }: Props) => {
           </Stack>
         </Stack>
         <DateTimePicker
-          defaultValue={new Date()}
+          value={fillupTime}
+          onChange={date => {
+            if (date) setFillupTime(date);
+          }}
           slotProps={{ textField: { variant, label: "Fillup time" } }}
         />
       </SectionStack>
@@ -247,11 +473,13 @@ const AddFillupForm = ({ route }: Props) => {
       <FormSectionHeader>Fuel Information</FormSectionHeader>
       <SectionStack>
         <Stack direction="row" spacing={1} alignItems="center" sx={{ pt: 1 }}>
-          <LabeledSelect
+          <LabeledSelect<FuelCategory>
             fullWidth
             variant={variant}
             size="small"
             label="Category"
+            value={fuelCategory}
+            onChange={e => setFuelCategory(e.target.value as FuelCategory)}
           >
             {fuelCategories.map(c => (
               <MenuItem key={c} value={c}>
@@ -259,24 +487,60 @@ const AddFillupForm = ({ route }: Props) => {
               </MenuItem>
             ))}
           </LabeledSelect>
-          <LabeledSelect fullWidth variant={variant} size="small" label="Type">
+          <LabeledSelect
+            fullWidth
+            variant={variant}
+            size="small"
+            label="Type"
+            disabled={!fuelCategory}
+            value={fuelTypeId}
+            onChange={e => setFuelTypeId(e.target.value as FuelTypeId)}
+          >
             {userData.loading
               ? []
-              : fuelTypes.map(f => (
-                  <MenuItem key={f.id} value={f.id}>
-                    {f.displayName}
-                  </MenuItem>
-                ))}
+              : fuelTypes
+                  .filter(f => f.category === fuelCategory)
+                  .map(f => (
+                    <MenuItem key={f.id} value={f.id}>
+                      {f.displayName}
+                    </MenuItem>
+                  ))}
           </LabeledSelect>
         </Stack>
       </SectionStack>
 
       <FormSectionHeader>Location Information</FormSectionHeader>
-      <AddFillupLocation variant={variant} route={route} />
+      <AddFillupLocation
+        variant={variant}
+        route={route}
+        onLocationSelect={(loc, p) => {
+          setDeviceLoc(loc);
+          setPlace(p);
+        }}
+        name={pName}
+        onNameChange={setPName}
+        street={pStreet}
+        onStreetChange={setPStreet}
+        city={pCity}
+        onCityChange={setPCity}
+        state={pState}
+        onStateChange={setPState}
+        zip={pZip}
+        onZipChange={setPZip}
+        country={pCountry}
+        onCountryChange={setPCountry}
+      />
 
       <FormSectionHeader>Notes</FormSectionHeader>
       <SectionStack>
-        <TextField variant={variant} size="small" multiline fullWidth />
+        <TextField
+          variant={variant}
+          size="small"
+          multiline
+          fullWidth
+          value={notes}
+          onChange={e => setNotes(e.target.value)}
+        />
       </SectionStack>
     </>
   );
@@ -315,7 +579,7 @@ const AddFillup = ({ route }: Props) => {
       }
 
       const vehicleIdOpt = Array.head(Struct.keys(vehicles));
-      if (Option.isSome(vehicleIdOpt)) {
+      if (O.isSome(vehicleIdOpt)) {
         const vehicleId = vehicleIdOpt.value;
         setDefaultVehicle(vehicleId);
         routes.AddFillup({ vehicleId }).replace();
@@ -365,8 +629,8 @@ const AddFillup = ({ route }: Props) => {
               subheader={
                 fillupInfo.loading ? (
                   <Skeleton />
-                ) : fillupInfo.highestOdometer ? (
-                  `${fillupInfo.highestOdometer} mi`
+                ) : fillupInfo.highestOdometerStr ? (
+                  `${fillupInfo.highestOdometerStr} mi`
                 ) : undefined
               }
               slotProps={{ action: { sx: { alignSelf: "center" } } }}
@@ -384,7 +648,7 @@ const AddFillup = ({ route }: Props) => {
               open
             />
           )}
-          <AddFillupForm route={route} />
+          <AddFillupForm route={route} fillupInfo={fillupInfo} />
         </Stack>
       )}
     </StandardPageBox>
