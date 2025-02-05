@@ -48,6 +48,8 @@ export const useFillupInformationForVehicle = (
       };
     });
 
+    const highestOdometer = fillupInfo.pipe(flatMap(i => i.highestOdometer));
+
     return {
       loading: false as const,
       value: fillupInfo,
@@ -55,8 +57,8 @@ export const useFillupInformationForVehicle = (
         flatMap(i => i.odometerOnLastFillup),
         getOrUndefined,
       ),
-      highestOdometer: fillupInfo.pipe(
-        flatMap(i => i.highestOdometer),
+      highestOdometer,
+      highestOdometerStr: highestOdometer.pipe(
         map(BigDecimal.scale(1)),
         map(BigDecimal.format),
         getOrUndefined,

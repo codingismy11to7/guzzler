@@ -228,13 +228,15 @@ const PlaceList = ({
   );
 };
 
+export type OnLocationSelect = (
+  deviceLocation: Location.Location | undefined,
+  place: GasStationResponsePlace,
+) => void;
+
 type Props = Readonly<{
   open: boolean;
   onClose: LazyArg<void>;
-  onLocationSelect: (
-    deviceLocation: Location.Location | undefined,
-    place: GasStationResponsePlace,
-  ) => void;
+  onLocationSelect: OnLocationSelect;
 }>;
 
 export const PlaceChooserDialog = ({
