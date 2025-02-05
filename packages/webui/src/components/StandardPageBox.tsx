@@ -1,6 +1,6 @@
 import { Box, BoxProps } from "@mui/material";
 import React, { useCallback } from "react";
-import { useMainDrawer } from "../hooks/useMainDrawer.js";
+import { useAppState } from "../AppStore.js";
 import { SwipeCallback, useOnSwipe } from "../hooks/useOnSwipe.js";
 
 type Props = BoxProps & Readonly<{ pOverride?: number }>;
@@ -12,7 +12,7 @@ export const StandardPageBox = ({
   pOverride,
   ...rest
 }: Props) => {
-  const [, setDrawerOpen] = useMainDrawer();
+  const setDrawerOpen = useAppState(s => s.setMainDrawerOpen);
 
   const onSwipe: SwipeCallback = useCallback(
     d => {
