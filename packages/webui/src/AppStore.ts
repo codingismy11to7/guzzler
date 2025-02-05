@@ -1,6 +1,7 @@
 import * as Op from "@fp-ts/optic";
 import { Boolean, Schema as S } from "effect";
 import { LazyArg } from "effect/Function";
+import { ReactNode } from "react";
 import { create, StateCreator } from "zustand";
 import {
   Loaded,
@@ -31,6 +32,11 @@ type MainDrawerSlice = Readonly<{
   toggleMainDrawerOpen: LazyArg<void>;
 }>;
 
+type PageActionSlice = Readonly<{
+  pageAction: ReactNode;
+  setPageAction: (action: ReactNode) => void;
+}>;
+
 const _sessionState = Op.id<SessionSlice>().at("sessionState");
 const createSessionSlice: StateCreator<SessionSlice> = set => ({
   sessionState: SessionLoading.make(),
@@ -40,8 +46,8 @@ const createSessionSlice: StateCreator<SessionSlice> = set => ({
 
 const createUserDataSlice: StateCreator<UserDataSlice> = set => ({
   userData: Loading.make(),
-  resetUserData: () => set(() => ({ userData: Loading.make() })),
-  setUserData: userData => set(() => ({ userData })),
+  resetUserData: () => set({ userData: Loading.make() }),
+  setUserData: userData => set({ userData }),
 });
 
 const createNewFillupSlice: StateCreator<NewFillupSlice> = () => ({
@@ -57,11 +63,21 @@ const createMainDrawerSlice: StateCreator<MainDrawerSlice> = set => ({
   toggleMainDrawerOpen: () => set(Op.modify(_mainDrawerOpen)(Boolean.not)),
 });
 
+const createPageActionSlice: StateCreator<PageActionSlice> = set => ({
+  pageAction: undefined,
+  setPageAction: n => set({ pageAction: n }),
+});
+
 export const useAppState = create<
-  SessionSlice & UserDataSlice & NewFillupSlice & MainDrawerSlice
+  SessionSlice &
+    UserDataSlice &
+    NewFillupSlice &
+    MainDrawerSlice &
+    PageActionSlice
 >()((...a) => ({
   ...createSessionSlice(...a),
   ...createUserDataSlice(...a),
   ...createNewFillupSlice(...a),
   ...createMainDrawerSlice(...a),
+  ...createPageActionSlice(...a),
 }));
