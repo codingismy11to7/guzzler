@@ -17,8 +17,8 @@ import {
 } from "@mui/material";
 import { Match } from "effect";
 import React, { PropsWithChildren, Suspense } from "react";
-import { useSucceededGlobalContext_Unsafe } from "../contexts/GlobalContext.js";
-import { useMainDrawer } from "../hooks/useMainDrawer.js";
+import { useAppState } from "../AppStore.js";
+import { useSucceededSessionState_Unsafe } from "../hooks/sessionHooks.js";
 import { useTranslation } from "../i18n.js";
 import { PagesRoute, routes } from "../router.js";
 import { AppLink } from "./AppLink.js";
@@ -31,9 +31,10 @@ export const PageContainer = ({
   children,
 }: { route: PagesRoute } & PropsWithChildren) => {
   const { t } = useTranslation();
-  const { connected } = useSucceededGlobalContext_Unsafe();
+  const { connectedToBackend: connectedToBackend } =
+    useSucceededSessionState_Unsafe();
 
-  const [, setDrawerOpen] = useMainDrawer();
+  const toggleMainDrawerOpen = useAppState(s => s.toggleMainDrawerOpen);
 
   const title = Match.value(route).pipe(
     Match.discriminatorsExhaustive("name")({
@@ -65,7 +66,7 @@ export const PageContainer = ({
                 <span>{title}</span>
                 <Box sx={{ flexGrow: 1 }} />
                 <Stack sx={{ pr: 1 }}>
-                  {connected ? (
+                  {connectedToBackend ? (
                     <Tooltip title="Connected to Server">
                       <CheckCircle color="success" />
                     </Tooltip>
@@ -102,7 +103,7 @@ export const PageContainer = ({
           <IconButton
             color="inherit"
             aria-label="open drawer"
-            onClick={() => setDrawerOpen(o => !o)}
+            onClick={toggleMainDrawerOpen}
           >
             <MenuIcon />
           </IconButton>
