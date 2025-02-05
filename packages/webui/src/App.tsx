@@ -10,17 +10,13 @@ import {
   retry,
   tapError,
 } from "effect/Effect";
-import React, { lazy, ReactElement, useEffect, useState } from "react";
+import React, { lazy, ReactElement, useEffect } from "react";
 import { SessionClient } from "./apiclients/SessionClient.js";
+import { useAppState } from "./AppStore.js";
 import Loading from "./components/Loading.js";
-import {
-  defaultGlobalContext,
-  GlobalContext,
-  Succeeded,
-  Unauthenticated,
-  useCurrentSessionInfo,
-} from "./contexts/GlobalContext.js";
+import { useCurrentSessionInfo } from "./hooks/sessionHooks.js";
 import { runFork, runP } from "./internal/bootstrap.js";
+import { Succeeded, Unauthenticated } from "./models/AppState.js";
 import { LoginPage } from "./pages/LoginPage.js";
 import {
   PagesRoute,
@@ -37,7 +33,7 @@ const LoggedInAppWrapper = ({ route }: { route: PagesRoute }) => {
   const session = useCurrentSessionInfo();
 
   return session?._tag === "FullSession" ? (
-    <LoggedInApp route={route} session={session} />
+    <LoggedInApp route={route} />
   ) : (
     <Skeleton variant="rectangular" />
   );
@@ -77,20 +73,27 @@ const Page = (): ReactElement => {
 };
 
 const App = () => {
-  const [globalContext, setGlobalContext] = useState(defaultGlobalContext);
-  const [connected, setConnected] = useState(false);
+  const sessionState = useAppState(s => s.sessionState);
+  const setSessionState = useAppState(s => s.setSessionState);
+  const modifySessionState = useAppState(s => s.modifySessionState);
+
+  const connectedToBackend =
+    !sessionState.loading && sessionState._tag === "Succeeded"
+      ? sessionState.connectedToBackend
+      : false;
+
   const route = useRoute();
 
   useEffect(() => {
-    setGlobalContext(old =>
+    modifySessionState(old =>
       old.loading || old._tag !== "Succeeded"
         ? old
-        : Succeeded.make({ ...old, connected }),
+        : Succeeded.make({ ...old, connectedToBackend }),
     );
-  }, [connected]);
+  }, [connectedToBackend, modifySessionState]);
 
   useEffect(() => {
-    if (!connected) {
+    if (!connectedToBackend) {
       const fiber = runFork(
         gen(function* () {
           yield* logDebug("checking for existing session");
@@ -101,17 +104,16 @@ const App = () => {
             annotateLogs({ type: si._tag }),
           );
 
-          setGlobalContext(
+          setSessionState(
             Succeeded.make({
               sessionInfo: si,
-              connected,
-              setConnected,
+              connectedToBackend,
             }),
           );
         }).pipe(
           catchTags({
             Unauthorized: () =>
-              Effect.sync(() => setGlobalContext(Unauthenticated.make())),
+              Effect.sync(() => setSessionState(Unauthenticated.make())),
           }),
           tapError(e =>
             logWarning("Received error while fetching session info", e),
@@ -128,14 +130,14 @@ const App = () => {
         void runP(Fiber.interruptFork(fiber));
       };
     }
-  }, [connected]);
+  }, [connectedToBackend, setSessionState]);
 
   const isUnauthenticated =
-    !globalContext.loading && globalContext._tag === "Unauthenticated";
+    !sessionState.loading && sessionState._tag === "Unauthenticated";
   const isNewUser =
-    !globalContext.loading &&
-    globalContext._tag === "Succeeded" &&
-    globalContext.sessionInfo._tag === "SessionWithoutUser";
+    !sessionState.loading &&
+    sessionState._tag === "Succeeded" &&
+    sessionState.sessionInfo._tag === "SessionWithoutUser";
 
   useEffect(() => {
     if (isUnauthenticated && route.name !== routes.Login().name)
@@ -144,11 +146,7 @@ const App = () => {
       routes.Signup().replace();
   }, [isNewUser, isUnauthenticated, route]);
 
-  return (
-    <GlobalContext.Provider value={globalContext}>
-      {globalContext.loading ? <Loading /> : <Page />}
-    </GlobalContext.Provider>
-  );
+  return sessionState.loading ? <Loading /> : <Page />;
 };
 
 export default App;

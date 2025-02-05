@@ -2,10 +2,10 @@ import { VehicleId } from "@guzzler/domain/models/Autos";
 import { BigDecimal, Chunk, Option, Order } from "effect";
 import { sortWith, unsafeFromArray } from "effect/Chunk";
 import { flatMap, fromNullable, getOrUndefined, map } from "effect/Option";
-import { useContext, useMemo } from "react";
-import * as internal from "../internal/contexts/userDataContext.js";
+import { useMemo } from "react";
+import { useAppState } from "../AppStore.js";
 
-export const useUserData = () => useContext(internal.UserDataContext);
+export const useUserData = () => useAppState(state => state.userData);
 
 export const useFillupInformationForVehicle = (
   vehicleIdOpt: VehicleId | undefined,

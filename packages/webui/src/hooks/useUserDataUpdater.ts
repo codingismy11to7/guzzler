@@ -1,15 +1,27 @@
 import { Effect, Fiber, pipe, Stream } from "effect";
 import { gen } from "effect/Effect";
-import { PropsWithChildren, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
+import { useAppState } from "../AppStore.js";
 import { AutosDataRepository } from "../data/AutosDataRepository.js";
 import { runFork, runP } from "../internal/bootstrap.js";
-import * as internal from "../internal/contexts/userDataContext.js";
-import * as Model from "../models/UserDataContext.js";
-import { useSucceededGlobalContext_Unsafe } from "./GlobalContext.js";
+import * as Model from "../models/AppState.js";
 
-export const UserDataContextProvider = ({ children }: PropsWithChildren) => {
-  const { setConnected } = useSucceededGlobalContext_Unsafe();
-  const [userData, setUserData] = useState(internal.defaultUserDataContext());
+export const useUserDataUpdater = () => {
+  const modifySessionState = useAppState(s => s.modifySessionState);
+  const setUserData = useAppState(s => s.setUserData);
+
+  const setConnected = useCallback(
+    (connectedToBackend: boolean) =>
+      modifySessionState(old =>
+        !old.loading && old._tag === "Succeeded"
+          ? {
+              ...old,
+              connectedToBackend,
+            }
+          : old,
+      ),
+    [modifySessionState],
+  );
 
   useEffect(() => {
     const fiber = runFork(
@@ -36,11 +48,5 @@ export const UserDataContextProvider = ({ children }: PropsWithChildren) => {
     return () => {
       void runP(Fiber.interruptFork(fiber));
     };
-  }, [setConnected]);
-
-  return (
-    <internal.UserDataContext.Provider value={userData}>
-      {children}
-    </internal.UserDataContext.Provider>
-  );
+  }, [setConnected, setUserData]);
 };

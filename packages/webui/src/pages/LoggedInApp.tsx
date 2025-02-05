@@ -1,10 +1,7 @@
-import { FullSession } from "@guzzlerapp/domain/apis/SessionApi";
 import { Match } from "effect";
 import React, { lazy } from "react";
 import { PageContainer } from "../components/PageContainer.js";
-import { FullSessionContext } from "../contexts/GlobalContext.js";
-import { MainDrawerContextProvider } from "../contexts/MainDrawerContext.js";
-import { UserDataContextProvider } from "../contexts/UserDataContext.js";
+import { useUserDataUpdater } from "../hooks/useUserDataUpdater.js";
 import { PagesRoute } from "../router.js";
 
 const AddFillup = lazy(() => import("./AddFillup.js"));
@@ -15,28 +12,26 @@ const SettingsPage = lazy(() => import("./SettingsPage.js"));
 const VehiclePage = lazy(() => import("./VehiclePage.js"));
 const VehiclesPage = lazy(() => import("./VehiclesPage.js"));
 
-type Props = Readonly<{ route: PagesRoute; session: FullSession }>;
+type Props = Readonly<{ route: PagesRoute }>;
 
-const LoggedInApp = ({ route, session }: Props) => (
-  <FullSessionContext.Provider value={session}>
-    <UserDataContextProvider>
-      <MainDrawerContextProvider>
-        <PageContainer route={route}>
-          {Match.value(route).pipe(
-            Match.discriminatorsExhaustive("name")({
-              AddFillup: r => <AddFillup route={r} />,
-              CategoryManagement: () => <CategoryManagement />,
-              Home: () => <HomePage />,
-              ImportExport: () => <ImportPage />,
-              Settings: () => <SettingsPage />,
-              Vehicles: () => <VehiclesPage />,
-              Vehicle: r => <VehiclePage route={r} />,
-            }),
-          )}
-        </PageContainer>
-      </MainDrawerContextProvider>
-    </UserDataContextProvider>
-  </FullSessionContext.Provider>
-);
+const LoggedInApp = ({ route }: Props) => {
+  useUserDataUpdater();
+
+  return (
+    <PageContainer route={route}>
+      {Match.value(route).pipe(
+        Match.discriminatorsExhaustive("name")({
+          AddFillup: r => <AddFillup route={r} />,
+          CategoryManagement: () => <CategoryManagement />,
+          Home: () => <HomePage />,
+          ImportExport: () => <ImportPage />,
+          Settings: () => <SettingsPage />,
+          Vehicles: () => <VehiclesPage />,
+          Vehicle: r => <VehiclePage route={r} />,
+        }),
+      )}
+    </PageContainer>
+  );
+};
 
 export default LoggedInApp;
