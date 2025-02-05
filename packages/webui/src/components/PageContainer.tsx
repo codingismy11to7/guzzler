@@ -1,7 +1,6 @@
 import {
   CheckCircle,
   Menu as MenuIcon,
-  MoreVert as MoreVertIcon,
   Search as SearchIcon,
 } from "@mui/icons-material";
 import {
@@ -16,7 +15,7 @@ import {
   Typography,
 } from "@mui/material";
 import { Match } from "effect";
-import React, { PropsWithChildren, Suspense } from "react";
+import React, { PropsWithChildren, ReactNode, Suspense } from "react";
 import { useAppState } from "../AppStore.js";
 import { useSucceededSessionState_Unsafe } from "../hooks/sessionHooks.js";
 import { useTranslation } from "../i18n.js";
@@ -35,6 +34,8 @@ export const PageContainer = ({
     useSucceededSessionState_Unsafe();
 
   const toggleMainDrawerOpen = useAppState(s => s.toggleMainDrawerOpen);
+
+  const pageAction = useAppState(s => s.pageAction);
 
   const title = Match.value(route).pipe(
     Match.discriminatorsExhaustive("name")({
@@ -65,15 +66,7 @@ export const PageContainer = ({
                 </AppLink>
                 <span>{title}</span>
                 <Box sx={{ flexGrow: 1 }} />
-                <Stack sx={{ pr: 1 }}>
-                  {connectedToBackend ? (
-                    <Tooltip title="Connected to Server">
-                      <CheckCircle color="success" />
-                    </Tooltip>
-                  ) : (
-                    <CircularProgress color="warning" size={24} />
-                  )}
-                </Stack>
+                {pageAction}
               </Stack>
             </Typography>
           </Paper>
@@ -90,9 +83,15 @@ export const PageContainer = ({
         }}
       >
         <Toolbar>
-          <IconButton color="inherit">
-            <MoreVertIcon />
-          </IconButton>
+          <Stack sx={{ pr: 1 }}>
+            {connectedToBackend ? (
+              <Tooltip title="Connected to Server">
+                <CheckCircle color="success" />
+              </Tooltip>
+            ) : (
+              <CircularProgress color="warning" size={24} />
+            )}
+          </Stack>
           <IconButton color="inherit" aria-label="search">
             <SearchIcon />
           </IconButton>
