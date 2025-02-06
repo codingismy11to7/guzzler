@@ -1,7 +1,7 @@
 import { HttpApiBuilder } from "@effect/platform";
-import { AppApi } from "@guzzler/domain/AppApi";
-import { CurrentFullSession } from "@guzzler/domain/Authentication";
-import { MongoTransactions } from "@guzzler/mongodb/MongoTransactions";
+import { AppApi } from "@guzzlerapp/domain/AppApi";
+import { CurrentFullSession } from "@guzzlerapp/domain/Authentication";
+import { MongoTransactions } from "@guzzlerapp/mongodb/MongoTransactions";
 import { Effect } from "effect";
 import { gen } from "effect/Effect";
 import { AutosStorage } from "../AutosStorage.js";

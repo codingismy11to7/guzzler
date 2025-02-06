@@ -1,5 +1,5 @@
 {
-  "name": "@guzzler/domain",
+  "name": "@guzzlerapp/domain",
   "version": "0.0.5",
 
   "description": "The domain template",
@@ -8,7 +8,8 @@
 
   "publishConfig": {
     "access": "public",
-    "directory": "dist"
+    "directory": "dist",
+    "provenance": true
   },
   "repository": {
     "directory": "packages/domain",
@@ -30,7 +31,7 @@
 
   "dependencies": {
     "@effect/platform": "^0.74.0",
-    "@guzzler/utils": "^0.0.2",
+    "@guzzlerapp/utils": "^0.0.2",
     "effect": "^3.12.7"
   },
 

@@ -10,15 +10,15 @@ import { ApiGroup } from "@effect/platform/HttpApiGroup";
 import { HttpPlatform } from "@effect/platform/HttpPlatform";
 import { Path } from "@effect/platform/Path";
 import { NodeHttpClient } from "@effect/platform-node";
-import { AppApi } from "@guzzler/domain/AppApi";
+import { AppApi } from "@guzzlerapp/domain/AppApi";
 import {
   AuthRedirectMiddleware,
   RawSessionAccess_DoNotUse,
-} from "@guzzler/domain/Authentication";
-import { GridFS } from "@guzzler/mongodb/GridFS";
-import { MongoChangeStreams } from "@guzzler/mongodb/MongoChangeStreams";
-import { MongoTransactions } from "@guzzler/mongodb/MongoTransactions";
-import { RandomId } from "@guzzler/utils/RandomId";
+} from "@guzzlerapp/domain/Authentication";
+import { GridFS } from "@guzzlerapp/mongodb/GridFS";
+import { MongoChangeStreams } from "@guzzlerapp/mongodb/MongoChangeStreams";
+import { MongoTransactions } from "@guzzlerapp/mongodb/MongoTransactions";
+import { RandomId } from "@guzzlerapp/utils/RandomId";
 import { Effect, Layer, Option, pipe } from "effect";
 import { ParseError } from "effect/ParseResult";
 import { AccountApiLive } from "./apis/AccountApiLive.js";

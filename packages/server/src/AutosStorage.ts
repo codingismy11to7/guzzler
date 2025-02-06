@@ -9,16 +9,16 @@ import {
   VehicleEventRecords,
   VehicleFillupRecords,
   VehicleId,
-} from "@guzzler/domain/Autos";
-import { ContentType } from "@guzzler/domain/ContentType";
-import { Username } from "@guzzler/domain/User";
-import { GridFS } from "@guzzler/mongodb/GridFS";
-import { DocumentNotFound, MongoError } from "@guzzler/mongodb/Model";
+} from "@guzzlerapp/domain/Autos";
+import { ContentType } from "@guzzlerapp/domain/ContentType";
+import { Username } from "@guzzlerapp/domain/User";
+import { GridFS } from "@guzzlerapp/mongodb/GridFS";
+import { DocumentNotFound, MongoError } from "@guzzlerapp/mongodb/Model";
 import {
   makeObjectIdFromHexString,
   randomObjectId,
-} from "@guzzler/mongodb/Mongo";
-import { MongoTransactions } from "@guzzler/mongodb/MongoTransactions";
+} from "@guzzlerapp/mongodb/Mongo";
+import { MongoTransactions } from "@guzzlerapp/mongodb/MongoTransactions";
 import { ObjectId } from "bson";
 import { Effect, Exit, Option, pipe, Stream, Struct } from "effect";
 import { andThen, catchTag, catchTags, gen } from "effect/Effect";

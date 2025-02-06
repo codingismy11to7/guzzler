@@ -19,12 +19,12 @@ const config: UserConfigExport = {
   },
   resolve: {
     alias: {
-      "@guzzler/domain": path.resolve(
+      "@guzzlerapp/domain": path.resolve(
         // @ts-ignore
         import.meta.dirname,
         "..", "domain", "src", "index.ts",
       ),
-      "@guzzler/utils": path.resolve(
+      "@guzzlerapp/utils": path.resolve(
         // @ts-ignore
         import.meta.dirname,
         "..", "utils", "src", "index.ts",

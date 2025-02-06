@@ -1,15 +1,15 @@
 import { HttpApiBuilder, HttpServerResponse } from "@effect/platform";
 import { HttpServerRequest } from "@effect/platform/HttpServerRequest";
-import { StartGoogleLogin } from "@guzzler/domain/apis/AuthApi";
-import { AppApi } from "@guzzler/domain/AppApi";
-import { SessionCookieName } from "@guzzler/domain/Authentication";
-import { RedactedError } from "@guzzler/domain/Errors";
+import { StartGoogleLogin } from "@guzzlerapp/domain/apis/AuthApi";
+import { AppApi } from "@guzzlerapp/domain/AppApi";
+import { SessionCookieName } from "@guzzlerapp/domain/Authentication";
+import { RedactedError } from "@guzzlerapp/domain/Errors";
 import {
   SessionId,
   UnknownUserSession,
   UserSession,
-} from "@guzzler/domain/Session";
-import { RandomId } from "@guzzler/utils/RandomId";
+} from "@guzzlerapp/domain/Session";
+import { RandomId } from "@guzzlerapp/utils/RandomId";
 import { Effect, pipe, Redacted, Struct } from "effect";
 import { AppConfig } from "../AppConfig.js";
 import { setSecureCookie } from "../internal/apis/setSecureCookie.js";

@@ -4,15 +4,15 @@ import {
   HttpServerResponse,
 } from "@effect/platform";
 import { BadRequest, NotFound } from "@effect/platform/HttpApiError";
-import { AppApi } from "@guzzler/domain/AppApi";
-import { currentSessionUsername } from "@guzzler/domain/Authentication";
-import { RedactedError, ServerError } from "@guzzler/domain/Errors";
+import { AppApi } from "@guzzlerapp/domain/AppApi";
+import { currentSessionUsername } from "@guzzlerapp/domain/Authentication";
+import { RedactedError, ServerError } from "@guzzlerapp/domain/Errors";
 import {
   ExportBackupCallId,
   SubscribeToChanges,
-} from "@guzzler/domain/models/AutosModel";
-import { MongoChangeStreams } from "@guzzler/mongodb/MongoChangeStreams";
-import { RandomId } from "@guzzler/utils/RandomId";
+} from "@guzzlerapp/domain/models/AutosModel";
+import { MongoChangeStreams } from "@guzzlerapp/mongodb/MongoChangeStreams";
+import { RandomId } from "@guzzlerapp/utils/RandomId";
 import { Chunk, pipe, Stream } from "effect";
 import { catchTags, gen, logTrace, logWarning } from "effect/Effect";
 import { AutosStorage } from "../AutosStorage.js";

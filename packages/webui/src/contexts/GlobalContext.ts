@@ -1,4 +1,4 @@
-import { SessionApi } from "@guzzler/domain";
+import { SessionApi } from "@guzzlerapp/domain";
 import { Schema } from "effect";
 import { isFunction } from "effect/Function";
 import React, { createContext, useContext } from "react";

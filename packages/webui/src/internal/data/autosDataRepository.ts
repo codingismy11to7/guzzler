@@ -1,5 +1,5 @@
 import { Socket } from "@effect/platform";
-import { AutosModel } from "@guzzler/domain";
+import { AutosModel } from "@guzzlerapp/domain";
 import { Effect, pipe, Ref, Runtime, Schedule } from "effect";
 import {
   gen,
