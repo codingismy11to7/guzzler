@@ -1,8 +1,8 @@
 import { FileSystem } from "@effect/platform";
-import { AutosModel } from "@guzzler/domain";
-import { RedactedError } from "@guzzler/domain/Errors";
-import { MongoTransactions } from "@guzzler/mongodb/MongoTransactions";
-import { RandomId } from "@guzzler/utils/RandomId";
+import { AutosModel } from "@guzzlerapp/domain";
+import { RedactedError } from "@guzzlerapp/domain/Errors";
+import { MongoTransactions } from "@guzzlerapp/mongodb/MongoTransactions";
+import { RandomId } from "@guzzlerapp/utils/RandomId";
 import { Effect, flow } from "effect";
 import { andThen, gen } from "effect/Effect";
 import { catchTags } from "effect/Stream";

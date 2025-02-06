@@ -3,11 +3,11 @@ import {
   UserVehicles,
   VehicleEventRecords,
   VehicleFillupRecords,
-} from "@guzzler/domain/Autos";
-import { SecureUserPreferences } from "@guzzler/domain/SecureUserPreferences";
-import { Session } from "@guzzler/domain/Session";
-import { User } from "@guzzler/domain/User";
-import { MongoCollectionLayer } from "@guzzler/mongodb/MongoCollection";
+} from "@guzzlerapp/domain/Autos";
+import { SecureUserPreferences } from "@guzzlerapp/domain/SecureUserPreferences";
+import { Session } from "@guzzlerapp/domain/Session";
+import { User } from "@guzzlerapp/domain/User";
+import { MongoCollectionLayer } from "@guzzlerapp/mongodb/MongoCollection";
 import { Context, Effect, Layer, pipe } from "effect";
 
 const collections = pipe(

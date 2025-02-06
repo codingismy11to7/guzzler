@@ -1,5 +1,5 @@
 import { Socket } from "@effect/platform";
-import { AutosApi, AutosModel, MiscSchemas } from "@guzzler/domain";
+import { AutosApi, AutosModel, MiscSchemas } from "@guzzlerapp/domain";
 import { Duration, Effect, Either, Schema } from "effect";
 import { logTrace, logWarning } from "effect/Effect";
 import { LazyArg } from "effect/Function";

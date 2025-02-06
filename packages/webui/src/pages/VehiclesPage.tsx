@@ -1,4 +1,4 @@
-import { PhotoId } from "@guzzler/domain/Autos";
+import { PhotoId } from "@guzzlerapp/domain/Autos";
 import {
   Avatar,
   List,

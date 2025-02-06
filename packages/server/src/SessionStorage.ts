@@ -1,5 +1,5 @@
-import { Session, SessionId } from "@guzzler/domain/Session";
-import { DocumentNotFound } from "@guzzler/mongodb/Model";
+import { Session, SessionId } from "@guzzlerapp/domain/Session";
+import { DocumentNotFound } from "@guzzlerapp/mongodb/Model";
 import { Effect, pipe } from "effect";
 import { CollectionRegistry } from "./internal/database/CollectionRegistry.js";
 

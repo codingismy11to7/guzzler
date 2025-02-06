@@ -1,7 +1,7 @@
 import { tz } from "@date-fns/tz";
 import { FileSystem, Path } from "@effect/platform";
 import { SystemError } from "@effect/platform/Error";
-import { AutosModel } from "@guzzler/domain";
+import { AutosModel } from "@guzzlerapp/domain";
 import {
   encodeLocationOpt,
   EventRecord,
@@ -18,20 +18,20 @@ import {
   UserTypesWithId,
   Vehicle,
   VehicleId,
-} from "@guzzler/domain/Autos";
-import { RedactedError } from "@guzzler/domain/Errors";
+} from "@guzzlerapp/domain/Autos";
+import { RedactedError } from "@guzzlerapp/domain/Errors";
 import {
   BooleanFromSelfOrString,
   IntFromSelfOrString,
   NumberFromSelfOrString,
   OptionalBigDecimal,
   OptionalString,
-} from "@guzzler/domain/MiscSchemas";
-import { TimeZone } from "@guzzler/domain/TimeZone";
-import { Username } from "@guzzler/domain/User";
-import { DocumentNotFound, MongoError } from "@guzzler/mongodb/Model";
-import { MongoTransactions } from "@guzzler/mongodb/MongoTransactions";
-import { RandomId } from "@guzzler/utils/RandomId";
+} from "@guzzlerapp/domain/MiscSchemas";
+import { TimeZone } from "@guzzlerapp/domain/TimeZone";
+import { Username } from "@guzzlerapp/domain/User";
+import { DocumentNotFound, MongoError } from "@guzzlerapp/mongodb/Model";
+import { MongoTransactions } from "@guzzlerapp/mongodb/MongoTransactions";
+import { RandomId } from "@guzzlerapp/utils/RandomId";
 import { parse as parseDate } from "date-fns";
 import {
   BigDecimal,

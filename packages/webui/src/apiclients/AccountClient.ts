@@ -1,5 +1,5 @@
 import { HttpApiClient } from "@effect/platform";
-import { AppApi } from "@guzzler/domain";
+import { AppApi } from "@guzzlerapp/domain";
 import { Effect, pipe } from "effect";
 import { dieFromFatal } from "../internal/apiclients/utils.js";
 import { logout } from "../utils/logout.js";

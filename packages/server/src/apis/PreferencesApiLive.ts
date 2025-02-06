@@ -1,9 +1,9 @@
 import { HttpApiBuilder } from "@effect/platform";
-import { AppApi } from "@guzzler/domain/AppApi";
-import { currentSessionUsername } from "@guzzler/domain/Authentication";
-import { RedactedError } from "@guzzler/domain/Errors";
-import { MongoTransactions } from "@guzzler/mongodb/MongoTransactions";
-import { RandomId } from "@guzzler/utils/RandomId";
+import { AppApi } from "@guzzlerapp/domain/AppApi";
+import { currentSessionUsername } from "@guzzlerapp/domain/Authentication";
+import { RedactedError } from "@guzzlerapp/domain/Errors";
+import { MongoTransactions } from "@guzzlerapp/mongodb/MongoTransactions";
+import { RandomId } from "@guzzlerapp/utils/RandomId";
 import { catchTags, gen } from "effect/Effect";
 import * as internal from "../internal/apis/preferencesApiLive.js";
 import { CollectionRegistry } from "../internal/database/CollectionRegistry.js";

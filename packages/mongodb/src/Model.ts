@@ -1,4 +1,4 @@
-import { FancyTypes } from "@guzzler/utils";
+import { FancyTypes } from "@guzzlerapp/utils";
 import { Data, Schema } from "effect";
 import { ParseError } from "effect/ParseResult";
 import { MongoError as RealMongoError } from "mongodb";

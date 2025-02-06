@@ -1,15 +1,15 @@
-import { Mongo } from "@guzzler/mongodb";
-import { GridFS } from "@guzzler/mongodb/GridFS";
-import { MongoChangeStreams } from "@guzzler/mongodb/MongoChangeStreams";
-import { MongoCrypto, MongoCryptoKey } from "@guzzler/mongodb/MongoCrypto";
+import { Mongo } from "@guzzlerapp/mongodb";
+import { GridFS } from "@guzzlerapp/mongodb/GridFS";
+import { MongoChangeStreams } from "@guzzlerapp/mongodb/MongoChangeStreams";
+import { MongoCrypto, MongoCryptoKey } from "@guzzlerapp/mongodb/MongoCrypto";
 import {
   addIndex,
   clearCollection,
   dropCollection,
   MongoMigrationHandler,
   noOp,
-} from "@guzzler/mongodb/MongoMigrations";
-import { MongoTransactions } from "@guzzler/mongodb/MongoTransactions";
+} from "@guzzlerapp/mongodb/MongoMigrations";
+import { MongoTransactions } from "@guzzlerapp/mongodb/MongoTransactions";
 import { Effect, Layer, Redacted } from "effect";
 import { AppConfig } from "../../AppConfig.js";
 import {

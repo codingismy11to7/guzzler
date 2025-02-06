@@ -1,4 +1,4 @@
-import { SessionApi } from "@guzzler/domain";
+import { SessionApi } from "@guzzlerapp/domain";
 
 export const logoutPath =
   SessionApi.SessionApi.endpoints[SessionApi.Logout].path;

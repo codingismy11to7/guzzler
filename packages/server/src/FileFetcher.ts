@@ -1,5 +1,5 @@
-import { GridFS } from "@guzzler/mongodb/GridFS";
-import { DocumentNotFound } from "@guzzler/mongodb/Model";
+import { GridFS } from "@guzzlerapp/mongodb/GridFS";
+import { DocumentNotFound } from "@guzzlerapp/mongodb/Model";
 import { ObjectId } from "bson";
 import { Array, Effect, Option } from "effect";
 import { gen } from "effect/Effect";

@@ -8,8 +8,8 @@ import { HttpClient } from "@effect/platform/HttpClient";
 import { withLoggerDisabled } from "@effect/platform/HttpMiddleware";
 import { HttpServerRequest } from "@effect/platform/HttpServerRequest";
 import { stream } from "@effect/platform/HttpServerResponse";
-import { AppApi } from "@guzzler/domain/AppApi";
-import { ServerError } from "@guzzler/domain/Errors";
+import { AppApi } from "@guzzlerapp/domain/AppApi";
+import { ServerError } from "@guzzlerapp/domain/Errors";
 import { Cause, Effect, pipe } from "effect";
 
 export const UIDev = HttpApiBuilder.group(AppApi, "ui", handlers =>
