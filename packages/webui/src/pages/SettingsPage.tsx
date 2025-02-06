@@ -30,7 +30,7 @@ import {
 import { PreferencesClient } from "../apiclients/PreferencesClient.js";
 import { StandardPageBox } from "../components/StandardPageBox.js";
 import { useTranslation } from "../i18n.js";
-import { runP } from "../internal/bootstrap.js";
+import { runP } from "../internal/runtimes/Main.js";
 import SecureUserPreferencesFields = SecureUserPreferences.SecureUserPreferencesFields;
 import SecureUserPreferencesPatch = SecureUserPreferences.SecureUserPreferencesPatch;
 

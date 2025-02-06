@@ -15,7 +15,7 @@ import { SessionClient } from "./apiclients/SessionClient.js";
 import { useAppState } from "./AppStore.js";
 import Loading from "./components/Loading.js";
 import { useCurrentSessionInfo } from "./hooks/sessionHooks.js";
-import { runFork, runP } from "./internal/bootstrap.js";
+import { PreLoginFunctions } from "./internal/runtimes/PreLogin.js";
 import { Succeeded, Unauthenticated } from "./models/AppState.js";
 import { LoginPage } from "./pages/LoginPage.js";
 import {
@@ -25,6 +25,8 @@ import {
   SignupRoute,
   useRoute,
 } from "./router.js";
+
+const { runFork, runP } = PreLoginFunctions;
 
 const SignupPage = lazy(() => import("./pages/SignupPage.js"));
 const LoggedInApp = lazy(() => import("./pages/LoggedInApp.js"));

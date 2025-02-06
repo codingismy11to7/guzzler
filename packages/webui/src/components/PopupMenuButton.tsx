@@ -8,7 +8,7 @@ import {
 import { isFunction } from "effect/Function";
 import { isNotNull } from "effect/Predicate";
 import React, { ReactNode, useRef, useState } from "react";
-import { randomId } from "../internal/bootstrap.js";
+import { randomId } from "../internal/runtimes/Main.js";
 
 type Props<
   D extends React.ElementType = IconButtonTypeMap["defaultComponent"],
