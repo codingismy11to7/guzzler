@@ -1,3 +1,16 @@
+diff --git a/node_modules/@uidotdev/usehooks/index.d.ts b/node_modules/@uidotdev/usehooks/index.d.ts
+index db01dc2..2a1dec8 100644
+--- a/node_modules/@uidotdev/usehooks/index.d.ts
++++ b/node_modules/@uidotdev/usehooks/index.d.ts
+@@ -216,7 +216,7 @@ declare module "@uidotdev/usehooks" {
+ 
+   export function usePreferredLanguage(): string;
+ 
+-  export function usePrevious<T>(newValue: T): T;
++  export function usePrevious<T>(newValue: T): T | null;
+ 
+   export function useQueue<T>(initialValue?: T[]): CustomQueue<T>;
+ 
 diff --git a/node_modules/@uidotdev/usehooks/index.js b/node_modules/@uidotdev/usehooks/index.js
 index f6e4fe2..1d40223 100644
 --- a/node_modules/@uidotdev/usehooks/index.js

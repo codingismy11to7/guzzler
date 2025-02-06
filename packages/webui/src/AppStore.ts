@@ -1,5 +1,5 @@
 import * as Op from "@fp-ts/optic";
-import { Boolean, Schema as S } from "effect";
+import { Boolean as B, flow, Schema as S, Struct } from "effect";
 import { LazyArg } from "effect/Function";
 import { ReactNode } from "react";
 import { create, StateCreator } from "zustand";
@@ -7,6 +7,9 @@ import {
   Loaded,
   Loading,
   NewFillup,
+  NewFillupSection,
+  SectionOpenMap,
+  SectionRefMap,
   SessionLoading,
   SessionState,
   UserData,
@@ -24,7 +27,14 @@ type UserDataSlice = Readonly<{
   resetUserData: LazyArg<void>;
 }>;
 
-type NewFillupSlice = Readonly<{ newFillup: NewFillup }>;
+type NewFillupSlice = Readonly<{
+  newFillup: NewFillup;
+  sectionOpenMap: SectionOpenMap;
+  sectionRefMap: SectionRefMap;
+  toggleSectionOpen: (s: NewFillupSection) => void;
+  resetNewFillup: LazyArg<void>;
+}>;
+const emptyRefObject = <A>(): React.RefObject<A | null> => ({ current: null });
 
 type MainDrawerSlice = Readonly<{
   mainDrawerOpen: boolean;
@@ -38,34 +48,62 @@ type PageActionSlice = Readonly<{
 }>;
 
 const _sessionState = Op.id<SessionSlice>().at("sessionState");
-const createSessionSlice: StateCreator<SessionSlice> = set => ({
+const createSessionSlice: StateCreator<SessionSlice> = setState => ({
   sessionState: SessionLoading.make(),
-  setSessionState: sessionState => set({ sessionState }),
-  modifySessionState: modify => set(Op.modify(_sessionState)(modify)),
+  setSessionState: sessionState => setState({ sessionState }),
+  modifySessionState: flow(Op.modify(_sessionState), setState),
 });
 
-const createUserDataSlice: StateCreator<UserDataSlice> = set => ({
+const createUserDataSlice: StateCreator<UserDataSlice> = (
+  setState,
+  _,
+  store,
+) => ({
   userData: Loading.make(),
-  resetUserData: () => set({ userData: Loading.make() }),
-  setUserData: userData => set({ userData }),
+  resetUserData: () => setState({ userData: store.getInitialState().userData }),
+  setUserData: userData => setState({ userData }),
 });
 
-const createNewFillupSlice: StateCreator<NewFillupSlice> = () => ({
+const _secOpenMap = Op.id<NewFillupSlice>().at("sectionOpenMap");
+const _section = (s: NewFillupSection) => _secOpenMap.at(s);
+const createNewFillupSlice: StateCreator<NewFillupSlice> = (
+  setState,
+  _,
+  store,
+) => ({
   newFillup: S.decodeSync(NewFillup)({ odometerReading: "0" }),
+  sectionOpenMap: SectionOpenMap.make({
+    fillup: true,
+    fuel: false,
+    location: true,
+    other: false,
+  }),
+  sectionRefMap: NewFillupSection.literals.reduce(
+    (acc, s) => ({ ...acc, [s]: emptyRefObject<HTMLDivElement>() }),
+    {} as SectionRefMap,
+  ),
+  toggleSectionOpen: flow(_section, o => Op.modify(o)(B.not), setState),
+  resetNewFillup: () =>
+    setState(
+      Struct.pick(
+        store.getInitialState(),
+        "newFillup",
+        "sectionOpenMap",
+        "toggleSectionOpen",
+      ),
+    ),
 });
 
-const _mainDrawerOpen =
-  Op.id<Pick<MainDrawerSlice, "mainDrawerOpen">>().at("mainDrawerOpen");
-
-const createMainDrawerSlice: StateCreator<MainDrawerSlice> = set => ({
+const _mainDrawerOpen = Op.id<MainDrawerSlice>().at("mainDrawerOpen");
+const createMainDrawerSlice: StateCreator<MainDrawerSlice> = setState => ({
   mainDrawerOpen: false,
-  setMainDrawerOpen: o => set(Op.replace(_mainDrawerOpen)(o)),
-  toggleMainDrawerOpen: () => set(Op.modify(_mainDrawerOpen)(Boolean.not)),
+  setMainDrawerOpen: flow(Op.replace(_mainDrawerOpen), setState),
+  toggleMainDrawerOpen: () => setState(Op.modify(_mainDrawerOpen)(B.not)),
 });
 
-const createPageActionSlice: StateCreator<PageActionSlice> = set => ({
+const createPageActionSlice: StateCreator<PageActionSlice> = setState => ({
   pageAction: undefined,
-  setPageAction: n => set({ pageAction: n }),
+  setPageAction: n => setState({ pageAction: n }),
 });
 
 export const useAppState = create<
