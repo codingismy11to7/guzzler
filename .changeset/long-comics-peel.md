@@ -1,9 +1,0 @@
----
-"@guzzlerapp/mongodb": patch
-"@guzzlerapp/domain": patch
-"@guzzlerapp/server": patch
-"@guzzlerapp/utils": patch
-"@guzzlerapp/webui": patch
----
-
-reformat code to be 80 chars instead of 120

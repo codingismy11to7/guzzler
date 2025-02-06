@@ -1,11 +1,9 @@
 {
   "name": "@guzzlerapp/utils",
-  "version": "0.0.2",
-
+  "version": "0.0.3",
   "description": "The utils template",
   "license": "MIT",
   "type": "module",
-
   "publishConfig": {
     "access": "public",
     "directory": "dist"
@@ -15,7 +13,6 @@
     "type": "git",
     "url": "git+ssh://git@github.com/codingismy11to7/guzzler.git"
   },
-
   "scripts": {
     "build": "npm run build-esm && npm run build-annotate && npm run build-cjs && build-utils pack-v2",
     "build-annotate": "babel build/esm --plugins annotate-pure-calls --out-dir build/esm --source-maps",
@@ -28,20 +25,22 @@
     "test": "vitest --run",
     "test:watch": "vitest"
   },
-
   "dependencies": {
     "ulid": "^2.3.0"
   },
   "peerDependencies": {
     "effect": "^3.12.7"
   },
-
   "effect": {
     "generateExports": {
-      "include": ["**/*.ts"]
+      "include": [
+        "**/*.ts"
+      ]
     },
     "generateIndex": {
-      "include": ["**/*.ts"]
+      "include": [
+        "**/*.ts"
+      ]
     }
   }
 }
