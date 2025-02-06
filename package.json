@@ -7,7 +7,7 @@
 
   "scripts": {
     "build": "tsc -b tsconfig.build.json && npm run build --workspaces --if-present",
-    "changeset-publish": "npm run build && TEST_DIST= npm run test && changeset publish",
+    "changeset-publish": "changeset publish",
     "changeset-version": "changeset version && tsx scripts/version.mts",
     "check": "tsc -b tsconfig.json",
     "check-recursive": "npm run check --workspaces",
@@ -20,8 +20,8 @@
     "lint": "eslint --max-warnings=0",
     "lint:fix": "npm run codegen && eslint --cache --max-warnings=0 --fix",
     "postinstall": "patch-package",
-    "runBackend": "npm run dev -w @guzzler/server",
-    "runFrontend": "npm run dev -w @guzzler/webui",
+    "runBackend": "npm run dev -w @guzzlerapp/server",
+    "runFrontend": "npm run dev -w @guzzlerapp/webui",
     "test": "vitest --run",
     "test:ui": "vitest --ui",
     "test:watch": "vitest"

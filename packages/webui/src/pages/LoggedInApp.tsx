@@ -1,4 +1,4 @@
-import { FullSession } from "@guzzler/domain/apis/SessionApi";
+import { FullSession } from "@guzzlerapp/domain/apis/SessionApi";
 import { Match } from "effect";
 import React, { lazy } from "react";
 import { PageContainer } from "../components/PageContainer.js";

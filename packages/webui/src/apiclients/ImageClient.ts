@@ -1,5 +1,5 @@
-import { ImageApi } from "@guzzler/domain";
-import { PhotoId } from "@guzzler/domain/Autos";
+import { ImageApi } from "@guzzlerapp/domain";
+import { PhotoId } from "@guzzlerapp/domain/Autos";
 import { Option } from "effect";
 
 export const imageUrl = (imageId: Option.Some<PhotoId>) =>

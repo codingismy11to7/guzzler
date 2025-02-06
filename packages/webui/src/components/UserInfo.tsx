@@ -1,4 +1,4 @@
-import { OAuthUserInfo, SessionApi } from "@guzzler/domain";
+import { OAuthUserInfo, SessionApi } from "@guzzlerapp/domain";
 import React from "react";
 import { useTranslation } from "../i18n.js";
 

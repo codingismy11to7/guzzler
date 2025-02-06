@@ -1,4 +1,4 @@
-import { Autos } from "@guzzler/domain";
+import { Autos } from "@guzzlerapp/domain";
 import { Schema } from "effect";
 
 export const AutosData = Schema.Struct({

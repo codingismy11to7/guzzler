@@ -6,8 +6,8 @@ import {
   Path,
 } from "@effect/platform";
 import { NotFound } from "@effect/platform/HttpApiError";
-import { AppApi } from "@guzzler/domain/AppApi";
-import { ServerError } from "@guzzler/domain/Errors";
+import { AppApi } from "@guzzlerapp/domain/AppApi";
+import { ServerError } from "@guzzlerapp/domain/Errors";
 import { Effect, pipe } from "effect";
 import { orDie } from "effect/Effect";
 import { ulid } from "ulid";

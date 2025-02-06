@@ -11,8 +11,8 @@ import {
   RawSessionAccess_DoNotUse,
   RequireFullSession,
   RequireNewUserSession,
-} from "@guzzler/domain/Authentication";
-import { Session, SessionId } from "@guzzler/domain/Session";
+} from "@guzzlerapp/domain/Authentication";
+import { Session, SessionId } from "@guzzlerapp/domain/Session";
 import { Effect, HashSet, Layer, Option, pipe } from "effect";
 import { Redacted } from "effect/Redacted";
 import { LoginUrl, NewUserRedirectUrl } from "../apis/AuthApiLive.js";

@@ -1,9 +1,9 @@
 ---
-"@guzzler/mongodb": patch
-"@guzzler/domain": patch
-"@guzzler/server": patch
-"@guzzler/utils": patch
-"@guzzler/webui": patch
+"@guzzlerapp/mongodb": patch
+"@guzzlerapp/domain": patch
+"@guzzlerapp/server": patch
+"@guzzlerapp/utils": patch
+"@guzzlerapp/webui": patch
 ---
 
 add encrypted collection support to mongo, encrypt access tokens

@@ -1,4 +1,4 @@
-import { FuelType, UserTypes } from "@guzzler/domain/Autos";
+import { FuelType, UserTypes } from "@guzzlerapp/domain/Autos";
 import { LocalGasStationTwoTone } from "@mui/icons-material";
 import {
   AppBar,

@@ -1,5 +1,5 @@
 {
-  "name": "@guzzler/mongodb",
+  "name": "@guzzlerapp/mongodb",
   "version": "0.0.3",
 
   "description": "The mongodb template",
@@ -8,7 +8,8 @@
 
   "publishConfig": {
     "access": "public",
-    "directory": "dist"
+    "directory": "dist",
+    "provenance": true
   },
   "repository": {
     "directory": "packages/mongodb",
@@ -31,7 +32,7 @@
   "dependencies": {
     "@effect/platform": "^0.74.0",
     "@effect/platform-node": "^0.70.0",
-    "@guzzler/utils": "^0.0.2",
+    "@guzzlerapp/utils": "^0.0.2",
     "effect": "^3.12.7",
     "mongodb": "^6.12.0"
   },

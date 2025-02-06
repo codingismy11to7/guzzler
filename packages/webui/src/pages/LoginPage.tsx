@@ -1,4 +1,4 @@
-import { AuthApi } from "@guzzler/domain";
+import { AuthApi } from "@guzzlerapp/domain";
 import { Backdrop, Button } from "@mui/material";
 import React from "react";
 import { useTranslation } from "../i18n.js";

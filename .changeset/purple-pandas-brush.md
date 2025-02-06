@@ -6,4 +6,4 @@
 "@guzzlerapp/webui": patch
 ---
 
-reformat code to be 80 chars instead of 120
+create guzzlerapp npm org and move everything over

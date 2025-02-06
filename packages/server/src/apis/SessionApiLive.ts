@@ -4,10 +4,10 @@ import {
   FullSession,
   Logout,
   SessionWithoutUser,
-} from "@guzzler/domain/apis/SessionApi";
-import { AppApi } from "@guzzler/domain/AppApi";
-import { RawCurrentSession_DoNotUse } from "@guzzler/domain/Authentication";
-import { Session } from "@guzzler/domain/Session";
+} from "@guzzlerapp/domain/apis/SessionApi";
+import { AppApi } from "@guzzlerapp/domain/AppApi";
+import { RawCurrentSession_DoNotUse } from "@guzzlerapp/domain/Authentication";
+import { Session } from "@guzzlerapp/domain/Session";
 import { Effect, identity, Match, Option, pipe } from "effect";
 import { SessionStorage } from "../SessionStorage.js";
 

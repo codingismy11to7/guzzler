@@ -1,5 +1,5 @@
 ---
-"@guzzler/webui": patch
+"@guzzlerapp/webui": patch
 ---
 
 reintegrate the frontend runtime into one

@@ -1,4 +1,4 @@
-import { Autos } from "@guzzler/domain";
+import { Autos } from "@guzzlerapp/domain";
 import {
   Route,
   createRouter,

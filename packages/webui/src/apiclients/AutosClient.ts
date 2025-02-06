@@ -1,7 +1,7 @@
 import { HttpApiClient, Socket } from "@effect/platform";
-import { AppApi, Autos, AutosModel } from "@guzzler/domain";
-import { RedactedError } from "@guzzler/domain/Errors";
-import { TimeZone } from "@guzzler/domain/TimeZone";
+import { AppApi, Autos, AutosModel } from "@guzzlerapp/domain";
+import { RedactedError } from "@guzzlerapp/domain/Errors";
+import { TimeZone } from "@guzzlerapp/domain/TimeZone";
 import { Effect, Runtime } from "effect";
 import { catchTags, gen } from "effect/Effect";
 import * as internal from "../internal/apiclients/autosClient.js";

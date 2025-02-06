@@ -1,10 +1,10 @@
 import { HttpApiBuilder } from "@effect/platform";
 import { Conflict } from "@effect/platform/HttpApiError";
-import { SetUsername } from "@guzzler/domain/apis/SignupApi";
-import { AppApi } from "@guzzler/domain/AppApi";
-import { CurrentUnknownUserSession } from "@guzzler/domain/Authentication";
-import { UserSession } from "@guzzler/domain/Session";
-import { User } from "@guzzler/domain/User";
+import { SetUsername } from "@guzzlerapp/domain/apis/SignupApi";
+import { AppApi } from "@guzzlerapp/domain/AppApi";
+import { CurrentUnknownUserSession } from "@guzzlerapp/domain/Authentication";
+import { UserSession } from "@guzzlerapp/domain/Session";
+import { User } from "@guzzlerapp/domain/User";
 import { Effect, pipe, Struct } from "effect";
 import { catchTag } from "effect/Effect";
 import { SessionStorage } from "../SessionStorage.js";
