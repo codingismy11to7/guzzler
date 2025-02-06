@@ -1,6 +1,6 @@
 import { HttpApiClient } from "@effect/platform";
-import { AppApi } from "@guzzler/domain";
-import { Username } from "@guzzler/domain/User";
+import { AppApi } from "@guzzlerapp/domain";
+import { Username } from "@guzzlerapp/domain/User";
 import { Effect, pipe } from "effect";
 import {
   dieFromFatal,

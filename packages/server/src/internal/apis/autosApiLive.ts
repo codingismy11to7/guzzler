@@ -1,8 +1,8 @@
-import { AutosModel } from "@guzzler/domain";
-import { RedactedError } from "@guzzler/domain/Errors";
-import { HeartbeatInterval } from "@guzzler/domain/models/AutosModel";
-import { Username } from "@guzzler/domain/User";
-import { RandomId } from "@guzzler/utils/RandomId";
+import { AutosModel } from "@guzzlerapp/domain";
+import { RedactedError } from "@guzzlerapp/domain/Errors";
+import { HeartbeatInterval } from "@guzzlerapp/domain/models/AutosModel";
+import { Username } from "@guzzlerapp/domain/User";
+import { RandomId } from "@guzzlerapp/utils/RandomId";
 import {
   Effect,
   flow,

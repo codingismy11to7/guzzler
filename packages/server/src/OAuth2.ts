@@ -8,8 +8,8 @@ import {
   HttpServerResponse,
 } from "@effect/platform";
 import { Cookie, CookiesError } from "@effect/platform/Cookies";
-import { OAuthToken as T, OAuthUserInfo } from "@guzzler/domain";
-import { ObjectUtils } from "@guzzler/utils";
+import { OAuthToken as T, OAuthUserInfo } from "@guzzlerapp/domain";
+import { ObjectUtils } from "@guzzlerapp/utils";
 import { createHash, randomBytes } from "crypto";
 import {
   Context,

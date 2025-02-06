@@ -1,5 +1,5 @@
 {
-  "name": "@guzzler/utils",
+  "name": "@guzzlerapp/utils",
   "version": "0.0.2",
 
   "description": "The utils template",
@@ -8,7 +8,8 @@
 
   "publishConfig": {
     "access": "public",
-    "directory": "dist"
+    "directory": "dist",
+    "provenance": true
   },
   "repository": {
     "directory": "packages/utils",

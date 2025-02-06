@@ -1,11 +1,16 @@
 {
-  "name": "@guzzler/server",
+  "name": "@guzzlerapp/server",
   "version": "0.0.6",
 
   "description": "The server template",
   "license": "MIT",
   "type": "module",
 
+  "publishConfig": {
+    "access": "public",
+    "directory": "dist",
+    "provenance": true
+  },
   "repository": {
     "directory": "packages/server",
     "type": "git",
@@ -32,9 +37,9 @@
     "@date-fns/tz": "^1.2.0",
     "@effect/platform": "^0.74.0",
     "@effect/platform-node": "^0.70.0",
-    "@guzzler/domain": "^0.0.5",
-    "@guzzler/mongodb": "^0.0.3",
-    "@guzzler/utils": "^0.0.2",
+    "@guzzlerapp/domain": "^0.0.5",
+    "@guzzlerapp/mongodb": "^0.0.3",
+    "@guzzlerapp/utils": "^0.0.2",
     "@npmcli/package-json": "^6.1.1",
     "archiver": "^7.0.1",
     "date-fns": "^4.1.0",

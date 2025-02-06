@@ -16,7 +16,7 @@ RUN npm run codegen --workspaces --if-present
 RUN npm run build
 RUN NODE_OPTIONS=--max_old_space_size=8192 npm run test
 
-RUN npm prune --omit=dev -w @guzzler/server
+RUN npm prune --omit=dev -w @guzzlerapp/server
 
 FROM base
 

@@ -1,5 +1,5 @@
 import { NodeRuntime } from "@effect/platform-node";
-import { RandomId } from "@guzzler/utils/RandomId";
+import { RandomId } from "@guzzlerapp/utils/RandomId";
 import { Effect, Layer, pipe } from "effect";
 import { AppConfig, AppConfigLive } from "./AppConfig.js";
 import { HttpLive } from "./HttpLive.js";

@@ -1,5 +1,5 @@
-import { User as U } from "@guzzler/domain";
-import { OAuthUserInfo } from "@guzzler/domain/OAuthUserInfo";
+import { User as U } from "@guzzlerapp/domain";
+import { OAuthUserInfo } from "@guzzlerapp/domain/OAuthUserInfo";
 import { CheckCircle, ThumbUp } from "@mui/icons-material";
 import {
   Avatar,

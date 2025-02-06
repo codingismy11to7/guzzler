@@ -1,11 +1,11 @@
-import { isRemoveField } from "@guzzler/domain/MiscSchemas";
+import { isRemoveField } from "@guzzlerapp/domain/MiscSchemas";
 import {
   SecureUserPreferences,
   SecureUserPreferencesFields,
   SecureUserPreferencesPatch,
-} from "@guzzler/domain/SecureUserPreferences";
-import { Username } from "@guzzler/domain/User";
-import { MongoTransactions } from "@guzzler/mongodb/MongoTransactions";
+} from "@guzzlerapp/domain/SecureUserPreferences";
+import { Username } from "@guzzlerapp/domain/User";
+import { MongoTransactions } from "@guzzlerapp/mongodb/MongoTransactions";
 import { Context, Effect, Schema, Struct } from "effect";
 import { catchTags, gen } from "effect/Effect";
 import { isString } from "effect/String";
