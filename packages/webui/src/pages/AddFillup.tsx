@@ -5,6 +5,8 @@ import { MoreBigDecimal } from "@guzzler/utils";
 import {
   Add,
   CarCrashTwoTone,
+  ChevronRight,
+  ExpandMore,
   NearMeTwoTone,
   SyncAlt,
 } from "@mui/icons-material";
@@ -19,6 +21,7 @@ import {
   Divider,
   FormControl,
   FormControlLabel,
+  Grid2,
   InputLabel,
   MenuItem,
   Paper,
@@ -29,10 +32,9 @@ import {
   TextField,
   TextFieldProps,
   TextFieldVariants,
-  Typography,
 } from "@mui/material";
 import { DateTimePicker } from "@mui/x-date-pickers";
-import { useLocalStorage } from "@uidotdev/usehooks";
+import { useLocalStorage, usePrevious } from "@uidotdev/usehooks";
 import {
   Array,
   BigDecimal as BD,
@@ -45,13 +47,16 @@ import {
 } from "effect";
 import { catchTags, gen } from "effect/Effect";
 import { fromNullable, isNone } from "effect/Option";
+import { isNotNull } from "effect/Predicate";
 import React, {
   PropsWithChildren,
+  ReactNode,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+import { useAppState } from "../AppStore.js";
 import MobileInfoIcon from "../components/MobileInfoIcon.js";
 import {
   type OnLocationSelect,
@@ -66,10 +71,10 @@ import {
   useUserData,
 } from "../hooks/useUserData.js";
 import { useTranslation } from "../i18n.js";
-import { randomId, runSync } from "../internal/bootstrap.js";
+import { randomId, runSync } from "../internal/runtimes/Main.js";
+import { NewFillupSection } from "../models/AppState.js";
 import { routes } from "../router.js";
 import GasStationResponsePlace = AutosApiModel.GasStationResponsePlace;
-import { useAppState } from "../AppStore.js";
 
 const NeedAVehicle = () => {
   const { t } = useTranslation();
@@ -103,13 +108,27 @@ const NeedAVehicle = () => {
   );
 };
 
-const FormSectionHeader = ({ children }: PropsWithChildren) => (
-  <Divider textAlign="left" sx={{ pt: 1 }}>
-    <Typography variant="button" color="primary">
-      {children}
-    </Typography>
-  </Divider>
-);
+const FormSectionHeader = ({
+  section,
+  children,
+}: PropsWithChildren<{ section: NewFillupSection }>) => {
+  const openMap = useAppState(s => s.sectionOpenMap);
+  const open = openMap[section];
+  const toggleOpen = useAppState(s => s.toggleSectionOpen);
+
+  return (
+    <Divider textAlign="left" sx={{ pt: 1 }}>
+      <Button
+        onClick={() => toggleOpen(section)}
+        endIcon={
+          open ? <ExpandMore color="action" /> : <ChevronRight color="action" />
+        }
+      >
+        {children}
+      </Button>
+    </Divider>
+  );
+};
 
 const LabeledSelect = <Value,>({
   fullWidth,
@@ -130,10 +149,59 @@ const FormTextField = (props: TextFieldProps) => (
   <TextField size="small" fullWidth {...props} />
 );
 
-const SectionStack = ({ children }: PropsWithChildren) => (
-  <Stack direction="column" spacing={1} component={Paper} padding={1}>
-    {children}
-  </Stack>
+const scrollIntoView = (div: HTMLDivElement, first: boolean) =>
+  div.scrollIntoView({ behavior: "smooth", block: first ? "end" : "start" });
+
+const SectionStack = ({
+  section,
+  children,
+  first,
+}: PropsWithChildren<{
+  section: NewFillupSection;
+  first: boolean;
+}>) => {
+  const openMap = useAppState(s => s.sectionOpenMap);
+  const open = openMap[section];
+  const stackRef = useAppState(s => s.sectionRefMap)[section];
+
+  const wasOpen = usePrevious(open);
+
+  useEffect(() => {
+    if (open && isNotNull(wasOpen) && !wasOpen && stackRef.current)
+      scrollIntoView(stackRef.current, first);
+  }, [first, open, stackRef, wasOpen]);
+
+  return (
+    open && (
+      <Stack
+        direction="column"
+        spacing={1}
+        component={Paper}
+        padding={1}
+        ref={stackRef}
+      >
+        {children}
+      </Stack>
+    )
+  );
+};
+
+const FormSection = ({
+  label,
+  section,
+  children,
+  first = false,
+}: PropsWithChildren<{
+  label: ReactNode;
+  section: NewFillupSection;
+  first?: boolean;
+}>) => (
+  <>
+    <FormSectionHeader section={section}>{label}</FormSectionHeader>
+    <SectionStack section={section} first={first}>
+      {children}
+    </SectionStack>
+  </>
 );
 
 const AddFillupLocation = ({
@@ -180,14 +248,29 @@ const AddFillupLocation = ({
       })
       .push();
 
+  /*
+  const ref = useAppState(s => s.sectionRefMap).location;
+
+  const searchWasOpen = usePrevious(searchOpen);
+  useEffect(() => {
+    if (searchOpen && searchWasOpen === false && isNotNull(ref.current))
+      scrollIntoView(ref.current, false);
+  }, [ref, searchOpen, searchWasOpen]);
+*/
+
   return (
-    <SectionStack>
+    <>
       <Button
         variant="outlined"
         fullWidth
         startIcon={<NearMeTwoTone />}
         color="secondary"
-        onClick={() => setSearchOpen(true)}
+        onClick={
+          () => setSearchOpen(true)
+          // console.log(ref);
+          // if (isNotNull(ref.current)) scrollIntoView(ref.current, false);
+          // setTimeout(() => setSearchOpen(true), 10);
+        }
       >
         Search...
       </Button>
@@ -237,7 +320,7 @@ const AddFillupLocation = ({
           open
         />
       )}
-    </SectionStack>
+    </>
   );
 };
 
@@ -287,16 +370,26 @@ const AddFillupForm = ({
   const [pCountry, setPCountry] = useState("");
 
   const [notes, setNotes] = useState("");
+  const [cityDriving, setCityDriving] = useState("50");
+  const [freewayDriving, setFreewayDriving] = useState("50");
+
+  const locationRef = useAppState(s => s.sectionRefMap).location;
 
   const setPlace = (p: GasStationResponsePlace | undefined) => {
     _setPlace(p);
     if (p) {
-      setPName(p.name);
-      if (p.street) setPStreet(p.street);
-      if (p.city) setPCity(p.city);
-      if (p.state) setPState(p.state);
-      if (p.postalCode) setPZip(p.postalCode);
-      if (p.country) setPCountry(p.country);
+      setTimeout(() => {
+        if (isNotNull(locationRef.current))
+          scrollIntoView(locationRef.current, false);
+      }, 10);
+      setTimeout(() => {
+        setPName(p.name);
+        if (p.street) setPStreet(p.street);
+        if (p.city) setPCity(p.city);
+        if (p.state) setPState(p.state);
+        if (p.postalCode) setPZip(p.postalCode);
+        if (p.country) setPCountry(p.country);
+      }, 300);
     }
   };
 
@@ -417,8 +510,7 @@ const AddFillupForm = ({
 
   return (
     <>
-      <FormSectionHeader>Fillup Information</FormSectionHeader>
-      <SectionStack>
+      <FormSection section="fillup" label="Fillup Information" first>
         <Stack direction="row" spacing={1}>
           <UnitsTextField
             units="mi"
@@ -500,10 +592,9 @@ const AddFillupForm = ({
           }}
           slotProps={{ textField: { variant, label: "Fillup time" } }}
         />
-      </SectionStack>
+      </FormSection>
 
-      <FormSectionHeader>Fuel Information</FormSectionHeader>
-      <SectionStack>
+      <FormSection label="Fuel Information" section="fuel">
         <Stack direction="row" spacing={1} alignItems="center" sx={{ pt: 1 }}>
           <LabeledSelect<FuelCategory>
             fullWidth
@@ -539,33 +630,34 @@ const AddFillupForm = ({
                   ))}
           </LabeledSelect>
         </Stack>
-      </SectionStack>
+      </FormSection>
 
-      <FormSectionHeader>Location Information</FormSectionHeader>
-      <AddFillupLocation
-        variant={variant}
-        route={route}
-        onLocationSelect={(loc, p) => {
-          setDeviceLoc(loc);
-          setPlace(p);
-        }}
-        name={pName}
-        onNameChange={setPName}
-        street={pStreet}
-        onStreetChange={setPStreet}
-        city={pCity}
-        onCityChange={setPCity}
-        state={pState}
-        onStateChange={setPState}
-        zip={pZip}
-        onZipChange={setPZip}
-        country={pCountry}
-        onCountryChange={setPCountry}
-      />
+      <FormSection label="Location Information" section="location">
+        <AddFillupLocation
+          variant={variant}
+          route={route}
+          onLocationSelect={(loc, p) => {
+            setDeviceLoc(loc);
+            setPlace(p);
+          }}
+          name={pName}
+          onNameChange={setPName}
+          street={pStreet}
+          onStreetChange={setPStreet}
+          city={pCity}
+          onCityChange={setPCity}
+          state={pState}
+          onStateChange={setPState}
+          zip={pZip}
+          onZipChange={setPZip}
+          country={pCountry}
+          onCountryChange={setPCountry}
+        />
+      </FormSection>
 
-      <FormSectionHeader>Notes</FormSectionHeader>
-      <SectionStack>
+      <FormSection label="Other Information" section="other">
         <TextField
+          label="Notes"
           variant={variant}
           size="small"
           multiline
@@ -573,7 +665,29 @@ const AddFillupForm = ({
           value={notes}
           onChange={e => setNotes(e.target.value)}
         />
-      </SectionStack>
+        <Grid2 container spacing={1}>
+          <Grid2 size={6}>
+            <UnitsTextField
+              label="City Driving"
+              variant={variant}
+              units="%"
+              size="small"
+              value={cityDriving}
+              onChange={e => setCityDriving(e.target.value)}
+            />
+          </Grid2>
+          <Grid2 size={6}>
+            <UnitsTextField
+              label="Freeway Driving"
+              variant={variant}
+              units="%"
+              size="small"
+              value={freewayDriving}
+              onChange={e => setFreewayDriving(e.target.value)}
+            />
+          </Grid2>
+        </Grid2>
+      </FormSection>
     </>
   );
 };
