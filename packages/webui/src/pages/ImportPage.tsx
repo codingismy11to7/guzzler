@@ -1,5 +1,5 @@
-import { AutosApi, AutosModel, TimeZone } from "@guzzler/domain";
-import { RedactedError } from "@guzzler/domain/Errors";
+import { AutosApi, AutosModel, TimeZone } from "@guzzlerapp/domain";
+import { RedactedError } from "@guzzlerapp/domain/Errors";
 import { Check, Close, CloudUpload, ContentCopy } from "@mui/icons-material";
 import {
   Autocomplete,

@@ -1,7 +1,7 @@
 ---
-"@guzzler/domain": patch
-"@guzzler/server": patch
-"@guzzler/webui": patch
+"@guzzlerapp/domain": patch
+"@guzzlerapp/server": patch
+"@guzzlerapp/webui": patch
 ---
 
 support encrypted user preferences

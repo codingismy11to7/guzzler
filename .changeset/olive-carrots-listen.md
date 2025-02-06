@@ -1,9 +1,9 @@
 ---
-"@guzzler/mongodb": patch
-"@guzzler/domain": patch
-"@guzzler/server": patch
-"@guzzler/utils": patch
-"@guzzler/webui": patch
+"@guzzlerapp/mongodb": patch
+"@guzzlerapp/domain": patch
+"@guzzlerapp/server": patch
+"@guzzlerapp/utils": patch
+"@guzzlerapp/webui": patch
 ---
 
 add the ability for users to backup and restore data

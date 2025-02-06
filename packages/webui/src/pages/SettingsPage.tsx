@@ -1,4 +1,4 @@
-import { SecureUserPreferences } from "@guzzler/domain";
+import { SecureUserPreferences } from "@guzzlerapp/domain";
 import { Lock, LockOpen, Visibility, VisibilityOff } from "@mui/icons-material";
 import {
   Button,

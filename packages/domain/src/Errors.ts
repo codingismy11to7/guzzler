@@ -1,5 +1,5 @@
 import { HttpApiSchema } from "@effect/platform";
-import { RandomId } from "@guzzler/utils";
+import { RandomId } from "@guzzlerapp/utils";
 import { Effect, Schema } from "effect";
 import { gen } from "effect/Effect";
 

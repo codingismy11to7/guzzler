@@ -1,5 +1,5 @@
-import { OAuthUserInfo, UserInfoId } from "@guzzler/domain/OAuthUserInfo";
-import { User, Username } from "@guzzler/domain/User";
+import { OAuthUserInfo, UserInfoId } from "@guzzlerapp/domain/OAuthUserInfo";
+import { User, Username } from "@guzzlerapp/domain/User";
 import { Effect } from "effect";
 import { CollectionRegistry } from "./internal/database/CollectionRegistry.js";
 
