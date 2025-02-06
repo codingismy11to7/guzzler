@@ -33,10 +33,12 @@ import React, {
 import { SignupClient } from "../apiclients/SignupClient.js";
 import { useCountdown } from "../hooks/useCountdown.js";
 import { useTranslation } from "../i18n.js";
-import { runP } from "../internal/bootstrap.js";
+import { PreLoginFunctions } from "../internal/runtimes/PreLogin.js";
 import { routes, SignupRoute } from "../router.js";
 import { logout } from "../utils/logout.js";
 import { onEnterKey } from "../utils/onEnterKey.js";
+
+const { runP } = PreLoginFunctions;
 
 type CreateUserCardProps = Pick<Props, "userInfo"> &
   Readonly<{
