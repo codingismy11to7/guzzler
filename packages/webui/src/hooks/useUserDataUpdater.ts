@@ -3,7 +3,7 @@ import { gen } from "effect/Effect";
 import { useCallback, useEffect } from "react";
 import { useAppState } from "../AppStore.js";
 import { AutosDataRepository } from "../data/AutosDataRepository.js";
-import { runFork, runP } from "../internal/bootstrap.js";
+import { runFork, runP } from "../internal/runtimes/Main.js";
 import * as Model from "../models/AppState.js";
 
 export const useUserDataUpdater = () => {
