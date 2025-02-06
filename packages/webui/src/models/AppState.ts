@@ -2,6 +2,7 @@ import { Autos, SessionApi } from "@guzzler/domain";
 import { Schema, Schema as S, Struct } from "effect";
 import { AutosData } from "./AutosData.js";
 import SessionInfo = SessionApi.SessionInfo;
+import React from "react";
 
 /* session */
 
@@ -54,3 +55,21 @@ export const NewFillup = S.Struct({
   ...Struct.pick(Autos.FillupRecord.fields, "odometerReading"),
 });
 export type NewFillup = typeof NewFillup.Type;
+
+export const NewFillupSection = S.Literal(
+  "fillup",
+  "fuel",
+  "location",
+  "other",
+);
+export type NewFillupSection = typeof NewFillupSection.Type;
+export const SectionOpenMap = S.Record({
+  key: NewFillupSection,
+  value: S.Boolean,
+});
+export type SectionOpenMap = typeof SectionOpenMap.Type;
+
+export type SectionRefMap = Record<
+  NewFillupSection,
+  React.RefObject<HTMLDivElement | null>
+>;

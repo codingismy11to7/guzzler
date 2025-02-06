@@ -44,7 +44,7 @@ import {
   GasStationFetchError,
 } from "../apiclients/AutosClient.js";
 import { useTranslation } from "../i18n.js";
-import { runP } from "../internal/bootstrap.js";
+import { runP } from "../internal/runtimes/Main.js";
 import { routes } from "../router.js";
 import { AppLink } from "./AppLink.js";
 import { FullScreenDialog } from "./FullScreenDialog.js";
