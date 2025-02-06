@@ -1,5 +1,32 @@
 # @guzzler/server
 
+## 0.0.7
+
+### Patch Changes
+
+- [#129](https://github.com/codingismy11to7/guzzler/pull/129) [`0cae4a4`](https://github.com/codingismy11to7/guzzler/commit/0cae4a40114003a39a54da38a86ff269d322308d) Thanks [@codingismy11to7](https://github.com/codingismy11to7)! - get data to frontend, vehicle screen
+
+  data fetching and change notifications so the frontend can refresh
+
+  added a bad vehicle screen but with some things displayed at least
+
+- [#144](https://github.com/codingismy11to7/guzzler/pull/144) [`977368b`](https://github.com/codingismy11to7/guzzler/commit/977368b971daa906d97766f8631afcd7595a3681) Thanks [@codingismy11to7](https://github.com/codingismy11to7)! - support encrypted user preferences
+
+- [#110](https://github.com/codingismy11to7/guzzler/pull/110) [`18573cd`](https://github.com/codingismy11to7/guzzler/commit/18573cd92087cbc9ed166039cec2b354e9faec7e) Thanks [@codingismy11to7](https://github.com/codingismy11to7)! - reformat code to be 80 chars instead of 120
+
+- [#119](https://github.com/codingismy11to7/guzzler/pull/119) [`052f767`](https://github.com/codingismy11to7/guzzler/commit/052f767e3ddff21f5936691ad3b0c4e9c6b228e7) Thanks [@codingismy11to7](https://github.com/codingismy11to7)! - add the ability for users to backup and restore data
+
+- [`01d73ad`](https://github.com/codingismy11to7/guzzler/commit/01d73adea962865f2155746ca7b1eb659a180b58) Thanks [@codingismy11to7](https://github.com/codingismy11to7)! - create guzzlerapp npm org and move everything over
+
+- [#132](https://github.com/codingismy11to7/guzzler/pull/132) [`76d8112`](https://github.com/codingismy11to7/guzzler/commit/76d8112b987c32af67c9e26c55112c5356bb4c5e) Thanks [@codingismy11to7](https://github.com/codingismy11to7)! - add encrypted collection support to mongo, encrypt access tokens
+
+- [#114](https://github.com/codingismy11to7/guzzler/pull/114) [`f3433b5`](https://github.com/codingismy11to7/guzzler/commit/f3433b51c2746b884b7e8a485ca785b0d589f57a) Thanks [@codingismy11to7](https://github.com/codingismy11to7)! - switch from nanoid to ulid
+
+- Updated dependencies [[`0cae4a4`](https://github.com/codingismy11to7/guzzler/commit/0cae4a40114003a39a54da38a86ff269d322308d), [`f54cadf`](https://github.com/codingismy11to7/guzzler/commit/f54cadf1f3dbc72f0523df9ae5ba25cfb44f4f4a), [`977368b`](https://github.com/codingismy11to7/guzzler/commit/977368b971daa906d97766f8631afcd7595a3681), [`18573cd`](https://github.com/codingismy11to7/guzzler/commit/18573cd92087cbc9ed166039cec2b354e9faec7e), [`052f767`](https://github.com/codingismy11to7/guzzler/commit/052f767e3ddff21f5936691ad3b0c4e9c6b228e7), [`01d73ad`](https://github.com/codingismy11to7/guzzler/commit/01d73adea962865f2155746ca7b1eb659a180b58), [`76d8112`](https://github.com/codingismy11to7/guzzler/commit/76d8112b987c32af67c9e26c55112c5356bb4c5e), [`f3433b5`](https://github.com/codingismy11to7/guzzler/commit/f3433b51c2746b884b7e8a485ca785b0d589f57a)]:
+  - @guzzlerapp/mongodb@0.0.4
+  - @guzzlerapp/domain@0.0.6
+  - @guzzlerapp/utils@0.0.3
+
 ## 0.0.6
 
 ### Patch Changes
