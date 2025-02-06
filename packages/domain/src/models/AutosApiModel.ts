@@ -1,7 +1,7 @@
 import { HttpApiSchema } from "@effect/platform";
 import { Schema as S, Struct } from "effect";
 import { DurationInput } from "effect/Duration";
-import * as internal from "../internal/models/autosModel.js";
+import * as internal from "../internal/models/autosApiModel.js";
 import { Username } from "../User.js";
 import { UserVehicleId, VehicleId } from "./Autos.js";
 import { Latitude, Location, Longitude } from "./Location.js";

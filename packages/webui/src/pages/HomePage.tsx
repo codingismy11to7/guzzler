@@ -4,7 +4,7 @@ import reactLogo from "../assets/react.svg";
 import { StandardPageBox } from "../components/StandardPageBox.js";
 import { useTranslation } from "../i18n.js";
 import viteLogo from "/vite.svg";
-import { runP } from "../internal/bootstrap.js";
+import { runP } from "../internal/runtimes/Main.js";
 
 const HomePage = () => {
   const { t } = useTranslation();

@@ -42,7 +42,7 @@ import { RedactedErrorInfoPanel } from "../components/RedactedErrorInfoPanel.js"
 import { StandardPageBox } from "../components/StandardPageBox.js";
 import { VisuallyHiddenInput } from "../components/VisuallyHiddenInput.js";
 import { TFunction, useTranslation } from "../i18n.js";
-import { runP } from "../internal/bootstrap.js";
+import { runP } from "../internal/runtimes/Main.js";
 import { routes } from "../router.js";
 import { onEnterKey } from "../utils/onEnterKey.js";
 
