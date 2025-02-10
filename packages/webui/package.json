@@ -35,7 +35,7 @@
     "@uidotdev/usehooks": "^2.4.1",
     "date-fns": "^4.1.0",
     "effect": "^3.12.7",
-    "i18next": "^24.2.1",
+    "i18next": "^24.2.2",
     "i18next-browser-languagedetector": "^8.0.2",
     "i18next-http-backend": "^3.0.2",
     "react": "^19.0.0",
