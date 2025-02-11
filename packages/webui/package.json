@@ -25,11 +25,12 @@
   },
 
   "dependencies": {
-    "@effect/platform": "^0.90.8",
+    "@effect/platform": "^0.90.9",
     "@effect/platform-browser": "^0.70.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@fontsource/roboto": "^5.1.1",
+    "@fp-ts/optic": "^0.25.0",
     "@guzzlerapp/domain": "^0.0.6",
     "@guzzlerapp/utils": "^0.0.3",
     "@mui/icons-material": "^6.4.0",
@@ -47,7 +48,8 @@
     "react-i18next": "^15.7.3",
     "react-markdown": "^9.0.3",
     "remark-gfm": "^4.0.1",
-    "type-route": "^1.1.0"
+    "type-route": "^1.1.0",
+    "zustand": "^5.0.3"
   },
   "devDependencies": {
     "@types/react": "^19.0.7",

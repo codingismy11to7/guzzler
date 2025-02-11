@@ -10,6 +10,7 @@
     "access": "public",
     "directory": "dist"
   },
+
   "repository": {
     "directory": "packages/domain",
     "type": "git",
