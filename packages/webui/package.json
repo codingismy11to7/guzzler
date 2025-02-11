@@ -30,6 +30,7 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@fontsource/roboto": "^5.2.9",
+    "@fp-ts/optic": "^0.25.0",
     "@guzzlerapp/domain": "^0.0.6",
     "@guzzlerapp/utils": "^0.0.3",
     "@mui/icons-material": "^7.3.5",
@@ -47,7 +48,8 @@
     "react-i18next": "^16.3.5",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
-    "type-route": "^1.1.0"
+    "type-route": "^1.1.0",
+    "zustand": "^5.0.3"
   },
   "devDependencies": {
     "@types/react": "^19.1.13",
