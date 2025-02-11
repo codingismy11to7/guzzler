@@ -1,4 +1,4 @@
-import { PhotoId } from "@guzzler/domain/models/Autos";
+import { PhotoId } from "@guzzlerapp/domain/models/Autos";
 import { Avatar, Skeleton } from "@mui/material";
 import { Option } from "effect";
 import { isNotNullable, isNotUndefined } from "effect/Predicate";

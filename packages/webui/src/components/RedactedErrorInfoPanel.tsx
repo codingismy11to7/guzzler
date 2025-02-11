@@ -1,4 +1,4 @@
-import { Errors } from "@guzzler/domain";
+import { Errors } from "@guzzlerapp/domain";
 import { ContentCopy } from "@mui/icons-material";
 import { Alert, Box, Snackbar, Stack, Typography } from "@mui/material";
 import { useCopyToClipboard } from "@uidotdev/usehooks";
