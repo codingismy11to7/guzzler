@@ -1,4 +1,4 @@
-import { Autos, SessionApi } from "@guzzler/domain";
+import { Autos, SessionApi } from "@guzzlerapp/domain";
 import { Schema, Schema as S, Struct } from "effect";
 import { AutosData } from "./AutosData.js";
 import SessionInfo = SessionApi.SessionInfo;

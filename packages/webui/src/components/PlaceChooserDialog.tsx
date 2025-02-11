@@ -1,6 +1,6 @@
-import { Location } from "@guzzler/domain";
-import { GasStationResponsePlace } from "@guzzler/domain/models/AutosApiModel";
-import { MoreArray } from "@guzzler/utils";
+import { Location } from "@guzzlerapp/domain";
+import { GasStationResponsePlace } from "@guzzlerapp/domain/models/AutosApiModel";
+import { MoreArray } from "@guzzlerapp/utils";
 import {
   ArrowRightTwoTone,
   CloudOffTwoTone,
