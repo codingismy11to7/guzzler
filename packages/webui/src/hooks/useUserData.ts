@@ -1,4 +1,4 @@
-import { VehicleId } from "@guzzler/domain/models/Autos";
+import { VehicleId } from "@guzzlerapp/domain/models/Autos";
 import { BigDecimal, Chunk, Option, Order } from "effect";
 import { sortWith, unsafeFromArray } from "effect/Chunk";
 import { flatMap, fromNullable, getOrUndefined, map } from "effect/Option";

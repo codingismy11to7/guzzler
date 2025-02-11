@@ -1,5 +1,5 @@
 import { BrowserHttpClient, BrowserSocket } from "@effect/platform-browser";
-import { RandomId } from "@guzzler/utils";
+import { RandomId } from "@guzzlerapp/utils";
 import { format } from "date-fns/fp";
 import { flow, Layer, Logger, LogLevel } from "effect";
 

@@ -16,6 +16,15 @@ const config: UserConfigExport = {
   },
   build: {
     minify: true,
+    target: "es2022",
+  },
+  esbuild: {
+    target: "es2022",
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      target: "es2022",
+    },
   },
   resolve: {
     alias: {

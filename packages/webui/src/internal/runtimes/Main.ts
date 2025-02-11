@@ -1,4 +1,4 @@
-import { RandomId } from "@guzzler/utils";
+import { RandomId } from "@guzzlerapp/utils";
 import { Effect, Layer, ManagedRuntime } from "effect";
 import { AccountClient } from "../../apiclients/AccountClient.js";
 import { AutosClient } from "../../apiclients/AutosClient.js";

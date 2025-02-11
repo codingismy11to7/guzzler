@@ -1,4 +1,4 @@
-import { SessionApi } from "@guzzler/domain";
+import { SessionApi } from "@guzzlerapp/domain";
 import { useAppState } from "../AppStore.js";
 import { Succeeded } from "../models/AppState.js";
 import SessionInfo = SessionApi.SessionInfo;

@@ -1,7 +1,7 @@
-import { Autos, AutosApiModel } from "@guzzler/domain";
-import { FuelCategory, FuelTypeId } from "@guzzler/domain/models/Autos";
-import { type Location } from "@guzzler/domain/models/Location";
-import { MoreBigDecimal } from "@guzzler/utils";
+import { Autos, AutosApiModel } from "@guzzlerapp/domain";
+import { FuelCategory, FuelTypeId } from "@guzzlerapp/domain/models/Autos";
+import { type Location } from "@guzzlerapp/domain/models/Location";
+import { MoreBigDecimal } from "@guzzlerapp/utils";
 import {
   Add,
   CarCrashTwoTone,
@@ -501,7 +501,6 @@ const AddFillupForm = ({
       userData.loading
         ? []
         : Object.values(userData.types.fuelTypes).map(f => ({
-            // eslint-disable-next-line @typescript-eslint/no-misused-spread
             ...f,
             displayName: `${f.name}${f.rating ? ` [${f.rating}]` : ""}`,
           })),

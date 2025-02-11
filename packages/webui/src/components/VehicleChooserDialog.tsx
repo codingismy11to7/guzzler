@@ -1,4 +1,4 @@
-import { VehicleId } from "@guzzler/domain/models/Autos";
+import { VehicleId } from "@guzzlerapp/domain/models/Autos";
 import { LazyArg } from "effect/Function";
 import { FullScreenDialog } from "./FullScreenDialog.js";
 import { VehicleList } from "./VehicleList.js";

@@ -1,5 +1,5 @@
-import { PhotoId, VehicleId } from "@guzzler/domain/models/Autos";
-import { MoreArray } from "@guzzler/utils";
+import { PhotoId, VehicleId } from "@guzzlerapp/domain/models/Autos";
+import { MoreArray } from "@guzzlerapp/utils";
 import {
   Divider,
   List,
