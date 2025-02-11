@@ -1,16 +1,16 @@
 import { HttpBody } from "@effect/platform";
 import { HttpClient } from "@effect/platform/HttpClient";
 import { ResponseError } from "@effect/platform/HttpClientError";
-import { BadGateway, RedactedError } from "@guzzler/domain/Errors";
-import { NumberFromSelfOrString } from "@guzzler/domain/MiscSchemas";
-import { GasStationQueryMode } from "@guzzler/domain/models/AutosApiModel";
+import { BadGateway, RedactedError } from "@guzzlerapp/domain/Errors";
+import { NumberFromSelfOrString } from "@guzzlerapp/domain/MiscSchemas";
+import { GasStationQueryMode } from "@guzzlerapp/domain/models/AutosApiModel";
 import {
   FilterablePlaceType,
   GooglePlace,
-} from "@guzzler/domain/models/GooglePlace";
-import { Location } from "@guzzler/domain/models/Location";
-import { GoogleMapsApiKey } from "@guzzler/domain/SecureUserPreferences";
-import { RandomId } from "@guzzler/utils/RandomId";
+} from "@guzzlerapp/domain/models/GooglePlace";
+import { Location } from "@guzzlerapp/domain/models/Location";
+import { GoogleMapsApiKey } from "@guzzlerapp/domain/SecureUserPreferences";
+import { RandomId } from "@guzzlerapp/utils/RandomId";
 import { Effect, Match as M, Redacted, Schema as S } from "effect";
 import {
   annotateLogs,
