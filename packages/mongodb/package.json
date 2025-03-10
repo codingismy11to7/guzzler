@@ -26,7 +26,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@effect/platform": "^0.74.0",
+    "@effect/platform": "^0.78.1",
     "@effect/platform-node": "^0.70.0",
     "@guzzlerapp/utils": "^0.0.3",
     "effect": "^3.12.7",
