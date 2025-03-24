@@ -22,7 +22,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@effect/platform": "^0.74.0",
+    "@effect/platform": "^0.80.1",
     "@effect/platform-browser": "^0.56.4",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
