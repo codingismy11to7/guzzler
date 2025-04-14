@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@date-fns/tz": "^1.2.0",
-    "@effect/platform": "^0.74.0",
+    "@effect/platform": "^0.80.8",
     "@effect/platform-node": "^0.70.0",
     "@guzzlerapp/domain": "^0.0.6",
     "@guzzlerapp/mongodb": "^0.0.4",
