@@ -22,7 +22,7 @@ export const changeEventsToFrontend = (
       vehicles =>
         FrontendUserVehicleChange.make({
           type: from.collectionName,
-          vehicles: [...vehicles, from._id.vehicleId],
+          vehicleIds: [...vehicles, from._id.vehicleId],
         }),
     );
 

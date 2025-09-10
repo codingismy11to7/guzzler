@@ -89,7 +89,9 @@ export const MainDrawer = () => {
           },
         }}
         ref={drawerRef}
-        PaperProps={{ elevation: 1, sx: {} }}
+        slotProps={{
+          paper: { elevation: 1, sx: {} },
+        }}
       >
         <Card elevation={0}>
           <CardHeader

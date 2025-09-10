@@ -27,12 +27,16 @@ const AppSpeedDialAction = ({
 }: AppSpeedDialActionProps) => (
   <SpeedDialAction
     icon={icon}
-    tooltipTitle={
-      <Typography variant="body2" noWrap>
-        {label}
-      </Typography>
-    }
-    tooltipOpen={isTouch}
+    slotProps={{
+      tooltip: {
+        open: isTouch,
+        title: (
+          <Typography variant="body2" noWrap>
+            {label}
+          </Typography>
+        ),
+      },
+    }}
     {...rest}
   />
 );

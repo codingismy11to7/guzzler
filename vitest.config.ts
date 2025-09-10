@@ -12,32 +12,33 @@ const alias = (name: string) => {
 // This is a workaround, see https://github.com/vitest-dev/vitest/issues/4744
 const config: ViteUserConfig = {
   esbuild: {
-    target: "es2020"
+    target: "es2020",
   },
   optimizeDeps: {
-    exclude: ["bun:sqlite"]
+    exclude: ["bun:sqlite"],
   },
   test: {
     setupFiles: [path.join(__dirname, "setupTests.ts")],
     fakeTimers: {
-      toFake: undefined
+      toFake: undefined,
     },
     sequence: {
-      concurrent: true
+      concurrent: true,
     },
     include: ["test/**/*.test.ts"],
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts", "src/**/*.tsx"],
-      exclude: [...configDefaults.exclude, "**/dist/**", "**/build/**", "**/*.js"]
+      exclude: [...configDefaults.exclude, "**/dist/**", "**/build/**", "**/*.js"],
     },
-    alias: {
-      ...alias("domain"),
-      ...alias("mongodb"),
-      ...alias("server"),
-      ...alias("webui")
-    }
-  }
+    projects: ["packages/*"],
+    // alias: {
+    //   ...alias("domain"),
+    //   ...alias("mongodb"),
+    //   ...alias("server"),
+    //   ...alias("webui"),
+    // },
+  },
 };
 
 export default config;

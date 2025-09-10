@@ -1,6 +1,6 @@
 import react from "@vitejs/plugin-react-swc";
 import { mergeConfig, type UserConfigExport } from "vitest/config";
-import shared from "../../vitest.shared.js";
+import shared from "../../vitest.config.js";
 import * as path from "path";
 import svgr from "vite-plugin-svgr";
 
