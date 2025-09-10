@@ -349,6 +349,7 @@ const importFromACarFullBackup =
                     unknown
                   >,
                   // add a default name if it's missing
+                  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
                   f => ({ ...f, name: f.name || `${f.category} [${f.id}]` }),
                   Schema.decodeUnknown(ACarFuelType),
                 );

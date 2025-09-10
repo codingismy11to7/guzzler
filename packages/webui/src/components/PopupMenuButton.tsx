@@ -58,7 +58,9 @@ export const PopupMenuButton = <
           open={true}
           anchorEl={anchorEl}
           onClose={onMenuClose}
-          MenuListProps={{ "aria-labelledby": menuButtonId.current }}
+          slotProps={{
+            list: { "aria-labelledby": menuButtonId.current },
+          }}
         >
           {isFunction(menuItems) ? menuItems(onMenuClose) : menuItems}
         </Menu>

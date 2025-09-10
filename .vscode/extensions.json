@@ -1,7 +1,6 @@
 {
   "recommendations": [
     "dbaeumer.vscode-eslint",
-    "dotenv.dotenv-vscode",
     "effectful-tech.effect-vscode"
   ]
 }

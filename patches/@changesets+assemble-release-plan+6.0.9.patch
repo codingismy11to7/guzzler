@@ -1,8 +1,8 @@
 diff --git a/node_modules/@changesets/assemble-release-plan/dist/changesets-assemble-release-plan.cjs.js b/node_modules/@changesets/assemble-release-plan/dist/changesets-assemble-release-plan.cjs.js
-index e32a5e5..009b24b 100644
+index e07ba6e..88d80a9 100644
 --- a/node_modules/@changesets/assemble-release-plan/dist/changesets-assemble-release-plan.cjs.js
 +++ b/node_modules/@changesets/assemble-release-plan/dist/changesets-assemble-release-plan.cjs.js
-@@ -237,7 +237,7 @@ function determineDependents({
+@@ -215,7 +215,7 @@ function determineDependents({
              preInfo,
              onlyUpdatePeerDependentsWhenOutOfRange: config.___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH.onlyUpdatePeerDependentsWhenOutOfRange
            })) {

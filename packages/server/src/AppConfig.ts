@@ -30,13 +30,12 @@ export class ServerInfo extends Effect.Service<ServerInfo>()("ServerInfo", {
 
 const redacted = (name: string) =>
   pipe(
-    Config.string(`${name}_FILE`).pipe(
-      Config.option,
-      Config.mapAttempt(Option.getOrThrow),
-      Config.map(fName =>
-        // configs are synchronous, so have to go to native node
-        readFileSync(fName, { encoding: "utf8" }).trim(),
-      ),
+    Config.string(`${name}_FILE`),
+    Config.option,
+    Config.mapAttempt(Option.getOrThrow),
+    Config.map(fName =>
+      // configs are synchronous, so have to go to native node
+      readFileSync(fName, { encoding: "utf8" }).trim(),
     ),
     Config.orElse(() => Config.string(name)),
     c => Config.redacted(c),

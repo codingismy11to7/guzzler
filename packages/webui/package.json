@@ -1,9 +1,11 @@
 {
   "name": "@guzzlerapp/webui",
   "version": "0.0.6",
+
   "license": "MIT",
   "private": true,
   "type": "module",
+
   "repository": {
     "directory": "packages/webui",
     "type": "git",
@@ -21,20 +23,21 @@
     "test": "vitest --run",
     "test:watch": "vitest"
   },
+
   "dependencies": {
-    "@effect/platform": "^0.74.0",
-    "@effect/platform-browser": "^0.56.4",
+    "@effect/platform": "^0.90.8",
+    "@effect/platform-browser": "^0.70.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@fontsource/roboto": "^5.1.1",
     "@guzzlerapp/domain": "^0.0.6",
     "@guzzlerapp/utils": "^0.0.3",
     "@mui/icons-material": "^6.4.0",
-    "@mui/lab": "^6.0.0-beta.24",
-    "@mui/material": "^6.4.2",
+    "@mui/lab": "^7.0.0-beta.17",
+    "@mui/material": "^7.3.2",
     "@uidotdev/usehooks": "^2.4.1",
     "date-fns": "^4.1.0",
-    "effect": "^3.12.7",
+    "effect": "^3.17.13",
     "i18next": "^24.2.2",
     "i18next-browser-languagedetector": "^8.0.2",
     "i18next-http-backend": "^3.0.2",
@@ -51,7 +54,7 @@
     "@vitejs/plugin-react-swc": "^3.5.0",
     "globals": "^15.14.0",
     "i18next-resources-for-ts": "^1.5.0",
-    "vite": "^6.0.11",
+    "vite": "^7.1.5",
     "vite-plugin-svgr": "^4.3.0"
   }
 }

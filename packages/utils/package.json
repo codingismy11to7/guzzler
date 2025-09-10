@@ -1,9 +1,11 @@
 {
   "name": "@guzzlerapp/utils",
   "version": "0.0.3",
+
   "description": "The utils template",
   "license": "MIT",
   "type": "module",
+
   "publishConfig": {
     "access": "public",
     "directory": "dist"
@@ -25,22 +27,20 @@
     "test": "vitest --run",
     "test:watch": "vitest"
   },
+
   "dependencies": {
     "ulid": "^2.3.0"
   },
   "peerDependencies": {
-    "effect": "^3.12.7"
+    "effect": "^3.17.13"
   },
+
   "effect": {
     "generateExports": {
-      "include": [
-        "**/*.ts"
-      ]
+      "include": ["**/*.ts"]
     },
     "generateIndex": {
-      "include": [
-        "**/*.ts"
-      ]
+      "include": ["**/*.ts"]
     }
   }
 }

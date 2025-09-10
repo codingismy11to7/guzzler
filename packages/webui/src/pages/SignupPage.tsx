@@ -102,12 +102,7 @@ const SetUsernameStep = ({ userInfo }: SetUsernameStepProps) => {
           },
           onLeft: e => {
             setCheckingForConflict(false);
-            setError(
-              ParseResult.ArrayFormatter.formatErrorSync(e)
-                .slice(0, 1)
-                .map(i => `${i.path.join(".")} ${i.message}`)
-                .join(),
-            );
+            setError(ParseResult.TreeFormatter.formatErrorSync(e));
           },
         },
       );
