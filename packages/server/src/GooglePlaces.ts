@@ -143,7 +143,9 @@ export class GooglePlaces extends Effect.Service<GooglePlaces>()(
             catchTags({
               ParseError: e =>
                 gen(function* () {
-                  yield* logWarning("Error parsing nearby places", e);
+                  yield* logWarning("Error parsing nearby places").pipe(
+                    annotateLogs({ error: e, rawJson: j }),
+                  );
                   return yield* new BadGateway();
                 }),
             }),
