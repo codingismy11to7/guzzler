@@ -21,7 +21,7 @@ import {
   Divider,
   FormControl,
   FormControlLabel,
-  Grid2,
+  Grid as Grid2,
   InputLabel,
   MenuItem,
   Paper,
