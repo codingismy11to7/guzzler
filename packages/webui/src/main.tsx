@@ -5,7 +5,7 @@ import "@fontsource/roboto/700.css";
 import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
 import { green, orange } from "@mui/material/colors";
 import { LocalizationProvider } from "@mui/x-date-pickers";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFnsV3";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { lazy, StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import "./i18n.js";
