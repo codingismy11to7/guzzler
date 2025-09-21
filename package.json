@@ -42,7 +42,7 @@
     "@changesets/changelog-github": "^0.5.1",
     "@changesets/cli": "^2.27.12",
     "@effect/build-utils": "^0.8.9",
-    "@effect/language-service": "^0.38.4",
+    "@effect/language-service": "^0.40.0",
     "@effect/vitest": "^0.25.1",
     "@eslint/compat": "1.2.5",
     "@eslint/eslintrc": "3.2.0",
