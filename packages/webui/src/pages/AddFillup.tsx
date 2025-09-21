@@ -601,7 +601,7 @@ const AddFillupForm = ({
             size="small"
             label="Category"
             value={fuelCategory}
-            onChange={e => setFuelCategory(e.target.value as FuelCategory)}
+            onChange={e => setFuelCategory(e.target.value)}
           >
             {fuelCategories.map(c => (
               <MenuItem key={c} value={c}>
@@ -616,7 +616,7 @@ const AddFillupForm = ({
             label="Type"
             disabled={!fuelCategory}
             value={fuelTypeId}
-            onChange={e => setFuelTypeId(e.target.value as FuelTypeId)}
+            onChange={e => setFuelTypeId(e.target.value)}
           >
             {userData.loading
               ? []
