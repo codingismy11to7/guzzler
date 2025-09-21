@@ -1,4 +1,4 @@
-import { Schema, Struct } from "effect";
+import { Option, Schema, Struct } from "effect";
 import { propertySignature } from "effect/Schema";
 import {
   IntFromSelfOrString,
@@ -93,7 +93,11 @@ export class FillupRecord extends Schema.Class<FillupRecord>("FillupRecord")({
   averageSpeed: OptionalBigDecimal,
   deviceLocation: Schema.OptionFromUndefinedOr(Location),
   place: Schema.OptionFromUndefinedOr(Place),
-}) {}
+}) {
+  readonly withEfficiency = (fuelEfficiency: Option.Option<number>) =>
+    // eslint-disable-next-line @typescript-eslint/no-misused-spread
+    new FillupRecord({ ...this, fuelEfficiency });
+}
 
 /* event record */
 
