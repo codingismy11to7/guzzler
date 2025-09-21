@@ -211,6 +211,7 @@ export type FindResult<MemSchema, DbSchema> = Readonly<{
   stream: Stream.Stream<MemSchema>;
 }>;
 
+// @effect-diagnostics-next-line unsupportedServiceAccessors:off
 export class MongoCollectionLayer extends Effect.Service<MongoCollectionLayer>()(
   "MongoCollectionLayer",
   {

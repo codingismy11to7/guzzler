@@ -25,7 +25,6 @@ export const FullScreenDialog = ({
             direction="up"
             ref={ref}
             {...props}
-            appear={props.appear ?? false}
           />
         );
       }),

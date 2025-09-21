@@ -1,0 +1,405 @@
+[
+  {
+    "odometerReading": "41.6",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "1.86"
+  },
+  {
+    "fuelEfficiency": 23.208927,
+    "odometerReading": "235",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "8.333"
+  },
+  {
+    "fuelEfficiency": 18.800774,
+    "odometerReading": "478",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "12.925"
+  },
+  {
+    "fuelEfficiency": 18.97224,
+    "odometerReading": "726.1",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "13.077"
+  },
+  {
+    "fuelEfficiency": 22.219217,
+    "odometerReading": "890.3",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "7.39"
+  },
+  {
+    "fuelEfficiency": 26.283335,
+    "odometerReading": "1048",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "6"
+  },
+  {
+    "fuelEfficiency": 25.914232,
+    "odometerReading": "1327.2",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "10.774"
+  },
+  {
+    "fuelEfficiency": 26.402504,
+    "odometerReading": "1699",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.082"
+  },
+  {
+    "fuelEfficiency": 20.494383,
+    "odometerReading": "1927",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "11.125"
+  },
+  {
+    "fuelEfficiency": 19.136236,
+    "odometerReading": "2145",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "11.392"
+  },
+  {
+    "fuelEfficiency": 18.216944,
+    "odometerReading": "2418.4",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "15.008"
+  },
+  {
+    "fuelEfficiency": 17.066612,
+    "odometerReading": "2665.9",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.502"
+  },
+  {
+    "fuelEfficiency": 17.696754,
+    "odometerReading": "2877.5",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "11.957"
+  },
+  {
+    "fuelEfficiency": 19.73244,
+    "odometerReading": "3113.5",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "11.96"
+  },
+  {
+    "fuelEfficiency": 17.154808,
+    "odometerReading": "3347.2",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "13.623"
+  },
+  {
+    "fuelEfficiency": 28.3942,
+    "odometerReading": "3672.2",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "11.446"
+  },
+  {
+    "fuelEfficiency": 27.940115,
+    "odometerReading": "4060.4",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "13.894"
+  },
+  {
+    "fuelEfficiency": 19.998613,
+    "odometerReading": "4348.9",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.426"
+  },
+  {
+    "fuelEfficiency": 25.337263,
+    "odometerReading": "4572.4",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "8.821"
+  },
+  {
+    "fuelEfficiency": 25.505236,
+    "odometerReading": "4781.9",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "8.214"
+  },
+  {
+    "fuelEfficiency": 28.009897,
+    "odometerReading": "5054.1",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "9.718"
+  },
+  {
+    "fuelEfficiency": 26.604967,
+    "odometerReading": "5427.9",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.05"
+  },
+  {
+    "fuelEfficiency": 20.402498,
+    "odometerReading": "5721.9",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.41"
+  },
+  {
+    "fuelEfficiency": 18.446602,
+    "odometerReading": "5930.9",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "11.33"
+  },
+  {
+    "fuelEfficiency": 21.023157,
+    "odometerReading": "6246.1",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.993"
+  },
+  {
+    "odometerReading": "8112",
+    "partial": false,
+    "previousMissedFillups": true,
+    "volume": "7.524"
+  },
+  {
+    "fuelEfficiency": 22.61301,
+    "odometerReading": "8450.2",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.956"
+  },
+  {
+    "fuelEfficiency": 18.703728,
+    "odometerReading": "8733.3",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "15.136"
+  },
+  {
+    "fuelEfficiency": 19.236773,
+    "odometerReading": "9016.1",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.701"
+  },
+  {
+    "fuelEfficiency": 19.306246,
+    "odometerReading": "9292.7",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.327"
+  },
+  {
+    "fuelEfficiency": 20.729599,
+    "odometerReading": "9602.4",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.94"
+  },
+  {
+    "fuelEfficiency": 17.625896,
+    "odometerReading": "9867.6",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "15.046"
+  },
+  {
+    "fuelEfficiency": 21.95069,
+    "odometerReading": "10155",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "13.093"
+  },
+  {
+    "fuelEfficiency": 21.364452,
+    "odometerReading": "10457.2",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.145"
+  },
+  {
+    "fuelEfficiency": 26.07897,
+    "odometerReading": "10827",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.18"
+  },
+  {
+    "fuelEfficiency": 17.87176,
+    "odometerReading": "11089",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.66"
+  },
+  {
+    "fuelEfficiency": 21.75071,
+    "odometerReading": "11398.6",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.234"
+  },
+  {
+    "fuelEfficiency": 18.972765,
+    "odometerReading": "11693",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "15.517"
+  },
+  {
+    "fuelEfficiency": 21.7558,
+    "odometerReading": "12021.6",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "15.104"
+  },
+  {
+    "fuelEfficiency": 21.45763,
+    "odometerReading": "12301.3",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "13.035"
+  },
+  {
+    "fuelEfficiency": 20.833094,
+    "odometerReading": "12612.9",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.957"
+  },
+  {
+    "fuelEfficiency": 28.502546,
+    "odometerReading": "12802.3",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "6.645"
+  },
+  {
+    "fuelEfficiency": 24.727467,
+    "odometerReading": "13081.3",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "11.283"
+  },
+  {
+    "fuelEfficiency": 17.958063,
+    "odometerReading": "13343.2",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.584"
+  },
+  {
+    "fuelEfficiency": 20.298489,
+    "odometerReading": "13645.1",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.873"
+  },
+  {
+    "fuelEfficiency": 20.174206,
+    "odometerReading": "13911.5",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "13.205"
+  },
+  {
+    "fuelEfficiency": 21.939775,
+    "odometerReading": "14233.4",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.672"
+  },
+  {
+    "fuelEfficiency": 18.999071,
+    "odometerReading": "14474.1",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "12.669"
+  },
+  {
+    "fuelEfficiency": 20.590742,
+    "odometerReading": "14770.4",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.39"
+  },
+  {
+    "fuelEfficiency": 19.984524,
+    "odometerReading": "15055",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.241"
+  },
+  {
+    "fuelEfficiency": 21.00252,
+    "odometerReading": "15355",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.284"
+  },
+  {
+    "fuelEfficiency": 18.37861,
+    "odometerReading": "15624.1",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.642"
+  },
+  {
+    "fuelEfficiency": 18.828213,
+    "odometerReading": "15890.5",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.149"
+  },
+  {
+    "fuelEfficiency": 16.25796,
+    "odometerReading": "16130.5",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.762"
+  },
+  {
+    "fuelEfficiency": 18.585081,
+    "odometerReading": "16381.9",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "13.527"
+  },
+  {
+    "fuelEfficiency": 21.064777,
+    "odometerReading": "16683.8",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.332"
+  },
+  {
+    "fuelEfficiency": 20.296076,
+    "odometerReading": "16982.6",
+    "partial": false,
+    "previousMissedFillups": false,
+    "volume": "14.722"
+  },
+  {
+    "odometerReading": "17269.9",
+    "partial": true,
+    "previousMissedFillups": false,
+    "volume": "2.04"
+  }
+]
