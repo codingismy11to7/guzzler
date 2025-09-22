@@ -39,7 +39,7 @@
     "date-fns": "^4.1.0",
     "effect": "^3.17.13",
     "i18next": "^24.2.2",
-    "i18next-browser-languagedetector": "^8.0.2",
+    "i18next-browser-languagedetector": "^8.2.0",
     "i18next-http-backend": "^3.0.2",
     "react": "^19.1.1",
     "react-dom": "^19.0.0",
