@@ -186,7 +186,7 @@ const PlaceList = ({
       void pipe(
         AutosClient.getGasStations("GasStations", currentLocation),
         ensuring(sync(() => setFetching(false))),
-        andThen(x => setPlaces(x)),
+        andThen(setPlaces),
         catchAll(e => Effect.sync(() => setFetchError(e))),
         runP,
       );
