@@ -1,3 +1,4 @@
+import { defineConfig } from "eslint/config";
 import js from "@eslint/js";
 import codegen from "eslint-plugin-codegen";
 import importPlugin from "eslint-plugin-import";
@@ -42,7 +43,7 @@ const jsonRules = {
   ],
 };
 
-export default tseslint.config([
+export default defineConfig([
   {
     ignores: ["**/dist", "**/build", "**/docs", "**/*.md"]
   },

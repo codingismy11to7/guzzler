@@ -1,8 +1,8 @@
 import { Autos, SessionApi } from "@guzzlerapp/domain";
-import { Schema, Schema as S, Struct } from "effect";
+import { Schema as S, Schema, Struct } from "effect";
+import React from "react";
 import { AutosData } from "./AutosData.js";
 import SessionInfo = SessionApi.SessionInfo;
-import React from "react";
 
 /* session */
 
