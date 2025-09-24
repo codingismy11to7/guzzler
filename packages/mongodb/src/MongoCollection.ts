@@ -132,14 +132,14 @@ export type MongoCollection<
     replacement: MemSchema<SchemaT>,
     options?: ReplaceOptions,
   ) => Effect.Effect<
-    UpdateResult<DbSchema<SchemaT>> | Document,
+    UpdateResult<DbSchema<SchemaT>>,
     MongoError | SchemaMismatch
   >;
   replaceOne: (
     filter: Filter<MemSchema<SchemaT>>,
     replacement: MemSchema<SchemaT>,
     options?: ReplaceOptions,
-  ) => Effect.Effect<UpdateResult<DbSchema<SchemaT>> | Document>;
+  ) => Effect.Effect<UpdateResult<DbSchema<SchemaT>>>;
 
   /**
    * Warning: these two functions don't do schema encoding for you
@@ -174,14 +174,14 @@ export type MongoCollection<
     replacement: MemSchema<SchemaT>,
     options?: Omit<ReplaceOptions, "upsert">,
   ) => Effect.Effect<
-    UpdateResult<DbSchema<SchemaT>> | Document,
+    UpdateResult<DbSchema<SchemaT>>,
     MongoError | SchemaMismatch
   >;
   upsert: (
     filter: Filter<MemSchema<SchemaT>>,
     replacement: MemSchema<SchemaT>,
     options?: Omit<ReplaceOptions, "upsert">,
-  ) => Effect.Effect<UpdateResult<DbSchema<SchemaT>> | Document>;
+  ) => Effect.Effect<UpdateResult<DbSchema<SchemaT>>>;
 
   deleteOneRaw: (
     filter?: Filter<MemSchema<SchemaT>>,
