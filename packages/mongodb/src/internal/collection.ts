@@ -259,10 +259,7 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
     filter: Filter<MemSchema>,
     replacement: MemSchema,
     options?: ReplaceOptions,
-  ): Effect.Effect<
-    UpdateResult<DbSchema> | Document,
-    MongoError | SchemaMismatch
-  > =>
+  ): Effect.Effect<UpdateResult<DbSchema>, MongoError | SchemaMismatch> =>
     Effect.gen(function* () {
       const filt = yield* encodePartial(filter);
       const toIns = yield* encode(replacement);
@@ -302,10 +299,8 @@ export const make = <CName extends string, SchemaT extends AnySchema>(
     filter: Filter<MemSchema>,
     replacement: MemSchema,
     options?: Omit<ReplaceOptions, "upsert">,
-  ): Effect.Effect<
-    UpdateResult<DbSchema> | Document,
-    MongoError | SchemaMismatch
-  > => replaceOneRaw(filter, replacement, { ...options, upsert: true });
+  ): Effect.Effect<UpdateResult<DbSchema>, MongoError | SchemaMismatch> =>
+    replaceOneRaw(filter, replacement, { ...options, upsert: true });
   const upsert = flow(upsertRaw, Effect.catchTags(dieFromFatal));
 
   const deleteOneRaw = (
