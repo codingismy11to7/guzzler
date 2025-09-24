@@ -12,6 +12,7 @@ import {
 import { dual } from "effect/Function";
 
 // hrm, i don't see any way to do this in effect?? only mutable arrays?
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
 export const empty = <A>(): readonly A[] => [];
 
 export const intersperse: {

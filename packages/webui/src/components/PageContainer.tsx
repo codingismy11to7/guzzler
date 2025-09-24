@@ -15,7 +15,7 @@ import {
   Typography,
 } from "@mui/material";
 import { Match } from "effect";
-import React, { PropsWithChildren, ReactNode, Suspense } from "react";
+import { PropsWithChildren, Suspense } from "react";
 import { useAppState } from "../AppStore.js";
 import { useSucceededSessionState_Unsafe } from "../hooks/sessionHooks.js";
 import { useTranslation } from "../i18n.js";

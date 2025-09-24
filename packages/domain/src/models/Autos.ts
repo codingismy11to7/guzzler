@@ -43,14 +43,15 @@ export type FuelCategory = typeof FuelCategory.Type;
 export const FuelRatingType = Schema.Literal("AKI", "RON", "MON", "Cetane");
 export type FuelRatingType = typeof FuelRatingType.Type;
 
-export class FuelType extends Schema.Class<FuelType>("FuelType")({
+export const FuelType = Schema.Struct({
   id: FuelTypeId,
   category: FuelCategory,
   name: Schema.Trimmed,
   notes: OptionalString,
   ratingType: Schema.OptionFromUndefinedOr(FuelRatingType),
   rating: OptionalNumber,
-}) {}
+});
+export type FuelType = typeof FuelType.Type;
 
 /* trip type */
 

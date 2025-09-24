@@ -14,8 +14,17 @@ import {
 } from "@guzzlerapp/domain/models/AutosApiModel";
 import { MongoChangeStreams } from "@guzzlerapp/mongodb/MongoChangeStreams";
 import { RandomId } from "@guzzlerapp/utils/RandomId";
-import { Chunk, Effect, pipe, Stream } from "effect";
-import { catchTags, gen, logTrace, logWarning } from "effect/Effect";
+import { Chunk, pipe, Stream } from "effect";
+import {
+  catchTags,
+  fn,
+  gen,
+  logTrace,
+  logWarning,
+  succeed,
+  sync,
+} from "effect/Effect";
+import { runCollect } from "effect/Stream";
 import { AutosStorage } from "../AutosStorage.js";
 import { BackupRestore } from "../BackupRestore.js";
 import { GooglePlaces } from "../GooglePlaces.js";
@@ -69,7 +78,7 @@ export const AutosApiLive = HttpApiBuilder.group(
             .getAllUserTypes(yield* currentSessionUsername)
             .pipe(
               catchTags({
-                DocumentNotFound: () => Effect.sync(UserTypes.make),
+                DocumentNotFound: () => sync(UserTypes.make),
               }),
             );
         }),
@@ -93,7 +102,7 @@ export const AutosApiLive = HttpApiBuilder.group(
         gen(function* () {
           return (yield* autos.getVehicles(yield* currentSessionUsername))
             .vehicles;
-        }).pipe(catchTags({ DocumentNotFound: () => Effect.succeed({}) })),
+        }).pipe(catchTags({ DocumentNotFound: () => succeed({}) })),
       )
       .handle("getUserFillups", () =>
         gen(function* () {
