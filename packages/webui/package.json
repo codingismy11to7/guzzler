@@ -28,7 +28,7 @@
     "@effect/platform": "^0.90.9",
     "@effect/platform-browser": "^0.70.0",
     "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@fontsource/roboto": "^5.2.8",
     "@guzzlerapp/domain": "^0.0.6",
     "@guzzlerapp/utils": "^0.0.3",
