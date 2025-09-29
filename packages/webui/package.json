@@ -42,7 +42,7 @@
     "i18next-browser-languagedetector": "^8.2.0",
     "i18next-http-backend": "^3.0.2",
     "react": "^19.1.1",
-    "react-dom": "^19.0.0",
+    "react-dom": "^19.1.1",
     "react-i18next": "^15.7.3",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
@@ -50,7 +50,7 @@
   },
   "devDependencies": {
     "@types/react": "^19.1.13",
-    "@types/react-dom": "^19.0.3",
+    "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react-swc": "^3.5.0",
     "globals": "^16.4.0",
     "i18next-resources-for-ts": "^1.7.4",
