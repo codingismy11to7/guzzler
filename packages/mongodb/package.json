@@ -1,11 +1,9 @@
 {
   "name": "@guzzlerapp/mongodb",
-  "version": "0.0.4",
-
+  "version": "0.0.5",
   "description": "The mongodb template",
   "license": "MIT",
   "type": "module",
-
   "publishConfig": {
     "access": "public",
     "directory": "dist"
@@ -27,17 +25,20 @@
     "test": "vitest --run",
     "test:watch": "vitest"
   },
-
   "dependencies": {
-    "@guzzlerapp/utils": "^0.0.3",
+    "@guzzlerapp/utils": "^0.0.4",
     "mongodb": "^6.19.0"
   },
   "effect": {
     "generateExports": {
-      "include": ["**/*.ts"]
+      "include": [
+        "**/*.ts"
+      ]
     },
     "generateIndex": {
-      "include": ["**/*.ts"]
+      "include": [
+        "**/*.ts"
+      ]
     }
   }
 }
