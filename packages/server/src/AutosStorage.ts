@@ -29,7 +29,6 @@ import { CollectionRegistry } from "./internal/database/CollectionRegistry.js";
 export class AutosStorage extends Effect.Service<AutosStorage>()(
   "AutosStorage",
   {
-    accessors: true,
     effect: gen(function* () {
       const { userTypes, vehicles, fillupRecords, eventRecords } =
         yield* CollectionRegistry;

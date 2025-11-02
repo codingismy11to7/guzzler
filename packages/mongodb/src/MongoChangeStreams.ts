@@ -13,7 +13,6 @@ import { MongoDatabaseLayer } from "./MongoDatabaseLayer.js";
 export class MongoChangeStreams extends Effect.Service<MongoChangeStreams>()(
   "MongoChangeStreams",
   {
-    accessors: true,
     effect: gen(function* () {
       const db = yield* MongoDatabaseLayer;
 
@@ -31,11 +30,9 @@ export class MongoChangeStreams extends Effect.Service<MongoChangeStreams>()(
         changeStream: ChangeStream<TSchema, TChange>;
       }> => {
         const changeStream = db.watch<TSchema, TChange>(pipeline, options);
-        const stream = pipe(
-          Stream.fromAsyncIterable(
-            changeStream,
-            e => new MongoError({ cause: e as RealMongoError }),
-          ),
+        const stream = Stream.fromAsyncIterable(
+          changeStream,
+          e => new MongoError({ cause: e as RealMongoError }),
         );
 
         return { stream, changeStream };
