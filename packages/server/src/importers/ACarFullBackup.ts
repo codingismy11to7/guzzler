@@ -44,9 +44,29 @@ import {
   Stream,
   Struct,
 } from "effect";
-import { catchTag, catchTags, gen } from "effect/Effect";
+import {
+  andThen,
+  asSomeError,
+  catchTag,
+  catchTags,
+  fail,
+  forEach,
+  fromNullable,
+  gen,
+  logDebug,
+  logError,
+  logInfo,
+  promise,
+  scoped,
+  succeed,
+  succeedNone,
+  tap,
+  tapError,
+  withLogSpan,
+} from "effect/Effect";
 import { ParseError } from "effect/ParseResult";
 import { isNotUndefined, isUndefined } from "effect/Predicate";
+import { unfoldEffect } from "effect/Stream";
 import { fileTypeFromBuffer } from "file-type";
 import { AutosStorage } from "../AutosStorage.js";
 import { MissingBackupFile } from "../internal/MissingBackupFile.js";
@@ -289,11 +309,11 @@ const importFromACarFullBackup =
         readonly EventSubtype[],
         ParseError | XmlParsingError | UnexpectedOpeningTag | E
       > =>
-        Effect.gen(function* () {
+        gen(function* () {
           const doc = yield* parseEntireXml(data);
 
           if (doc.name !== "eventSubtypes")
-            yield* unexpectedOpeningTag("eventSubtypes", doc.name);
+            return yield* unexpectedOpeningTag("eventSubtypes", doc.name);
 
           const convert = (
             n: Xml2JsNode,
@@ -310,7 +330,7 @@ const importFromACarFullBackup =
                 });
 
           // make sure they match our schema
-          const parsed = yield* Effect.forEach(doc.children, convert, {
+          const parsed = yield* forEach(doc.children, convert, {
             concurrency: "unbounded",
           });
 
@@ -319,12 +339,10 @@ const importFromACarFullBackup =
           const convertToDataModel = (es: ACarEventSubtype) =>
             Schema.decode(EventSubtype, { onExcessProperty: "error" })(es);
 
-          return yield* Effect.forEach(parsed, convertToDataModel, {
+          return yield* forEach(parsed, convertToDataModel, {
             concurrency: "unbounded",
-          }).pipe(
-            Effect.tap(Effect.logInfo(`parsed ${parsed.length} EventSubtypes`)),
-          );
-        }).pipe(Effect.withLogSpan("parseEventSubtypes"));
+          }).pipe(tap(logInfo(`parsed ${parsed.length} EventSubtypes`)));
+        }).pipe(withLogSpan("parseEventSubtypes"));
 
       const parseFuelTypes = <E>(
         data: Stream.Stream<Uint8Array, E>,
@@ -332,11 +350,11 @@ const importFromACarFullBackup =
         readonly FuelType[],
         ParseError | XmlParsingError | UnexpectedOpeningTag | E
       > =>
-        Effect.gen(function* () {
+        gen(function* () {
           const doc = yield* parseEntireXml(data);
 
           if (doc.name !== "fuelTypes")
-            yield* unexpectedOpeningTag("fuelTypes", doc.name);
+            return yield* unexpectedOpeningTag("fuelTypes", doc.name);
 
           const convert = (
             n: Xml2JsNode,
@@ -354,7 +372,7 @@ const importFromACarFullBackup =
                   Schema.decodeUnknown(ACarFuelType),
                 );
 
-          const parsed = yield* Effect.forEach(doc.children, convert, {
+          const parsed = yield* forEach(doc.children, convert, {
             concurrency: "unbounded",
           });
 
@@ -374,12 +392,10 @@ const importFromACarFullBackup =
               ),
             });
 
-          return yield* Effect.forEach(parsed, convertToDataModel, {
+          return yield* forEach(parsed, convertToDataModel, {
             concurrency: "unbounded",
-          }).pipe(
-            Effect.tap(Effect.logInfo(`parsed ${parsed.length} FuelTypes`)),
-          );
-        }).pipe(Effect.withLogSpan("parseFuelTypes"));
+          }).pipe(tap(logInfo(`parsed ${parsed.length} FuelTypes`)));
+        }).pipe(withLogSpan("parseFuelTypes"));
 
       const parseTripTypes = <E>(
         data: Stream.Stream<Uint8Array, E>,
@@ -387,11 +403,11 @@ const importFromACarFullBackup =
         readonly TripType[],
         ParseError | XmlParsingError | UnexpectedOpeningTag | E
       > =>
-        Effect.gen(function* () {
+        gen(function* () {
           const doc = yield* parseEntireXml(data);
 
           if (doc.name !== "tripTypes")
-            yield* unexpectedOpeningTag("tripTypes", doc.name);
+            return yield* unexpectedOpeningTag("tripTypes", doc.name);
 
           const convert = (
             n: Xml2JsNode,
@@ -403,17 +419,15 @@ const importFromACarFullBackup =
                   Schema.decodeUnknown(ACarTripType),
                 );
 
-          const parsed = yield* Effect.forEach(doc.children, convert);
+          const parsed = yield* forEach(doc.children, convert);
 
           const convertToDataModel = (tt: ACarTripType) =>
             Schema.decode(TripType, { onExcessProperty: "error" })(tt);
 
-          return yield* Effect.forEach(parsed, convertToDataModel, {
+          return yield* forEach(parsed, convertToDataModel, {
             concurrency: "unbounded",
-          }).pipe(
-            Effect.tap(Effect.logInfo(`parsed ${parsed.length} TripTypes`)),
-          );
-        }).pipe(Effect.withLogSpan("parseTripTypes"));
+          }).pipe(tap(logInfo(`parsed ${parsed.length} TripTypes`)));
+        }).pipe(withLogSpan("parseTripTypes"));
 
       const parseVehicles = <E>(
         data: Stream.Stream<Uint8Array, E>,
@@ -426,14 +440,14 @@ const importFromACarFullBackup =
         | UnexpectedOpeningTag
         | E
       > =>
-        Effect.gen(function* () {
+        gen(function* () {
           const [controller, evtStream] = yield* xmlStream(data);
 
           const { pullNext, peekNext } = yield* singleStreamPuller(evtStream);
 
           const currEvt = yield* pullNext;
           if (currEvt._tag !== "StartElement" || currEvt.name !== "vehicles")
-            yield* unexpectedOpeningTag(
+            return yield* unexpectedOpeningTag(
               "vehicles",
               // eslint-disable-next-line @typescript-eslint/no-base-to-string
               currEvt._tag === "StartElement" ? currEvt.name : `${currEvt}`,
@@ -447,22 +461,18 @@ const importFromACarFullBackup =
           > = gen(function* () {
             const nextIsVehicleStart = pipe(
               peekNext,
-              Effect.andThen(
-                e => e._tag === "StartElement" && e.name === "vehicle",
-              ),
+              andThen(e => e._tag === "StartElement" && e.name === "vehicle"),
             );
 
             while (!(yield* nextIsVehicleStart)) yield* pullNext;
 
-            const vehicleStream = Stream.unfoldEffect(false, seenEnd =>
+            const vehicleStream = unfoldEffect(false, seenEnd =>
               seenEnd
-                ? Effect.succeedNone
+                ? succeedNone
                 : pipe(
                     pullNext,
-                    Effect.andThen(evt =>
-                      Effect.succeed<
-                        Option.Option<readonly [ParseEvent, boolean]>
-                      >(
+                    andThen(evt =>
+                      succeed<Option.Option<readonly [ParseEvent, boolean]>>(
                         Option.some([
                           evt,
                           evt._tag === "EndElement" && evt.name === "vehicle",
@@ -473,9 +483,7 @@ const importFromACarFullBackup =
             );
 
             const node = yield* transformToJson(vehicleStream).pipe(
-              Effect.catchTag("XmlParsingError", e =>
-                Effect.fail(Option.some(e)),
-              ),
+              catchTag("XmlParsingError", e => fail(Option.some(e))),
             );
 
             // ok it read a potentially large subdocument, pause the stream while we handle
@@ -504,9 +512,9 @@ const importFromACarFullBackup =
                     id: n.attrs.id,
                     ...childrenAsObj(n),
                   })),
-                }).pipe(Effect.asSomeError);
+                }).pipe(asSomeError);
 
-                yield* Effect.logDebug(`processing vehicle ${aCarVehicle.id}`);
+                yield* logDebug(`processing vehicle ${aCarVehicle.id}`);
 
                 const {
                   id,
@@ -527,14 +535,14 @@ const importFromACarFullBackup =
                     Option.map(BigDecimal.format),
                     Option.getOrUndefined,
                   ),
-                }).pipe(Effect.asSomeError);
+                }).pipe(asSomeError);
 
                 yield* autos.insertUserVehicle(username, vehicle);
 
-                yield* Effect.logInfo(`Inserted vehicle ${aCarVehicle.id}`);
+                yield* logInfo(`Inserted vehicle ${aCarVehicle.id}`);
 
                 if (Option.isSome(photo)) {
-                  const fType = yield* Effect.promise(() =>
+                  const fType = yield* promise(() =>
                     fileTypeFromBuffer(photo.value),
                   );
 
@@ -546,7 +554,7 @@ const importFromACarFullBackup =
                       fType?.mime ?? "application/octet-stream",
                       Stream.succeed(photo.value),
                     )
-                    .pipe(Effect.asSomeError);
+                    .pipe(asSomeError);
                 }
 
                 const convertFillup = (fr: ACarFillupRecord) =>
@@ -589,18 +597,16 @@ const importFromACarFullBackup =
                       deviceLocation,
                       place,
                     });
-                  }).pipe(Effect.asSomeError);
+                  }).pipe(asSomeError);
 
-                const fillups = yield* Effect.forEach(
-                  fillupRecords,
-                  convertFillup,
-                  { concurrency: "unbounded" },
-                );
+                const fillups = yield* forEach(fillupRecords, convertFillup, {
+                  concurrency: "unbounded",
+                });
                 yield* autos.replaceFillupRecords(
                   { username, vehicleId: vehicle.id },
                   fillups,
                 );
-                yield* Effect.logInfo(`Added ${fillups.length} fillup records`);
+                yield* logInfo(`Added ${fillups.length} fillup records`);
 
                 const convertEvent = (er: ACarEventRecord) =>
                   gen(function* () {
@@ -632,20 +638,16 @@ const importFromACarFullBackup =
                       deviceLocation,
                       place,
                     });
-                  }).pipe(Effect.asSomeError);
+                  }).pipe(asSomeError);
 
-                const events = yield* Effect.forEach(
-                  eventRecords,
-                  convertEvent,
-                  { concurrency: "unbounded" },
-                );
+                const events = yield* forEach(eventRecords, convertEvent, {
+                  concurrency: "unbounded",
+                });
                 yield* autos.replaceEventRecords(
                   { username, vehicleId: vehicle.id },
                   events,
                 );
-                yield* Effect.logInfo(
-                  `Added ${eventRecords.length} event records`,
-                );
+                yield* logInfo(`Added ${eventRecords.length} event records`);
               }),
             );
           });
@@ -653,29 +655,29 @@ const importFromACarFullBackup =
           while (isNotUndefined(yield* peekNext))
             yield* parseAndHandleNextVehicle;
         }).pipe(
-          Effect.catchTags({
+          catchTags({
             None: () => Effect.void,
-            Some: e => Effect.fail(e.value),
+            Some: e => fail(e.value),
           }),
-          Effect.andThen(Effect.logInfo("Finished parsing vehicles")),
-          Effect.withLogSpan("parseVehicles"),
-          Effect.scoped,
+          andThen(logInfo("Finished parsing vehicles")),
+          withLogSpan("parseVehicles"),
+          scoped,
         );
 
-      yield* Effect.logInfo("Beginning aCar Full Backup import");
+      yield* logInfo("Beginning aCar Full Backup import");
 
-      yield* Effect.logInfo(`Unzipping ${zipPath}`);
+      yield* logInfo(`Unzipping ${zipPath}`);
 
       const backupFiles = yield* zip.getZipContents(zipPath);
 
-      yield* Effect.logInfo(`Unzipped ${backupFiles.length} files/directories`);
+      yield* logInfo(`Unzipped ${backupFiles.length} files/directories`);
 
       const openBackupFile = (
         fileName: string,
       ): Stream.Stream<Uint8Array, MissingBackupFile | SystemError> =>
         Stream.unwrap(
           gen(function* () {
-            const targetFile = yield* Effect.fromNullable(
+            const targetFile = yield* fromNullable(
               backupFiles
                 .filter(e => !e.isDirectory)
                 .find(e => path.basename(e.fileName) === fileName),
@@ -697,14 +699,12 @@ const importFromACarFullBackup =
       );
       const fuelTypes = yield* parseFuelTypes(openBackupFile("fuel-types.xml"));
       const tripTypes = yield* parseTripTypes(openBackupFile("trip-types.xml"));
-      yield* Effect.logInfo(
-        "Parsed settings, going to start writing to the database",
-      );
+      yield* logInfo("Parsed settings, going to start writing to the database");
 
       yield* inTransactionRaw()(
         gen(function* () {
           yield* autos.deleteAllUserData(username, { includeUserTypes: false });
-          yield* Effect.logInfo("Replacing settings");
+          yield* logInfo("Replacing settings");
           yield* autos.replaceAllUserTypes(
             UserTypesWithId.make({
               _id: username,
@@ -716,13 +716,13 @@ const importFromACarFullBackup =
             }),
           );
 
-          yield* Effect.logInfo("Parsing vehicles");
+          yield* logInfo("Parsing vehicles");
           yield* parseVehicles(openBackupFile("vehicles.xml"));
         }),
       );
     }).pipe(
-      Effect.scoped,
-      Effect.tapError(e => Effect.logError(e.message)),
+      scoped,
+      tapError(e => logError(e.message)),
       catchTags({
         UnexpectedOpeningTag: () =>
           new AutosModel.AbpWrongFormatError({ type: "UnexpectedOpeningTag" }),
