@@ -1,6 +1,7 @@
 import { Document } from "bson";
 import { Effect, pipe, PubSub, Ref, Runtime, Stream } from "effect";
-import { gen } from "effect/Effect";
+import { gen, logDebug, logInfo } from "effect/Effect";
+import { fromAsyncIterable, runForEachChunk } from "effect/Stream";
 import {
   ChangeStream,
   ChangeStreamDocument,
@@ -13,7 +14,6 @@ import { MongoDatabaseLayer } from "./MongoDatabaseLayer.js";
 export class MongoChangeStreams extends Effect.Service<MongoChangeStreams>()(
   "MongoChangeStreams",
   {
-    accessors: true,
     effect: gen(function* () {
       const db = yield* MongoDatabaseLayer;
 
@@ -31,11 +31,9 @@ export class MongoChangeStreams extends Effect.Service<MongoChangeStreams>()(
         changeStream: ChangeStream<TSchema, TChange>;
       }> => {
         const changeStream = db.watch<TSchema, TChange>(pipeline, options);
-        const stream = pipe(
-          Stream.fromAsyncIterable(
-            changeStream,
-            e => new MongoError({ cause: e as RealMongoError }),
-          ),
+        const stream = fromAsyncIterable(
+          changeStream,
+          e => new MongoError({ cause: e as RealMongoError }),
         );
 
         return { stream, changeStream };
@@ -58,20 +56,21 @@ export class MongoChangeStreams extends Effect.Service<MongoChangeStreams>()(
         return { stream: stream.pipe(Stream.orDie), ...rest };
       };
 
+      // TODO: this looks suspect, and was written when chemo was really kicking in
       const watchSharedStream = gen(function* () {
-        yield* Effect.logDebug("adding watcher to shared stream");
+        yield* logDebug("adding watcher to shared stream");
 
         const wasStarted = yield* Ref.getAndUpdate(
           subscriberAddedToSharedStream,
           () => true,
         );
         if (!wasStarted) {
-          yield* Effect.logInfo("Starting shared database change stream");
+          yield* logInfo("Starting shared database change stream");
 
           pipe(
             watch().stream,
             Stream.ensuring(Ref.set(subscriberAddedToSharedStream, false)),
-            Stream.runForEachChunk(es => PubSub.publishAll(sharedStream, es)),
+            runForEachChunk(es => PubSub.publishAll(sharedStream, es)),
             Runtime.runFork(yield* Effect.runtime()),
           );
         }

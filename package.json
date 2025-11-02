@@ -18,7 +18,7 @@
     "coverage": "vitest run --coverage",
     "coverage:watch": "vitest --coverage",
     "lint": "eslint --max-warnings=0",
-    "lint:fix": "npm run codegen && eslint --cache --max-warnings=0 --fix",
+    "lint:fix": "npm run codegen && eslint --max-warnings=0 --fix",
     "postinstall": "patch-package",
     "runBackend": "npm run dev -w @guzzlerapp/server",
     "runFrontend": "npm run dev -w @guzzlerapp/webui",

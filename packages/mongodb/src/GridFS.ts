@@ -5,7 +5,6 @@ import * as internal from "./internal/gridfs.js";
 import { MongoDatabaseLayer } from "./MongoDatabaseLayer.js";
 
 export class GridFS extends Effect.Service<GridFS>()("GridFS", {
-  accessors: true,
   effect: gen(function* () {
     const db = yield* MongoDatabaseLayer;
 

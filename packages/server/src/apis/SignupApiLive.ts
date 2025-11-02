@@ -5,51 +5,56 @@ import { AppApi } from "@guzzlerapp/domain/AppApi";
 import { CurrentUnknownUserSession } from "@guzzlerapp/domain/Authentication";
 import { UserSession } from "@guzzlerapp/domain/Session";
 import { User } from "@guzzlerapp/domain/User";
-import { Effect, pipe, Struct } from "effect";
-import { catchTag } from "effect/Effect";
+import { Struct } from "effect";
+import { annotateLogs, catchTag, fn, logDebug, logInfo } from "effect/Effect";
 import { SessionStorage } from "../SessionStorage.js";
 import { Users } from "../Users.js";
 
-export const SignupApiLive = HttpApiBuilder.group(AppApi, "signup", handlers =>
-  Effect.gen(function* () {
+export const SignupApiLive = HttpApiBuilder.group(
+  AppApi,
+  "signup",
+  fn(function* (handlers) {
     const { addSession } = yield* SessionStorage;
     const { addUser, usernameAvailable } = yield* Users;
 
     return handlers
+      .handle(
+        "validateUsername",
+        fn("validateUsername")(function* ({ path: { username } }) {
+          yield* CurrentUnknownUserSession;
 
-      .handle("validateUsername", ({ path: { username } }) =>
-        pipe(
-          CurrentUnknownUserSession,
-          Effect.andThen(usernameAvailable(username)),
-          Effect.andThen(available => ({ available })),
-        ),
+          const available = yield* usernameAvailable(username);
+
+          return { available };
+        }),
       )
 
-      .handle(SetUsername, ({ path: { username } }) =>
-        pipe(
-          CurrentUnknownUserSession,
-          Effect.andThen(sess =>
-            Effect.gen(function* () {
-              const userId = sess.oAuthUserInfo.id;
-              const user = User.make({ ...sess, _id: userId, username });
+      .handle(
+        SetUsername,
+        fn(SetUsername)(
+          function* ({ path: { username } }) {
+            const sess = yield* CurrentUnknownUserSession;
 
-              yield* Effect.logInfo(
-                "Setting username and creating account",
-              ).pipe(Effect.annotateLogs({ userId, user }));
+            const userId = sess.oAuthUserInfo.id;
+            const user = User.make({ ...sess, _id: userId, username });
 
-              yield* addUser(user);
+            yield* logInfo("Setting username and creating account").pipe(
+              annotateLogs({ userId, user }),
+            );
 
-              yield* Effect.logDebug("promoting session to full");
+            yield* addUser(user);
 
-              const fullSess = UserSession.make({
-                ...Struct.omit(sess, "_tag"),
-                user,
-              });
+            yield* logDebug("promoting session to full");
 
-              yield* addSession(fullSess);
-            }),
-          ),
-        ).pipe(catchTag("DocumentConflict", () => new Conflict())),
+            const fullSess = UserSession.make({
+              ...Struct.omit(sess, "_tag"),
+              user,
+            });
+
+            yield* addSession(fullSess);
+          },
+          catchTag("DocumentConflict", () => new Conflict()),
+        ),
       );
   }),
 );

@@ -213,7 +213,6 @@ const parseEntireXmlFromFile =
     );
 
 export class XmlParser extends Effect.Service<XmlParser>()("XmlParser", {
-  accessors: true,
   effect: Effect.gen(function* () {
     const fs = yield* FileSystem.FileSystem;
 

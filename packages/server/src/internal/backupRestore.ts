@@ -9,7 +9,6 @@ import {
   VehicleFillupRecords,
   VehicleId,
 } from "@guzzlerapp/domain/Autos";
-import { ContentType } from "@guzzlerapp/domain/ContentType";
 import { Username } from "@guzzlerapp/domain/User";
 import { DocumentNotFound, MongoError } from "@guzzlerapp/mongodb/Model";
 import { MongoTransactions } from "@guzzlerapp/mongodb/MongoTransactions";
@@ -25,6 +24,7 @@ import {
 } from "effect";
 import {
   catchTag,
+  fn,
   forEach,
   gen,
   logDebug,
@@ -35,10 +35,36 @@ import {
 import { stringifyCircular } from "effect/Inspectable";
 import { ParseError } from "effect/ParseResult";
 import { Scope } from "effect/Scope";
+import { filterMap, fromIterable, mapEffect, unwrap } from "effect/Stream";
 import slash from "slash";
 import { AutosStorage } from "../AutosStorage.js";
 import { UnzipError, Zip, ZipError } from "../Zip.js";
 import { MissingBackupFile } from "./MissingBackupFile.js";
+import { StoredFile } from "./storage/types.js";
+
+type Photo = Readonly<{ vId: VehicleId; pId: PhotoId; pInfo: StoredFile }>;
+
+const photosStream = (
+  autos: AutosStorage,
+  username: Username,
+  vehicles: UserVehicles,
+): Stream.Stream<Photo, MongoError | DocumentNotFound> =>
+  pipe(
+    // stream over all vehicles
+    Object.values(vehicles.vehicles),
+    fromIterable,
+    // collect all the photo & vehicle ids for all vehicles that have a photo
+    filterMap(({ id: vId, photoId }) =>
+      Option.map(photoId, pId => ({ vId, pId })),
+    ),
+    // and finally fetch the photos
+    mapEffect(
+      fn(function* ({ vId, pId }) {
+        const pInfo = yield* autos.getPhotoForVehicle(username, vId);
+        return { vId, pId, pInfo };
+      }),
+    ),
+  );
 
 export const getBackupStream =
   (autos: AutosStorage, { streamToZip }: Zip) =>
@@ -46,40 +72,16 @@ export const getBackupStream =
     username: Username,
     backupName: string,
   ): Stream.Stream<Uint8Array, ZipError | DocumentNotFound | MongoError> =>
-    Stream.unwrap(
+    unwrap(
       gen(function* () {
         const userTypes = yield* autos.getAllUserTypes(username);
         const vehicles = yield* autos.getVehicles(username);
         const eventRecords = yield* autos.getAllEventRecordsForUser(username);
-        const fillupRecords =
-          yield* autos.streamAllFillupRecordsForUser(username);
-        const photos: Stream.Stream<
-          {
-            vId: VehicleId;
-            pId: PhotoId;
-            pInfo: {
-              contentType: ContentType;
-              fileName: string;
-              stream: Stream.Stream<Uint8Array, MongoError>;
-            };
-          },
-          MongoError | DocumentNotFound
-        > = pipe(
-          Stream.fromIterable(Object.values(vehicles.vehicles)),
-          Stream.filterMap(v =>
-            pipe(
-              v.photoId,
-              Option.map(p => ({ vId: v.id, pId: p })),
-            ),
-          ),
-          Stream.mapEffect(({ vId, pId }) =>
-            gen(function* () {
-              const pInfo = yield* autos.getPhotoForVehicle(username, vId);
-              return { vId, pId, pInfo };
-            }),
-          ),
-        );
+        const fillupRecords: Stream.Stream<VehicleFillupRecords> =
+          autos.allFillupRecordsForUser(username);
+        const photos = photosStream(autos, username, vehicles);
 
+        // TODO: continue refactoring this mess
         return streamToZip(
           pipe(
             Stream.make(
