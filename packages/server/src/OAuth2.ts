@@ -22,17 +22,20 @@ import {
   Redacted,
   Schema,
 } from "effect";
+import { catchTag, fn, fromNullable, gen } from "effect/Effect";
 import { isFunction } from "effect/Function";
 import { ParseError } from "effect/ParseResult";
+import { decodeUnknown } from "effect/Schema";
 import { isString } from "effect/String";
 import { Draft, produce } from "immer";
-import * as url from "node:url";
 import { AuthorizationCode, ModuleOptions, TokenType } from "simple-oauth2";
 import { AppConfig } from "./AppConfig.js";
 import { stringQueryParam } from "./internal/util/misc.js";
 
 // port of https://github.com/fastify/fastify-oauth2
 // their copyright, MIT license, etc
+//
+// TODO: betting there is an effect way to do this now
 
 export const GoogleConfig: ProviderConfiguration = {
   authorizeHost: "https://accounts.google.com",
@@ -110,20 +113,18 @@ const defaultCheckStateFunction: CheckStateFunction = options => request => {
     : new InvalidState();
 };
 
-const getDiscoveryUri = (issuer: string) => {
-  // eslint-disable-next-line @typescript-eslint/no-deprecated
-  const parsed = url.parse(issuer);
+const getDiscoveryUri = fn(function* (issuer: string) {
+  const parsed = yield* fromNullable(URL.parse(issuer));
 
-  if (parsed.pathname?.includes("/.well-known/")) {
+  if (parsed.pathname.includes("/.well-known/")) {
     return issuer;
   } else {
-    const pathname = parsed.pathname?.endsWith("/")
-      ? `${parsed.pathname}.well-known/openid-configuration`
-      : `${parsed.pathname}/.well-known/openid-configuration`;
+    if (!parsed.pathname.endsWith("/")) parsed.pathname += "/";
+    parsed.pathname += ".well-known/openid-configuration";
 
-    return url.format({ ...parsed, pathname });
+    return parsed.toString();
   }
-};
+});
 
 const selectPkceFromMetadata = (
   metadata: Pick<DiscoveredMetadata, "code_challenge_methods_supported">,
@@ -402,13 +403,15 @@ export const make = (inputOptions: Omit<OAuth2Options, "credentials">) =>
             }
           })();
 
-          const httpClientRequest =
+          const httpClientRequest = HttpClientRequest.make(method)(
+            infoUrl,
             method === "GET" || method === "HEAD"
-              ? HttpClientRequest.make(method)(infoUrl, httpOpts)
-              : HttpClientRequest.make(method)(infoUrl, {
+              ? httpOpts
+              : {
                   ...httpOpts,
                   body: body ? HttpBody.text(body.toString()) : undefined,
-                });
+                },
+          );
 
           const resp = yield* httpClient.execute(httpClientRequest);
           const respBody = yield* resp.text;
@@ -426,38 +429,41 @@ export const make = (inputOptions: Omit<OAuth2Options, "credentials">) =>
         DiscoveredMetadata,
         ExternalError | HttpClientError.HttpClientError | ParseError
       > =>
-        pipe(
-          pipe(
-            {
-              headers: {
-                ...options.credentials.http?.headers,
-                "User-Agent": userAgent,
-              } as Record<string, string | undefined>,
+        gen(function* () {
+          const httpOpts = {
+            headers: {
+              ...options.credentials.http?.headers,
+              ...(omitUserAgent ? {} : { "User-Agent": userAgent }),
             },
-            httpOpts =>
-              !omitUserAgent
-                ? httpOpts
-                : produce(httpOpts, draft => {
-                    draft.headers = ObjectUtils.removeField(
-                      draft.headers,
-                      "User-Agent",
-                    );
-                  }),
-          ),
-          httpOpts =>
-            httpClient.execute(
-              HttpClientRequest.make("GET")(getDiscoveryUri(issuer), httpOpts),
+          };
+
+          const uri = yield* getDiscoveryUri(issuer).pipe(
+            catchTag(
+              "NoSuchElementException",
+              () =>
+                // TODO: we configure this value iirc, so it is not an external error
+                //  probably should convert to an url at config load time
+                new ExternalError({
+                  cause: new Error(`Invalid issuer URL: '${issuer}'`),
+                }),
             ),
-          Effect.andThen(resp => resp.text),
-          Effect.scoped,
-          Effect.andThen(respBody =>
-            Effect.try({
-              try: () => JSON.parse(respBody),
-              catch: e => new ExternalError({ cause: e as Error }),
-            }),
-          ),
-          Effect.andThen(Schema.decodeUnknown(DiscoveredMetadata)),
-        );
+          );
+
+          const resp = yield* httpClient.execute(
+            HttpClientRequest.make("GET")(uri, httpOpts),
+          );
+
+          const respBody = yield* resp.text;
+
+          // TODO: this was early code before i knew schema could do this
+          //  ...or, i was just trying to keep it close to the original code?
+          const j = yield* Effect.try({
+            try: () => JSON.parse(respBody),
+            catch: e => new ExternalError({ cause: e as Error }),
+          });
+
+          return yield* decodeUnknown(DiscoveredMetadata)(j);
+        });
 
       const configure = (
         configured: OAuth2Options,
@@ -685,22 +691,20 @@ export const make = (inputOptions: Omit<OAuth2Options, "credentials">) =>
           },
         ) =>
           Effect.gen(function* () {
-            if (!configured.discovery) {
-              yield* new InvalidOptions({
+            if (!configured.discovery)
+              return yield* new InvalidOptions({
                 message: "userinfo can not be used without discovery",
               });
-            }
-            if (!["GET", "POST"].includes(method)) {
-              yield* new InvalidOptions({
+
+            if (!["GET", "POST"].includes(method))
+              return yield* new InvalidOptions({
                 message: "userinfo methods supported are only GET and POST",
               });
-            }
 
-            if (method === "GET" && via === "body") {
-              yield* new InvalidOptions({
+            if (method === "GET" && via === "body")
+              return yield* new InvalidOptions({
                 message: "body is supported only with POST",
               });
-            }
 
             const token = isString(tokenSetOrToken)
               ? tokenSetOrToken

@@ -14,7 +14,6 @@ export class MongoCryptoKey extends Context.Tag("MongoCryptoKey")<
 }
 
 export class MongoCrypto extends Effect.Service<MongoCrypto>()("MongoCrypto", {
-  accessors: true,
   effect: gen(function* () {
     const encKey = yield* MongoCryptoKey;
 

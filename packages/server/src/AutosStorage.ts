@@ -10,7 +10,6 @@ import {
   VehicleFillupRecords,
   VehicleId,
 } from "@guzzlerapp/domain/Autos";
-import { ContentType } from "@guzzlerapp/domain/ContentType";
 import { Username } from "@guzzlerapp/domain/User";
 import { GridFS } from "@guzzlerapp/mongodb/GridFS";
 import { DocumentNotFound, MongoError } from "@guzzlerapp/mongodb/Model";
@@ -23,13 +22,14 @@ import { ObjectId } from "bson";
 import { Effect, Exit, Option, pipe, Stream, Struct } from "effect";
 import { andThen, catchTag, catchTags, gen } from "effect/Effect";
 import { isNullable } from "effect/Predicate";
+import { unwrap } from "effect/Stream";
 import { FileFetcher } from "./FileFetcher.js";
 import { CollectionRegistry } from "./internal/database/CollectionRegistry.js";
+import { StoredFile } from "./internal/storage/types.js";
 
 export class AutosStorage extends Effect.Service<AutosStorage>()(
   "AutosStorage",
   {
-    accessors: true,
     effect: gen(function* () {
       const { userTypes, vehicles, fillupRecords, eventRecords } =
         yield* CollectionRegistry;
@@ -267,14 +267,7 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
       const getPhotoForVehicle = (
         username: Username,
         vehicleId: VehicleId,
-      ): Effect.Effect<
-        Readonly<{
-          stream: Stream.Stream<Uint8Array, MongoError>;
-          contentType: ContentType;
-          fileName: string;
-        }>,
-        DocumentNotFound | MongoError
-      > =>
+      ): Effect.Effect<StoredFile, DocumentNotFound | MongoError> =>
         gen(function* () {
           const vehicle = yield* getSingleVehicle(username, vehicleId);
 
@@ -309,8 +302,10 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
           },
         );
 
-      const streamAllFillupRecordsForUser = (username: Username) =>
-        fillupRecords.find({ username }).pipe(andThen(c => c.stream));
+      const allFillupRecordsForUser = (
+        username: Username,
+      ): Stream.Stream<VehicleFillupRecords> =>
+        unwrap(fillupRecords.find({ username }).pipe(andThen(c => c.stream)));
 
       const bulkInsertVehicleFillupRecords = (
         vfrs: readonly VehicleFillupRecords[],
@@ -350,7 +345,7 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
         getAllEventRecordsForUser,
         replaceEventRecords,
         bulkInsertVehicleEventRecords,
-        streamAllFillupRecordsForUser,
+        allFillupRecordsForUser,
         replaceFillupRecords,
         bulkInsertVehicleFillupRecords,
       };
