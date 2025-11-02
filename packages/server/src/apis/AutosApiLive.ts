@@ -14,7 +14,7 @@ import {
 import { MongoChangeStreams } from "@guzzlerapp/mongodb/MongoChangeStreams";
 import { RandomId } from "@guzzlerapp/utils/RandomId";
 import { Chunk, pipe, Stream } from "effect";
-import { catchTags, gen, logTrace, logWarning } from "effect/Effect";
+import { catchTags, fn, gen, logTrace, logWarning } from "effect/Effect";
 import { runCollect } from "effect/Stream";
 import { AutosStorage } from "../AutosStorage.js";
 import { BackupRestore } from "../BackupRestore.js";
@@ -23,8 +23,10 @@ import * as internal from "../internal/apis/autosApiLive.js";
 
 const notFound = { DocumentNotFound: () => new NotFound() } as const;
 
-export const AutosApiLive = HttpApiBuilder.group(AppApi, "autos", handlers =>
-  gen(function* () {
+export const AutosApiLive = HttpApiBuilder.group(
+  AppApi,
+  "autos",
+  fn(function* (handlers) {
     const aCar = yield* ACarFullBackup;
     const { getBackupStream, importFromGuzzlerBackup } = yield* BackupRestore;
     const autos = yield* AutosStorage;
@@ -46,8 +48,9 @@ export const AutosApiLive = HttpApiBuilder.group(AppApi, "autos", handlers =>
           yield* aCar.import(yield* currentSessionUsername, tz, file.path);
         }),
       )
-      .handle("importBackup", ({ payload: { backupFile } }) =>
-        gen(function* () {
+      .handle(
+        "importBackup",
+        fn(function* ({ payload: { backupFile } }) {
           const [file] = backupFile;
 
           yield* importFromGuzzlerBackup(

@@ -1,10 +1,11 @@
 import { FileSystem } from "@effect/platform";
 import { AutosModel } from "@guzzlerapp/domain";
 import { RedactedError } from "@guzzlerapp/domain/Errors";
+import { Username } from "@guzzlerapp/domain/User";
 import { MongoTransactions } from "@guzzlerapp/mongodb/MongoTransactions";
 import { RandomId } from "@guzzlerapp/utils/RandomId";
 import { Effect, flow } from "effect";
-import { andThen, gen } from "effect/Effect";
+import { andThen, gen, logError, scoped, tapError } from "effect/Effect";
 import { catchTags } from "effect/Stream";
 import { AutosStorage } from "./AutosStorage.js";
 import * as internal from "./internal/backupRestore.js";
@@ -27,17 +28,25 @@ export class BackupRestore extends Effect.Service<BackupRestore>()(
           DocumentNotFound: e => RedactedError.provideLogged(rand)(e.message),
           MongoError: e => RedactedError.provideLogged(rand)(e.cause),
           ZipError: e =>
-            Effect.logError(
-              "Error creating backup from archiver",
-              e.cause,
-            ).pipe(andThen(new AutosModel.ZipError())),
+            logError("Error creating backup from archiver", e.cause).pipe(
+              andThen(new AutosModel.ZipError()),
+            ),
         }),
       );
 
-      const importFromGuzzlerBackup = flow(
+      const importFromGuzzlerBackup: (
+        username: Username,
+        filePath: string,
+      ) => Effect.Effect<
+        void,
+        | AutosModel.BackupWrongFormatError
+        | AutosModel.BackupFileCorruptedError
+        | RedactedError,
+        RandomId
+      > = flow(
         internal.importFromGuzzlerBackup(autos, txns, zip, fs),
-        Effect.scoped,
-        Effect.tapError(e => Effect.logError(e.message)),
+        scoped,
+        tapError(e => logError(e.message)),
         Effect.catchTags({
           MissingBackupFile: () =>
             new AutosModel.BackupWrongFormatError({
