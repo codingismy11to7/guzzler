@@ -1,21 +1,21 @@
 import * as crypto from "crypto";
-import { Effect, pipe, Schema, Struct } from "effect";
-import { gen } from "effect/Effect";
+import { Effect, pipe, Schema as S, Struct } from "effect";
+import { fn } from "effect/Effect";
 import { stringifyCircular } from "effect/Inspectable";
 
 const IvLen = 16;
 
-export const KeyBytesHexString = Schema.Trim.pipe(
-  Schema.pattern(/[0-9a-fA-F]{64}/, {
+export const KeyBytesHexString = S.Trim.pipe(
+  S.pattern(/[0-9a-fA-F]{64}/, {
     identifier: "KeyBytesString",
   }),
 );
 export type KeyBytesHexString = typeof KeyBytesHexString.Type;
 
-const EncryptedDoc = Schema.Struct({
-  __iv: Schema.String,
-  __data: Schema.String,
-  __authTag: Schema.String,
+const EncryptedDoc = S.Struct({
+  __iv: S.String,
+  __data: S.String,
+  __authTag: S.String,
 });
 
 export const encrypt =
@@ -48,37 +48,34 @@ export const encrypt =
       };
     });
 
-export const decrypt =
-  (encryptionKey: KeyBytesHexString) => (doc: Record<string, unknown>) =>
-    gen(function* () {
-      const {
-        __iv: iv,
-        __data,
-        __authTag,
-        ...rest
-      } = yield* Schema.decodeUnknownEither(EncryptedDoc, {
-        onExcessProperty: "preserve",
-      })(doc);
+export const decrypt = (encryptionKey: KeyBytesHexString) =>
+  fn(function* (doc: Record<string, unknown>) {
+    const {
+      __iv: iv,
+      __data,
+      __authTag,
+      ...rest
+    } = yield* S.decodeUnknownEither(EncryptedDoc, {
+      onExcessProperty: "preserve",
+    })(doc);
 
-      const key = Buffer.from(encryptionKey, "hex");
+    const key = Buffer.from(encryptionKey, "hex");
 
-      const decipher = crypto.createDecipheriv(
-        "aes-256-gcm",
-        key,
-        Buffer.from(iv, "hex"),
-      );
-      decipher.setAuthTag(Buffer.from(__authTag, "hex"));
-      const deciphered = pipe(
-        decipher.update(__data, "hex", "utf-8"),
-        pre => pre + decipher.final("utf-8"),
-      );
+    const decipher = crypto.createDecipheriv(
+      "aes-256-gcm",
+      key,
+      Buffer.from(iv, "hex"),
+    );
+    decipher.setAuthTag(Buffer.from(__authTag, "hex"));
+    const deciphered = pipe(
+      decipher.update(__data, "hex", "utf-8"),
+      pre => pre + decipher.final("utf-8"),
+    );
 
-      const obj = yield* Schema.decodeEither(
-        Schema.parseJson(Schema.Struct({})),
-      )(deciphered);
+    const obj = yield* S.decodeEither(S.parseJson(S.Struct({})))(deciphered);
 
-      return {
-        ...rest,
-        ...obj,
-      };
-    });
+    return {
+      ...rest,
+      ...obj,
+    };
+  });
