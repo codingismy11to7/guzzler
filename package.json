@@ -58,7 +58,7 @@
     "cross-env": "^7.0.3",
     "effect": "^3.17.13",
     "eslint": "^9.36.0",
-    "eslint-import-resolver-typescript": "^3.6.3",
+    "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-codegen": "^0.34.0",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jsonc": "^2.20.1",
