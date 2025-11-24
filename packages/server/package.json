@@ -42,7 +42,7 @@
     "dotenv": "^16.4.7",
     "effect": "^3.17.13",
     "file-type": "^21.0.0",
-    "immer": "^10.1.1",
+    "immer": "^11.0.0",
     "node-expat": "^2.4.1",
     "simple-oauth2": "^5.1.0",
     "slash": "^5.1.0",
