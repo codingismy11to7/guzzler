@@ -36,7 +36,7 @@
     "@guzzlerapp/domain": "^0.0.6",
     "@guzzlerapp/mongodb": "^0.0.4",
     "@guzzlerapp/utils": "^0.0.3",
-    "@npmcli/package-json": "^6.1.1",
+    "@npmcli/package-json": "^7.0.4",
     "archiver": "^7.0.1",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
