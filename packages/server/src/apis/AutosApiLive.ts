@@ -15,6 +15,7 @@ import { MongoChangeStreams } from "@guzzlerapp/mongodb/MongoChangeStreams";
 import { RandomId } from "@guzzlerapp/utils/RandomId";
 import { Chunk, pipe, Stream } from "effect";
 import { catchTags, gen, logTrace, logWarning } from "effect/Effect";
+import { runCollect } from "effect/Stream";
 import { AutosStorage } from "../AutosStorage.js";
 import { BackupRestore } from "../BackupRestore.js";
 import { ACarFullBackup } from "../importers/ACarFullBackup.js";
@@ -86,10 +87,9 @@ export const AutosApiLive = HttpApiBuilder.group(AppApi, "autos", handlers =>
       )
       .handle("getUserFillups", () =>
         gen(function* () {
-          const stream = yield* autos.streamAllFillupRecordsForUser(
-            yield* currentSessionUsername,
-          );
-          const items = yield* Stream.runCollect(stream);
+          const items = yield* autos
+            .allFillupRecordsForUser(yield* currentSessionUsername)
+            .pipe(runCollect);
           return Object.fromEntries(
             Chunk.map(items, i => [i._id.vehicleId, i.fillups]),
           );
@@ -120,7 +120,6 @@ export const AutosApiLive = HttpApiBuilder.group(AppApi, "autos", handlers =>
                 ? logTrace("got pong")
                 : logWarning("unknown message from client", m),
             ),
-          ).pipe(
             catchTags({
               RequestError: () => new BadRequest(),
               SocketError: e => new ServerError({ message: e.message }),

@@ -1,20 +1,21 @@
 import { HttpApiEndpoint, HttpApiGroup } from "@effect/platform";
 import { Unauthorized } from "@effect/platform/HttpApiError";
-import { Schema, Struct } from "effect";
+import { TaggedStruct, Union, Void } from "effect/Schema";
+import { omit } from "effect/Struct";
 import { RawSessionAccess_DoNotUse } from "../Authentication.js";
 import { OAuthUserInfo } from "../OAuthUserInfo.js";
 import { User } from "../User.js";
 
-export const SessionWithoutUser = Schema.TaggedStruct("SessionWithoutUser", {
+export const SessionWithoutUser = TaggedStruct("SessionWithoutUser", {
   userInfo: OAuthUserInfo,
 });
 export type SessionWithoutUser = typeof SessionWithoutUser.Type;
-export const FullSession = Schema.TaggedStruct("FullSession", {
-  ...Struct.omit(SessionWithoutUser.fields, "_tag"),
+export const FullSession = TaggedStruct("FullSession", {
+  ...omit(SessionWithoutUser.fields, "_tag"),
   user: User,
 });
 export type FullSession = typeof FullSession.Type;
-export const SessionInfo = Schema.Union(FullSession, SessionWithoutUser);
+export const SessionInfo = Union(FullSession, SessionWithoutUser);
 export type SessionInfo = typeof SessionInfo.Type;
 
 export const Logout = "logout";
@@ -26,9 +27,8 @@ export class SessionApi extends HttpApiGroup.make("session")
       .addError(Unauthorized),
   )
   .add(
-    HttpApiEndpoint.get(Logout, "/logout").addSuccess(Schema.Void, {
-      status: 303,
-    }),
+    //
+    HttpApiEndpoint.get(Logout, "/logout").addSuccess(Void, { status: 303 }),
   )
   .middleware(RawSessionAccess_DoNotUse)
   .prefix("/api/session") {}
