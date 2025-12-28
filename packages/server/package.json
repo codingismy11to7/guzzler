@@ -1,12 +1,10 @@
 {
   "name": "@guzzlerapp/server",
-  "version": "0.0.7",
-
+  "version": "0.0.8",
   "description": "Guzzler backend",
   "license": "MIT",
   "private": true,
   "type": "module",
-
   "repository": {
     "directory": "packages/server",
     "type": "git",
@@ -28,14 +26,13 @@
     "test": "vitest --run",
     "test:watch": "vitest"
   },
-
   "dependencies": {
     "@date-fns/tz": "^1.2.0",
     "@effect/platform": "^0.90.9",
     "@effect/platform-node": "^0.96.1",
-    "@guzzlerapp/domain": "^0.0.6",
-    "@guzzlerapp/mongodb": "^0.0.4",
-    "@guzzlerapp/utils": "^0.0.3",
+    "@guzzlerapp/domain": "^0.0.7",
+    "@guzzlerapp/mongodb": "^0.0.5",
+    "@guzzlerapp/utils": "^0.0.4",
     "@npmcli/package-json": "^7.0.4",
     "archiver": "^7.0.1",
     "date-fns": "^4.1.0",
@@ -58,10 +55,14 @@
   },
   "effect": {
     "generateExports": {
-      "include": ["**/*.ts"]
+      "include": [
+        "**/*.ts"
+      ]
     },
     "generateIndex": {
-      "include": ["**/*.ts"]
+      "include": [
+        "**/*.ts"
+      ]
     }
   },
   "nodemonConfig": {
