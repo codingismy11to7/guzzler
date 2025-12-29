@@ -25,7 +25,7 @@
   },
 
   "dependencies": {
-    "@effect/platform": "^0.90.9",
+    "@effect/platform": "^0.94.0",
     "@effect/platform-browser": "^0.70.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
