@@ -31,7 +31,7 @@
 
   "dependencies": {
     "@date-fns/tz": "^1.2.0",
-    "@effect/platform": "^0.90.9",
+    "@effect/platform": "^0.94.0",
     "@effect/platform-node": "^0.96.1",
     "@guzzlerapp/domain": "^0.0.6",
     "@guzzlerapp/mongodb": "^0.0.4",
