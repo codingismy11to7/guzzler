@@ -1,5 +1,14 @@
 # @guzzler/domain
 
+## 0.0.7
+
+### Patch Changes
+
+- [#262](https://github.com/codingismy11to7/guzzler/pull/262) [`797edc0`](https://github.com/codingismy11to7/guzzler/commit/797edc032936da723a1a0c3a198ef204c095865a) Thanks [@codingismy11to7](https://github.com/codingismy11to7)! - housekeeping, dep bumping
+
+- Updated dependencies [[`797edc0`](https://github.com/codingismy11to7/guzzler/commit/797edc032936da723a1a0c3a198ef204c095865a)]:
+  - @guzzlerapp/utils@0.0.4
+
 ## 0.0.6
 
 ### Patch Changes
