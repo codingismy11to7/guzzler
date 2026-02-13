@@ -18,7 +18,8 @@
           packages =
             let
               mainPkgs = with pkgs; [
-                nodejs_24
+                nodejs_22
+                python312
                 uv
               ];
             in
