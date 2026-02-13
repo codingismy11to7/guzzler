@@ -19,6 +19,7 @@
             let
               mainPkgs = with pkgs; [
                 nodejs_24
+                uv
               ];
             in
             mainPkgs;
