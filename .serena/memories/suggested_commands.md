@@ -1,6 +1,26 @@
 # Suggested Commands
 
 ## Development
+
+### Starting the dev environment
+All four steps should be run as **tracked background tasks** (using the agent's background command feature), NOT detached with `&` or `nohup`. This gives us control over their output and lifecycle.
+
+1. Start MongoDB (foreground, not `-d`): `podman compose -f docker/docker-compose.yaml up`
+   - **NEVER run `podman compose down`** — it can destroy data
+   - Use `podman compose -f docker/docker-compose.yaml stop` to stop, and `start` or `up` to start
+2. Start backend: `source packages/server/.envrc && npm run runBackend`
+3. Start frontend: `npm run runFrontend`
+4. Open browser when ready: `npm run openBrowser`
+   - Waits for backend on port 8080, then opens browser
+   - Backend proxies to frontend in dev mode, so just open :8080
+   - No `.envrc` needed for frontend
+   - Frontend runs on http://localhost:3000 (Vite)
+
+### Notes
+- The root `.envrc` has `use flake` which provides Node 24 via nix dev shell
+- MongoDB runs as a podman container (mongo:8, replica set `rs0`, auth enabled)
+
+### Individual commands
 - `npm run runBackend` - Start backend dev server (nodemon + tsx)
 - `npm run runFrontend` - Start frontend dev server (Vite)
 - `npm run dev -w @guzzlerapp/server` - Start backend directly

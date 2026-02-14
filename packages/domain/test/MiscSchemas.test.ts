@@ -1,12 +1,13 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Schema } from "effect";
-import { gen } from "effect/Effect";
+import { fn } from "effect/Effect";
 import { Timestamp } from "../src/MiscSchemas.js";
 
 describe("MiscSchemas", () => {
   describe("Timestamp", () => {
-    it.effect("should be a string when encoded", () =>
-      gen(function* () {
+    it.effect(
+      "should be a string when encoded",
+      fn(function* () {
         const ts1 = yield* Schema.decode(Timestamp)(1738479722987);
         const ts2 = yield* Schema.decode(Timestamp)("2025-02-02T07:02:02.987Z");
 
