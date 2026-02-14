@@ -1,6 +1,24 @@
 # Suggested Commands
 
 ## Development
+
+### Starting the dev environment
+1. Start MongoDB: `podman compose -f docker/docker-compose.yaml up -d`
+2. Start backend: `source packages/server/.envrc && npm run runBackend`
+   - The server `.envrc` sets env vars (PORT, MONGO_URL, etc.) but does NOT include `use flake`
+   - Do NOT use `direnv exec` on the server path — just `source` it
+   - Backend runs on http://localhost:8080 (nodemon + tsx, watches for changes)
+3. Start frontend: `npm run runFrontend`
+   - No `.envrc` needed for frontend
+   - Frontend runs on http://localhost:3000 (Vite)
+
+### Notes
+- The root `.envrc` has `use flake` which provides Node 22 via nix dev shell
+- `node-expat` native module requires Node 22 (won't compile against Node 24)
+- `node-expat` also requires Python for `node-gyp` — `python312` is in the flake for this
+- MongoDB runs as a podman container (mongo:8, replica set `rs0`, auth enabled)
+
+### Individual commands
 - `npm run runBackend` - Start backend dev server (nodemon + tsx)
 - `npm run runFrontend` - Start frontend dev server (Vite)
 - `npm run dev -w @guzzlerapp/server` - Start backend directly

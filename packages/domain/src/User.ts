@@ -2,7 +2,7 @@ import { Schema } from "effect";
 import { OAuthUserInfo, UserInfoId } from "./OAuthUserInfo.js";
 
 export const Username = Schema.String.pipe(
-  Schema.length({ min: 5, max: 20 }),
+  Schema.length({ min: 4, max: 20 }),
   Schema.pattern(/^[a-z0-9._-]+$/),
   Schema.brand("Username"),
 );
