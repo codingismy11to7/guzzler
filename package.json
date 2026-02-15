@@ -19,6 +19,7 @@
     "coverage:watch": "vitest --coverage",
     "lint": "eslint --max-warnings=0",
     "lint:fix": "npm run codegen && eslint --max-warnings=0 --fix",
+    "openBrowser": "wait-on http://localhost:8080 && open-cli http://localhost:8080",
     "postinstall": "patch-package",
     "runBackend": "npm run dev -w @guzzlerapp/server",
     "runFrontend": "npm run dev -w @guzzlerapp/webui",
@@ -69,9 +70,11 @@
     "eslint-plugin-react-refresh": "^0.4.24",
     "glob": "^11.1.0",
     "jsdom": "^27.2.0",
+    "open-cli": "^8.0.0",
     "tsx": "^4.19.2",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.45.0",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "wait-on": "^9.0.4"
   }
 }

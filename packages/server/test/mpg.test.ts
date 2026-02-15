@@ -1,5 +1,5 @@
 import { it } from "@effect/vitest";
-import { FillupRecord } from "@guzzlerapp/domain/src/models/Autos.js";
+import { FillupRecord } from "@guzzlerapp/domain/models/Autos";
 import { Arbitrary, FastCheck, Schema as S } from "effect";
 import { getOrThrow, isNone } from "effect/Option";
 import { pick } from "effect/Struct";
