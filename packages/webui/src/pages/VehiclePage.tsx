@@ -1,15 +1,16 @@
 import type { Vehicle } from "@guzzlerapp/domain/models/Autos";
 import { NoteTwoTone } from "@mui/icons-material";
-import { Box, Button, Paper, Skeleton, Stack, Typography } from "@mui/material";
-import { Chunk, Match, Option, pipe } from "effect";
+import { Box, Button, Paper, Skeleton, Stack, Tab, Tabs, Typography } from "@mui/material";
+import { Match, Option, pipe } from "effect";
 import { isNotUndefined, isUndefined } from "effect/Predicate";
 import { useState } from "react";
 import { imageUrl } from "../apiclients/ImageClient.js";
+import { FillupsList } from "../components/FillupsList.js";
 import NotesViewerDialog from "../components/NotesViewerDialog.js";
 import { StandardPageBox } from "../components/StandardPageBox.js";
 import { useUserData } from "../hooks/useUserData.js";
 import { useTranslation } from "../i18n.js";
-import { routes } from "../router.js";
+import { navigateToVehicleTab, VehicleRoute } from "../router.js";
 
 const getDescription = (v: Vehicle) => {
   const carDesc = (() => {
@@ -37,7 +38,7 @@ const getDescription = (v: Vehicle) => {
   );
 };
 
-type Props = Readonly<{ route: ReturnType<typeof routes.Vehicle> }>;
+type Props = Readonly<{ route: VehicleRoute }>;
 
 const VehiclePage = ({ route }: Props) => {
   const { t } = useTranslation();
@@ -46,10 +47,11 @@ const VehiclePage = ({ route }: Props) => {
 
   const [notesOpen, setNotesOpen] = useState(false);
 
+  const { vehicleId } = route.params;
+  const activeTab = route.name === "VehicleFillups" ? "fillups" : "info";
+
   return Match.value(
-    (userData.loading ? undefined : userData.vehicles)?.[
-      route.params.vehicleId
-    ],
+    (userData.loading ? undefined : userData.vehicles)?.[vehicleId],
   ).pipe(
     Match.when(
       v => !userData.loading && isUndefined(v),
@@ -113,19 +115,24 @@ const VehiclePage = ({ route }: Props) => {
               </>
             )}
           </Stack>
+          <Tabs
+            value={activeTab}
+            onChange={(_, tab) => navigateToVehicleTab(vehicleId, tab)}
+            variant="fullWidth"
+          >
+            <Tab label="Info" value="info" />
+            <Tab label="Fillups" value="fillups" />
+          </Tabs>
         </Paper>
-        <StandardPageBox>
-          {Chunk.makeBy(10, i => (
-            /*v?.notes &&*/ <Typography
-              key={i}
-              variant="body2"
-              sx={{ color: "text.secondary" }}
-            >
-              {v?.notes ??
-                "Lizards are a widespread group of squamate reptiles, with over 6,000 species, ranging across all continents except Antarctica"}
+        {activeTab === "info" ? (
+          <StandardPageBox>
+            <Typography variant="body2" color="text.secondary">
+              Vehicle details coming soon.
             </Typography>
-          ))}
-        </StandardPageBox>
+          </StandardPageBox>
+        ) : (
+          <FillupsList vehicleId={vehicleId} />
+        )}
       </>
     )),
   );

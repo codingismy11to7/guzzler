@@ -28,6 +28,7 @@ const LoggedInApp = ({ route }: Props) => {
           Settings: () => <SettingsPage />,
           Vehicles: () => <VehiclesPage />,
           Vehicle: r => <VehiclePage route={r} />,
+          VehicleFillups: r => <VehiclePage route={r} />,
         }),
       )}
     </PageContainer>

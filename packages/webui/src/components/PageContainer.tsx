@@ -45,6 +45,7 @@ export const PageContainer = ({
       ImportExport: () => t("importDialog.title"),
       Settings: () => t("settings.title"),
       Vehicle: () => t("vehicle.title"),
+      VehicleFillups: () => t("vehicle.title"),
       Vehicles: () => t("vehicles.title"),
     }),
   );
