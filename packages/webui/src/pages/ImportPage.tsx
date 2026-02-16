@@ -208,15 +208,25 @@ const BackupErrorDialog = ({ error, onClose }: BackupErrorDialogProps) => {
   );
 };
 
-type SuccessDialogProps = Readonly<{ open: boolean; onClose: LazyArg<void> }>;
-const SuccessDialog = ({ open, onClose }: SuccessDialogProps) => {
+type SuccessDialogProps = Readonly<{
+  result: AutosApiModel.ImportResult | true | undefined;
+  onClose: LazyArg<void>;
+}>;
+const SuccessDialog = ({ result, onClose }: SuccessDialogProps) => {
   const { t } = useTranslation();
 
+  const text =
+    result === true
+      ? t("successDialog.textGeneric")
+      : result
+        ? t("successDialog.text", result)
+        : "";
+
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog open={!!result} onClose={onClose}>
       <DialogTitle>{t("successDialog.title")}</DialogTitle>
       <DialogContent>
-        <DialogContentText>{t("successDialog.text")}</DialogContentText>
+        <DialogContentText>{text}</DialogContentText>
       </DialogContent>
       <DialogActions>
         <Button variant="contained" onClick={onClose} fullWidth>
@@ -301,7 +311,7 @@ const ACarUpload = ({ setCloseDisabled }: UploadProps) => {
       Effect.sync(() => setErrorSync(e)),
     [],
   );
-  const [succeeded, setSucceeded] = useState(false);
+  const [importResult, setImportResult] = useState<AutosApiModel.ImportResult>();
 
   useEffect(() => setCloseDisabled(importing), [importing, setCloseDisabled]);
 
@@ -316,7 +326,7 @@ const ACarUpload = ({ setCloseDisabled }: UploadProps) => {
         ),
         andThen(AutosClient.importACarBackup(timezone, file)),
         Effect.scoped,
-        andThen(() => setSucceeded(true)),
+        andThen(result => setImportResult(result)),
         catchAll(setError),
         runP,
       );
@@ -330,7 +340,7 @@ const ACarUpload = ({ setCloseDisabled }: UploadProps) => {
       {error && (
         <AbpErrorDialog error={error} onClose={() => setErrorSync(undefined)} />
       )}
-      <SuccessDialog open={succeeded} onClose={onSuccessAcked} />
+      <SuccessDialog result={importResult} onClose={onSuccessAcked} />
       <Stack spacing={1} direction="row" alignItems="center">
         <Autocomplete
           disabled={importing}
@@ -454,7 +464,7 @@ const BackupUpload = ({ setCloseDisabled }: UploadProps) => {
           onClose={() => setErrorSync(undefined)}
         />
       )}
-      <SuccessDialog open={succeeded} onClose={onSuccessAcked} />
+      <SuccessDialog result={succeeded || undefined} onClose={onSuccessAcked} />
       <Typography
         variant="caption"
         color={

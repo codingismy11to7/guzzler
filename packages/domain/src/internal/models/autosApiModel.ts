@@ -1,4 +1,5 @@
 import { Chunk, Match, Option, pipe } from "effect";
+import { VehicleId } from "../../models/Autos.js";
 import {
   ChangeEvent,
   FrontendChangeEvent,
@@ -18,12 +19,13 @@ export const changeEventsToFrontend = (
     pipe(
       fuvcOpt,
       Option.map(c => c.vehicleIds),
-      Option.getOrElse(() => []),
+      Option.getOrElse(() => [] as readonly VehicleId[]),
       vehicles =>
         FrontendUserVehicleChange.make({
           type: from.collectionName,
           vehicleIds: [...vehicles, from._id.vehicleId],
         }),
+      Option.some,
     );
 
   const { eventRecords, fillupRecords, userChanges } = Chunk.reduce(

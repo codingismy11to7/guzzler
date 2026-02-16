@@ -6,6 +6,7 @@ import {
   UserTypesWithId,
   Vehicle,
 } from "@guzzlerapp/domain/models/Autos";
+import { Username } from "@guzzlerapp/domain/User";
 import { MongoTransactions } from "@guzzlerapp/mongodb/MongoTransactions";
 import { RandomId } from "@guzzlerapp/utils/RandomId";
 import archiver from "archiver";
@@ -196,30 +197,39 @@ const makeTestLayers = () => {
 
 // -- tests --
 
+const testUser = Username.make("testuser");
+const testTz = "America/New_York" as const;
+
+const defaultXmlFiles = {
+  "event-subtypes.xml": eventSubtypesXml,
+  "fuel-types.xml": fuelTypesXml,
+  "trip-types.xml": tripTypesXml,
+  "vehicles.xml": vehiclesXml,
+};
+
+const runImport = (
+  xmlFiles: Record<string, string>,
+  testLayer: Layer.Layer<ACarFullBackup>,
+) =>
+  fn(function* () {
+    const tmpDir = yield* promise(() =>
+      fs.promises.mkdtemp(path.join("/tmp", "abp-test-")),
+    );
+    const zipPath = path.join(tmpDir, "test.abp");
+    yield* promise(() => createAbpFile(zipPath, xmlFiles));
+
+    return yield* ACarFullBackup.import(testUser, testTz, zipPath).pipe(
+      provide(testLayer),
+    );
+  })();
+
 describe("ACarFullBackup", () => {
   it.effect(
     "imports a valid .abp file",
     fn(function* () {
       const { testLayer, captured } = makeTestLayers();
 
-      const tmpDir = yield* promise(() =>
-        fs.promises.mkdtemp(path.join("/tmp", "abp-test-")),
-      );
-      const zipPath = path.join(tmpDir, "test.abp");
-      yield* promise(() =>
-        createAbpFile(zipPath, {
-          "event-subtypes.xml": eventSubtypesXml,
-          "fuel-types.xml": fuelTypesXml,
-          "trip-types.xml": tripTypesXml,
-          "vehicles.xml": vehiclesXml,
-        }),
-      );
-
-      yield* ACarFullBackup.import(
-        "testuser" as never,
-        "America/New_York" as never,
-        zipPath,
-      ).pipe(provide(testLayer));
+      const importResult = yield* runImport(defaultXmlFiles, testLayer);
 
       const result = yield* Ref.get(captured);
 
@@ -253,6 +263,111 @@ describe("ACarFullBackup", () => {
       expect(result.events[0].records).toHaveLength(1);
       const event = result.events[0].records[0];
       expect(event.type).toBe("maintenance");
+
+      // import result counts
+      expect(importResult).toEqual({
+        vehicles: 1,
+        fillups: 1,
+        events: 1,
+      });
+    }),
+  );
+
+  it.effect(
+    "returns correct counts with multiple vehicles",
+    fn(function* () {
+      const { testLayer } = makeTestLayers();
+
+      const multiVehiclesXml = `<?xml version="1.0" encoding="UTF-8"?>
+<vehicles>
+  <vehicle id="v1">
+    <name>Car 1</name>
+    <active>true</active>
+    <vehicle-parts/>
+    <reminders/>
+    <fillup-records>
+      <fillup-record id="fr1">
+        <date>01/15/2024 - 10:30</date>
+        <fuel-type-id>ft1</fuel-type-id>
+        <odometer-reading>50000</odometer-reading>
+        <volume>12.5</volume>
+        <total-cost>45.00</total-cost>
+        <price-per-volume-unit>3.60</price-per-volume-unit>
+        <partial>false</partial>
+        <previous-missed-fillups>false</previous-missed-fillups>
+        <has-fuel-additive>false</has-fuel-additive>
+        <city-driving-percentage>50</city-driving-percentage>
+        <highway-driving-percentage>50</highway-driving-percentage>
+      </fillup-record>
+      <fillup-record id="fr2">
+        <date>02/15/2024 - 10:30</date>
+        <fuel-type-id>ft1</fuel-type-id>
+        <odometer-reading>50300</odometer-reading>
+        <volume>11.0</volume>
+        <total-cost>40.00</total-cost>
+        <price-per-volume-unit>3.64</price-per-volume-unit>
+        <partial>false</partial>
+        <previous-missed-fillups>false</previous-missed-fillups>
+        <has-fuel-additive>false</has-fuel-additive>
+        <city-driving-percentage>60</city-driving-percentage>
+        <highway-driving-percentage>40</highway-driving-percentage>
+      </fillup-record>
+    </fillup-records>
+    <event-records>
+      <event-record id="er1">
+        <type>maintenance</type>
+        <date>02/01/2024 - 09:00</date>
+        <subtypes/>
+      </event-record>
+    </event-records>
+    <trip-records/>
+  </vehicle>
+  <vehicle id="v2">
+    <name>Car 2</name>
+    <active>true</active>
+    <vehicle-parts/>
+    <reminders/>
+    <fillup-records>
+      <fillup-record id="fr3">
+        <date>03/15/2024 - 10:30</date>
+        <fuel-type-id>ft2</fuel-type-id>
+        <odometer-reading>20000</odometer-reading>
+        <volume>15.0</volume>
+        <total-cost>60.00</total-cost>
+        <price-per-volume-unit>4.00</price-per-volume-unit>
+        <partial>false</partial>
+        <previous-missed-fillups>false</previous-missed-fillups>
+        <has-fuel-additive>false</has-fuel-additive>
+        <city-driving-percentage>40</city-driving-percentage>
+        <highway-driving-percentage>60</highway-driving-percentage>
+      </fillup-record>
+    </fillup-records>
+    <event-records>
+      <event-record id="er2">
+        <type>repair</type>
+        <date>03/01/2024 - 14:00</date>
+        <subtypes/>
+      </event-record>
+      <event-record id="er3">
+        <type>maintenance</type>
+        <date>04/01/2024 - 09:00</date>
+        <subtypes/>
+      </event-record>
+    </event-records>
+    <trip-records/>
+  </vehicle>
+</vehicles>`;
+
+      const importResult = yield* runImport(
+        { ...defaultXmlFiles, "vehicles.xml": multiVehiclesXml },
+        testLayer,
+      );
+
+      expect(importResult).toEqual({
+        vehicles: 2,
+        fillups: 3,
+        events: 3,
+      });
     }),
   );
 
@@ -261,24 +376,10 @@ describe("ACarFullBackup", () => {
     fn(function* () {
       const { testLayer } = makeTestLayers();
 
-      const tmpDir = yield* promise(() =>
-        fs.promises.mkdtemp(path.join("/tmp", "abp-test-")),
-      );
-      const zipPath = path.join(tmpDir, "test.abp");
-      yield* promise(() =>
-        createAbpFile(zipPath, {
-          "event-subtypes.xml": "<wrong-root/>",
-          "fuel-types.xml": fuelTypesXml,
-          "trip-types.xml": tripTypesXml,
-          "vehicles.xml": vehiclesXml,
-        }),
-      );
-
-      const result = yield* ACarFullBackup.import(
-        "testuser" as never,
-        "America/New_York" as never,
-        zipPath,
-      ).pipe(provide(testLayer), Effect.flip);
+      const result = yield* runImport(
+        { ...defaultXmlFiles, "event-subtypes.xml": "<wrong-root/>" },
+        testLayer,
+      ).pipe(Effect.flip);
 
       expect(result._tag).toBe("AbpWrongFormatError");
     }),
@@ -289,24 +390,11 @@ describe("ACarFullBackup", () => {
     fn(function* () {
       const { testLayer } = makeTestLayers();
 
-      const tmpDir = yield* promise(() =>
-        fs.promises.mkdtemp(path.join("/tmp", "abp-test-")),
-      );
-      const zipPath = path.join(tmpDir, "test.abp");
-      // missing vehicles.xml
-      yield* promise(() =>
-        createAbpFile(zipPath, {
-          "event-subtypes.xml": eventSubtypesXml,
-          "fuel-types.xml": fuelTypesXml,
-          "trip-types.xml": tripTypesXml,
-        }),
-      );
+      const { "vehicles.xml": _, ...missingVehicles } = defaultXmlFiles;
 
-      const result = yield* ACarFullBackup.import(
-        "testuser" as never,
-        "America/New_York" as never,
-        zipPath,
-      ).pipe(provide(testLayer), Effect.flip);
+      const result = yield* runImport(missingVehicles, testLayer).pipe(
+        Effect.flip,
+      );
 
       expect(result._tag).toBe("AbpWrongFormatError");
     }),

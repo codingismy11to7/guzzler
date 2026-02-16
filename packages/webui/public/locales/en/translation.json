@@ -99,7 +99,8 @@
     "trip": "Add Trip"
   },
   "successDialog": {
-    "text": "Your data was successfully imported. We imported 342 vehicles with a total fillup record count of 14e46 and event record count of 42.",
+    "text": "Your data was successfully imported. We imported {{vehicles}} vehicle(s) with a total of {{fillups}} fillup record(s) and {{events}} event record(s).",
+    "textGeneric": "Your data was successfully restored.",
     "title": "⛽ Success!"
   },
   "trash": {

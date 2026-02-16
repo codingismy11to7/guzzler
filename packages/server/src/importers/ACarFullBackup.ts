@@ -8,7 +8,6 @@ import {
   BooleanFromSelfOrString,
   IntFromSelfOrString,
   NumberFromSelfOrString,
-  OptionalBigDecimal,
   OptionalString,
 } from "@guzzlerapp/domain/MiscSchemas";
 import {
@@ -63,7 +62,7 @@ import {
   tapError,
 } from "effect/Effect";
 import { ParseError } from "effect/ParseResult";
-import { isNull, isUndefined } from "effect/Predicate";
+import { isRecord, isUndefined } from "effect/Predicate";
 import { fileTypeFromBuffer } from "file-type";
 import { AutosStorage } from "../AutosStorage.js";
 import { MissingBackupFile } from "../internal/MissingBackupFile.js";
@@ -74,13 +73,48 @@ import { Zip } from "../Zip.js";
 
 const String = Schema.Trimmed;
 
+// fast-xml-parser produces "" for empty XML elements like <foo/> or <foo></foo>.
+// The old node-expat parser produced undefined. These helpers restore that
+// behavior for optional non-string fields.
+
+// For use with Schema.optional — "" decodes to undefined
+const EmptyAsUndefined = Schema.transform(
+  Schema.Literal(""),
+  Schema.Undefined,
+  {
+    decode: () => undefined,
+    encode: () => "" as const,
+  },
+);
+const orEmpty = <A, I, R>(s: Schema.Schema<A, I, R>) =>
+  Schema.Union(s, EmptyAsUndefined);
+
+// For use instead of Schema.OptionFromUndefinedOr — "" decodes to None
+const xmlOptionOr = <A, I, R>(s: Schema.Schema<A, I, R>) =>
+  Schema.transform(
+    Schema.Union(s, Schema.Undefined, Schema.Literal("")),
+    Schema.OptionFromSelf(Schema.typeSchema(s)),
+    {
+      strict: true,
+      decode: (v): Option.Option<A> =>
+        isUndefined(v) || v === "" ? Option.none() : Option.some(v),
+      encode: o => Option.getOrUndefined(o) as A | undefined | "",
+    },
+  );
+
 const ACarEventSubtype = Schema.Struct({
   id: String,
   type: String,
   name: String,
   notes: OptionalString,
-  defaultTimeReminderInterval: IntFromSelfOrString.pipe(Schema.optional),
-  defaultDistanceReminderInterval: IntFromSelfOrString.pipe(Schema.optional),
+  defaultTimeReminderInterval: IntFromSelfOrString.pipe(
+    orEmpty,
+    Schema.optional,
+  ),
+  defaultDistanceReminderInterval: IntFromSelfOrString.pipe(
+    orEmpty,
+    Schema.optional,
+  ),
 });
 type ACarEventSubtype = typeof ACarEventSubtype.Type;
 
@@ -89,10 +123,8 @@ const ACarFuelType = Schema.Struct({
   category: String,
   name: String,
   notes: OptionalString,
-  ratingType: Schema.OptionFromUndefinedOr(
-    Schema.Literal("octane_ron", "octane_aki", "cetane"),
-  ),
-  rating: NumberFromSelfOrString.pipe(Schema.optional),
+  ratingType: xmlOptionOr(Schema.Literal("octane_ron", "octane_aki", "cetane")),
+  rating: NumberFromSelfOrString.pipe(orEmpty, Schema.optional),
 });
 type ACarFuelType = typeof ACarFuelType.Type;
 
@@ -100,7 +132,10 @@ const ACarTripType = Schema.Struct({
   id: String,
   name: String,
   notes: OptionalString,
-  defaultTaxDeductionRate: NumberFromSelfOrString.pipe(Schema.optional),
+  defaultTaxDeductionRate: NumberFromSelfOrString.pipe(
+    orEmpty,
+    Schema.optional,
+  ),
 });
 type ACarTripType = typeof ACarTripType.Type;
 
@@ -113,20 +148,21 @@ const placeFields = {
   placeCountry: OptionalString,
   placePostalCode: OptionalString,
   placeGooglePlacesId: OptionalString,
-  placeLatitude: Schema.OptionFromUndefinedOr(Latitude),
-  placeLongitude: Schema.OptionFromUndefinedOr(Longitude),
-  deviceLatitude: Schema.OptionFromUndefinedOr(Latitude),
-  deviceLongitude: Schema.OptionFromUndefinedOr(Longitude),
+  placeLatitude: xmlOptionOr(Latitude),
+  placeLongitude: xmlOptionOr(Longitude),
+  deviceLatitude: xmlOptionOr(Latitude),
+  deviceLongitude: xmlOptionOr(Longitude),
 } as const;
 
 const placeFieldNames = Struct.keys(placeFields);
 
 const VehiclePart = String;
 const Reminder = String;
+const OptionalBigDecimalOrEmpty = xmlOptionOr(Schema.BigDecimal);
 const ACarFillupRecord = Schema.Struct({
   id: String,
   date: String,
-  fuelEfficiency: OptionalBigDecimal,
+  fuelEfficiency: OptionalBigDecimalOrEmpty,
   fuelTypeId: String,
   notes: OptionalString,
   odometerReading: Schema.BigDecimal,
@@ -142,7 +178,7 @@ const ACarFillupRecord = Schema.Struct({
   drivingMode: OptionalString,
   cityDrivingPercentage: Schema.BigDecimal,
   highwayDrivingPercentage: Schema.BigDecimal,
-  averageSpeed: OptionalBigDecimal,
+  averageSpeed: OptionalBigDecimalOrEmpty,
   ...placeFields,
 });
 type ACarFillupRecord = typeof ACarFillupRecord.Type;
@@ -151,10 +187,10 @@ const ACarEventRecord = Schema.Struct({
   type: String,
   date: String,
   notes: OptionalString,
-  odometerReading: OptionalBigDecimal,
+  odometerReading: OptionalBigDecimalOrEmpty,
   paymentType: OptionalString,
   tags: OptionalString,
-  totalCost: OptionalBigDecimal,
+  totalCost: OptionalBigDecimalOrEmpty,
   ...placeFields,
   subtypes: Schema.Unknown,
 });
@@ -164,7 +200,7 @@ const ACarVehicle = Schema.Struct({
   name: String,
   notes: OptionalString,
   type: OptionalString,
-  year: IntFromSelfOrString.pipe(Schema.optional),
+  year: IntFromSelfOrString.pipe(orEmpty, Schema.optional),
   makeId: OptionalString,
   make: OptionalString,
   modelId: OptionalString,
@@ -187,7 +223,7 @@ const ACarVehicle = Schema.Struct({
   vin: OptionalString,
   insurancePolicy: OptionalString,
   color: OptionalString,
-  fuelTankCapacity: OptionalBigDecimal,
+  fuelTankCapacity: OptionalBigDecimalOrEmpty,
   active: BooleanFromSelfOrString,
   distanceUnit: OptionalString,
   volumeUnit: OptionalString,
@@ -196,7 +232,7 @@ const ACarVehicle = Schema.Struct({
   regionId: OptionalString,
   regionName: OptionalString,
   cityName: OptionalString,
-  photo: Schema.OptionFromUndefinedOr(Schema.Uint8ArrayFromBase64),
+  photo: xmlOptionOr(Schema.Uint8ArrayFromBase64),
 
   vehicleParts: Schema.Array(VehiclePart),
   reminders: Schema.Array(Reminder),
@@ -261,31 +297,27 @@ class UnexpectedOpeningTag extends Data.TaggedError("UnexpectedOpeningTag")<{
 const unexpectedOpeningTag = (expected: string, received: string) =>
   new UnexpectedOpeningTag({ expected, received });
 
-const asArray = (v: unknown): ReadonlyArray<Record<string, unknown>> =>
-  isUndefined(v)
-    ? []
-    : Array.isArray(v)
-      ? (v as Array<Record<string, unknown>>)
-      : [v as Record<string, unknown>];
+const asArray = (v: unknown): readonly unknown[] =>
+  isUndefined(v) ? [] : Array.isArray(v) ? v : [v];
 
 const childArray = (parent: unknown, childKey: string): readonly unknown[] => {
-  if (isUndefined(parent) || parent === "" || isNull(parent)) return [];
-  if (typeof parent !== "object") return [];
-  const children = (parent as Record<string, unknown>)[childKey];
+  if (!isRecord(parent)) return [];
+  const children = parent[childKey];
   if (isUndefined(children)) return [];
   return Array.isArray(children) ? children : [children];
 };
 
-const unwrapVehicle = (
-  raw: Record<string, unknown>,
-): Record<string, unknown> => ({
-  ...raw,
-  vehicleParts: childArray(raw.vehicleParts, "vehiclePart"),
-  reminders: childArray(raw.reminders, "reminder"),
-  fillupRecords: childArray(raw.fillupRecords, "fillupRecord"),
-  eventRecords: childArray(raw.eventRecords, "eventRecord"),
-  tripRecords: childArray(raw.tripRecords, "tripRecord"),
-});
+const unwrapVehicle = (raw: unknown): Record<string, unknown> =>
+  isRecord(raw)
+    ? {
+        ...raw,
+        vehicleParts: childArray(raw.vehicleParts, "vehiclePart"),
+        reminders: childArray(raw.reminders, "reminder"),
+        fillupRecords: childArray(raw.fillupRecords, "fillupRecord"),
+        eventRecords: childArray(raw.eventRecords, "eventRecord"),
+        tripRecords: childArray(raw.tripRecords, "tripRecord"),
+      }
+    : {};
 
 const parseSettingsFile = <S extends Schema.Schema.AnyNoContext>(
   parseXml: XmlParser["parse"],
@@ -301,13 +333,13 @@ const parseSettingsFile = <S extends Schema.Schema.AnyNoContext>(
     const doc = yield* parseXml(data);
     const root = doc[rootTag];
 
-    if (isUndefined(root))
+    if (isUndefined(root) || !isRecord(root))
       return yield* unexpectedOpeningTag(
         rootTag,
         Object.keys(doc)[0] ?? "<empty>",
       );
 
-    const items = asArray((root as Record<string, unknown>)[childTag]);
+    const items = asArray(root[childTag]);
 
     const parsed = yield* forEach(
       items,
@@ -325,7 +357,6 @@ export class ACarFullBackup extends Effect.Service<ACarFullBackup>()(
     dependencies: [
       AutosStorage.Default,
       NodeFileSystem.layer,
-      MongoTransactions.Default,
       RandomId.Default,
       XmlParser.Default,
       Zip.Default,
@@ -445,30 +476,8 @@ export class ACarFullBackup extends Effect.Service<ACarFullBackup>()(
         }).pipe(tap(logInfo(`parsed ${parsed.length} TripTypes`)));
       });
 
-      const parseVehicles: (
-        username: Username,
-        userTimeZone: TimeZone,
-        data: string,
-      ) => Effect.Effect<
-        void,
-        | XmlParsingError
-        | ParseError
-        | MongoError
-        | DocumentNotFound
-        | UnexpectedOpeningTag
-      > = fn("parseVehicles")(function* (username, userTimeZone, data) {
-        const doc = yield* parseXml(data);
-
-        if (isUndefined(doc.vehicles))
-          return yield* unexpectedOpeningTag(
-            "vehicles",
-            Object.keys(doc)[0] ?? "<empty>",
-          );
-
-        const vehiclesRoot = doc.vehicles as Record<string, unknown>;
-        const vehicles = asArray(vehiclesRoot.vehicle);
-
-        const processVehicle = fn(function* (raw: Record<string, unknown>) {
+      const processVehicle = (username: Username, userTimeZone: TimeZone) =>
+        fn("processVehicle")(function* (raw: unknown) {
           const aCarVehicle = yield* Schema.decodeUnknown(ACarVehicle)(
             unwrapVehicle(raw),
           );
@@ -601,11 +610,52 @@ export class ACarFullBackup extends Effect.Service<ACarFullBackup>()(
             events,
           );
           yield* logInfo(`Added ${eventRecords.length} event records`);
+
+          return { fillups: fillups.length, events: events.length };
         });
 
-        yield* forEach(vehicles, processVehicle);
+      const parseVehicles: (
+        username: Username,
+        userTimeZone: TimeZone,
+        data: string,
+      ) => Effect.Effect<
+        AutosApiModel.ImportResult,
+        | XmlParsingError
+        | ParseError
+        | MongoError
+        | DocumentNotFound
+        | UnexpectedOpeningTag
+      > = fn("parseVehicles")(function* (username, userTimeZone, data) {
+        const doc = yield* parseXml(data);
 
-        yield* logInfo("Finished parsing vehicles");
+        if (isUndefined(doc.vehicles))
+          return yield* unexpectedOpeningTag(
+            "vehicles",
+            Object.keys(doc)[0] ?? "<empty>",
+          );
+
+        const vehiclesRoot = yield* Schema.decodeUnknown(
+          Schema.Record({ key: Schema.String, value: Schema.Unknown }),
+        )(doc.vehicles);
+
+        const vehicles = asArray(vehiclesRoot.vehicle);
+
+        const counts = yield* forEach(
+          vehicles,
+          processVehicle(username, userTimeZone),
+        );
+
+        const result: AutosApiModel.ImportResult = {
+          vehicles: counts.length,
+          fillups: counts.reduce((sum, c) => sum + c.fillups, 0),
+          events: counts.reduce((sum, c) => sum + c.events, 0),
+        };
+
+        yield* logInfo(
+          `Finished parsing vehicles: ${result.vehicles} vehicles, ${result.fillups} fillups, ${result.events} events`,
+        );
+
+        return result;
       });
 
       const importFromACarFullBackup: (
@@ -613,7 +663,7 @@ export class ACarFullBackup extends Effect.Service<ACarFullBackup>()(
         userTimeZone: TimeZone,
         zipPath: string,
       ) => Effect.Effect<
-        void,
+        AutosApiModel.ImportResult,
         | AutosApiModel.AbpFileCorruptedError
         | AutosApiModel.AbpWrongFormatError
         | RedactedError
@@ -647,7 +697,7 @@ export class ACarFullBackup extends Effect.Service<ACarFullBackup>()(
             "Parsed settings, going to start writing to the database",
           );
 
-          yield* inTransactionRaw()(
+          return yield* inTransactionRaw()(
             gen(function* () {
               yield* autos.deleteAllUserData(username, {
                 includeUserTypes: false,
@@ -669,7 +719,7 @@ export class ACarFullBackup extends Effect.Service<ACarFullBackup>()(
                 backupFiles,
                 "vehicles.xml",
               );
-              yield* parseVehicles(username, userTimeZone, vehiclesData);
+              return yield* parseVehicles(username, userTimeZone, vehiclesData);
             }),
           );
         },

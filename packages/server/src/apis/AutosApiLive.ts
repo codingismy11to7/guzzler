@@ -58,7 +58,11 @@ export const AutosApiLive = HttpApiBuilder.group(
         gen(function* () {
           const [file] = abpFile;
 
-          yield* aCar.import(yield* currentSessionUsername, tz, file.path);
+          return yield* aCar.import(
+            yield* currentSessionUsername,
+            tz,
+            file.path,
+          );
         }),
       )
       .handle(

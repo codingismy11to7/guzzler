@@ -21,7 +21,7 @@ export class AutosClient extends Effect.Service<AutosClient>()("AutosClient", {
       tz: TimeZone,
       file: File,
     ): Effect.Effect<
-      void,
+      AutosApiModel.ImportResult,
       | AutosApiModel.AbpFileCorruptedError
       | AutosApiModel.AbpWrongFormatError
       | RedactedError

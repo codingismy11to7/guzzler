@@ -135,4 +135,23 @@ describe("XmlParser", () => {
       expect(vehicles[1].name).toBe("Car 2");
     }),
   );
+
+  it.effect(
+    "produces empty string for empty elements",
+    fn(function* () {
+      const result = yield* parse(
+        `<root>
+          <name>test</name>
+          <empty-self-closing/>
+          <empty-open-close></empty-open-close>
+          <has-value>42</has-value>
+        </root>`,
+      );
+      const root = result.root as Record<string, unknown>;
+      expect(root.name).toBe("test");
+      expect(root.emptySelfClosing).toBe("");
+      expect(root.emptyOpenClose).toBe("");
+      expect(root.hasValue).toBe("42");
+    }),
+  );
 });

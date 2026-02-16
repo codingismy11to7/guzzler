@@ -141,6 +141,13 @@ export class ZipError extends S.TaggedError<ZipError>("AutosApiZipError")(
   }),
 ) {}
 
+export const ImportResult = S.Struct({
+  vehicles: S.Int,
+  fillups: S.Int,
+  events: S.Int,
+});
+export type ImportResult = typeof ImportResult.Type;
+
 export type AbpImportError = AbpWrongFormatError | AbpFileCorruptedError;
 export type BackupImportError =
   | BackupWrongFormatError

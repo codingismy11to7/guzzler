@@ -27,6 +27,7 @@ import {
   FrontendChangeEvent,
   GasStationQuery,
   GasStationResponsePlace,
+  ImportResult,
   NoMapsApiKeySet,
   SubscribeToChanges,
   ZipError,
@@ -147,7 +148,7 @@ Trying to upload no or more than one file will be rejected.`,
           }),
         ),
       )
-      .addSuccess(S.Void, { status: 204 })
+      .addSuccess(ImportResult)
       .addError(AbpWrongFormatError)
       .addError(AbpFileCorruptedError)
       .addError(RedactedError),

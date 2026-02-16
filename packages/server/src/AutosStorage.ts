@@ -20,7 +20,24 @@ import {
 import { MongoTransactions } from "@guzzlerapp/mongodb/MongoTransactions";
 import { ObjectId } from "bson";
 import { Effect, Exit, Option, pipe, Stream, Struct } from "effect";
-import { andThen, catchTag, catchTags, gen } from "effect/Effect";
+import {
+  acquireUseRelease,
+  as,
+  andThen,
+  annotateLogs,
+  catchAll,
+  catchTag,
+  catchTags,
+  fn,
+  forEach,
+  gen,
+  logDebug,
+  logInfo,
+  logWarning,
+  succeed,
+  sync,
+} from "effect/Effect";
+import { isNone } from "effect/Option";
 import { isNullable } from "effect/Predicate";
 import { unwrap } from "effect/Stream";
 import { FileFetcher } from "./FileFetcher.js";
@@ -43,26 +60,24 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
 
       const getAllUserTypes = (_id: Username) => userTypes.findOne({ _id });
 
-      const deleteUserVehiclePhoto = (vehicle: Vehicle) =>
-        gen(function* () {
-          const photoId = yield* getPhotoId(vehicle).pipe(Effect.option);
+      const deleteUserVehiclePhoto = fn("deleteUserVehiclePhoto ")(function* (
+        vehicle: Vehicle,
+      ) {
+        const photoId = yield* getPhotoId(vehicle).pipe(Effect.option);
 
-          if (Option.isNone(photoId))
-            yield* Effect.logDebug(`no photo to delete for ${vehicle.id}`);
-          else {
-            const id = photoId.value;
+        if (isNone(photoId))
+          yield* logDebug(`no photo to delete for ${vehicle.id}`);
+        else {
+          const id = photoId.value;
 
-            yield* Effect.logInfo(`deleting photo ${id} for ${vehicle.id}`);
-            yield* deleteFile(id).pipe(
-              Effect.catchAll(e =>
-                Effect.logWarning(
-                  `Error deleting photo ${id} for ${vehicle.id}`,
-                  e,
-                ),
-              ),
-            );
-          }
-        });
+          yield* logInfo(`deleting photo ${id} for ${vehicle.id}`);
+          yield* deleteFile(id).pipe(
+            catchAll(e =>
+              logWarning(`Error deleting photo ${id} for ${vehicle.id}`, e),
+            ),
+          );
+        }
+      });
 
       const deleteAllUserData = (
         username: Username,
@@ -71,23 +86,21 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
         gen(function* () {
           const userVehicles = yield* getVehicles(username).pipe(
             catchTag("DocumentNotFound", () =>
-              Effect.succeed(
-                UserVehicles.make({ _id: username, vehicles: {} }),
-              ),
+              succeed(UserVehicles.make({ _id: username, vehicles: {} })),
             ),
           );
 
-          yield* Effect.logInfo("Deleting user data").pipe(
-            Effect.annotateLogs({ username, includeUserTypes }),
+          yield* logInfo("Deleting user data").pipe(
+            annotateLogs({ username, includeUserTypes }),
           );
 
-          yield* Effect.forEach(
+          yield* forEach(
             [vehicles, ...(includeUserTypes ? [userTypes] : [])],
             db => db.deleteMany({ _id: username }),
             { discard: true, concurrency: "unbounded" },
           );
 
-          yield* Effect.forEach(
+          yield* forEach(
             [fillupRecords, eventRecords],
             db => db.deleteMany({ "_id.username": username }),
             { discard: true, concurrency: "unbounded" },
@@ -95,13 +108,13 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
 
           yield* pipe(Struct.keys(userVehicles.vehicles), vIds =>
             !vIds.length
-              ? Effect.logDebug("no vehicles to clean up")
-              : Effect.logInfo(
+              ? logDebug("no vehicles to clean up")
+              : logInfo(
                   `Going to clean up any photos for ${vIds.length} vehicles`,
                 ),
           );
 
-          yield* Effect.forEach(
+          yield* forEach(
             Object.values(userVehicles.vehicles),
             deleteUserVehiclePhoto,
             {
@@ -124,6 +137,15 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
             yield* vehicles.updateOneRaw(
               { _id: username },
               { $unset: { [`vehicles.${vehicleId}`]: "" } },
+            );
+
+            yield* forEach(
+              [fillupRecords, eventRecords],
+              db =>
+                db.deleteMany({
+                  _id: { username, vehicleId },
+                }),
+              { discard: true, concurrency: "unbounded" },
             );
           }),
         );
@@ -162,7 +184,7 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
 
       const getPhotoIdAsString = (photoId: Option.Option<string>) =>
         photoId.pipe(
-          Effect.catchTag(
+          catchTag(
             "NoSuchElementException",
             () => new DocumentNotFound({ method: "getPhotoId" }),
           ),
@@ -179,8 +201,8 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
           mimeType: string,
           data: Stream.Stream<Uint8Array, StreamE>,
         ): Effect.Effect<void, StreamE | PostAddE | MongoError> =>
-          Effect.acquireUseRelease(
-            Effect.sync(() => {
+          acquireUseRelease(
+            sync(() => {
               const sink = openUploadSinkWithId(newPhotoId, filename, {
                 metadata: { mimeType },
               });
@@ -189,7 +211,7 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
             ({ newPhotoId, sink }) =>
               gen(function* () {
                 yield* pipe(data, Stream.run(sink));
-                yield* Effect.logInfo(`Added photo ${newPhotoId} to database`);
+                yield* logInfo(`Added photo ${newPhotoId} to database`);
 
                 yield* postAddToDb;
               }),
@@ -197,8 +219,8 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
               gen(function* () {
                 if (Exit.isFailure(exit)) {
                   yield* deleteFile(newPhotoId).pipe(
-                    Effect.catchAll(e =>
-                      Effect.logWarning(
+                    catchAll(e =>
+                      logWarning(
                         `Got an error trying to delete just-created file with id ${newPhotoId}`,
                         e,
                       ),
@@ -249,9 +271,7 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
                   },
                 },
               );
-              yield* Effect.logInfo(
-                `Updated vehicle ${vehicleId} with new photo id`,
-              );
+              yield* logInfo(`Updated vehicle ${vehicleId} with new photo id`);
             }),
           );
         });
@@ -285,9 +305,7 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
         eventRecords
           .insertMany(vers)
           .pipe(
-            Effect.as(
-              vers.reduce((acc, e) => acc + Object.keys(e.events).length, 0),
-            ),
+            as(vers.reduce((acc, e) => acc + Object.keys(e.events).length, 0)),
           );
 
       const replaceEventRecords = (
@@ -313,9 +331,7 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
         fillupRecords
           .insertMany(vfrs)
           .pipe(
-            Effect.as(
-              vfrs.reduce((acc, f) => acc + Object.keys(f.fillups).length, 0),
-            ),
+            as(vfrs.reduce((acc, f) => acc + Object.keys(f.fillups).length, 0)),
           );
 
       const replaceFillupRecords = (
@@ -349,6 +365,6 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
         replaceFillupRecords,
         bulkInsertVehicleFillupRecords,
       };
-    }).pipe(Effect.annotateLogs({ layer: "AutosStorage" })),
+    }).pipe(annotateLogs({ layer: "AutosStorage" })),
   },
 ) {}
