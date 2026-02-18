@@ -19,7 +19,15 @@ import {
 } from "@guzzlerapp/mongodb/Mongo";
 import { MongoTransactions } from "@guzzlerapp/mongodb/MongoTransactions";
 import { ObjectId } from "bson";
-import { Effect, Exit, Option, pipe, Stream, Struct } from "effect";
+import {
+  Effect,
+  Exit,
+  Option,
+  pipe,
+  Schema as S,
+  Stream,
+  Struct,
+} from "effect";
 import {
   acquireUseRelease,
   as,
@@ -43,6 +51,7 @@ import { unwrap } from "effect/Stream";
 import { FileFetcher } from "./FileFetcher.js";
 import { CollectionRegistry } from "./internal/database/CollectionRegistry.js";
 import { StoredFile } from "./internal/storage/types.js";
+import { calculateMpg } from "./internal/util/mpg.js";
 
 export class AutosStorage extends Effect.Service<AutosStorage>()(
   "AutosStorage",
@@ -346,6 +355,37 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
           },
         );
 
+      const encodeFillupRecordSync = S.encodeSync(FillupRecord);
+
+      const addFillupAndRecalculate = (
+        username: Username,
+        vehicleId: VehicleId,
+        fillup: FillupRecord,
+      ): Effect.Effect<void, MongoError> =>
+        inTransactionRaw()(
+          gen(function* () {
+            const _id: UserVehicleId = { username, vehicleId };
+            const encoded = encodeFillupRecordSync(fillup);
+
+            yield* fillupRecords.updateOneRaw(
+              { _id },
+              { $set: { _id, [`fillups.${fillup.id}`]: encoded } },
+              { upsert: true },
+            );
+
+            const doc = yield* fillupRecords
+              .findOne({ _id })
+              .pipe(
+                catchTag("DocumentNotFound", () =>
+                  Effect.die("fillup record not found after upsert"),
+                ),
+              );
+            const recalculated = calculateMpg(Object.values(doc.fillups));
+
+            yield* replaceFillupRecords(_id, recalculated);
+          }),
+        );
+
       return {
         replaceAllUserTypes,
         getAllUserTypes,
@@ -364,6 +404,7 @@ export class AutosStorage extends Effect.Service<AutosStorage>()(
         allFillupRecordsForUser,
         replaceFillupRecords,
         bulkInsertVehicleFillupRecords,
+        addFillupAndRecalculate,
       };
     }).pipe(annotateLogs({ layer: "AutosStorage" })),
   },

@@ -102,6 +102,15 @@ export const AutosApiLive = HttpApiBuilder.group(
           );
         }).pipe(catchTags({ MongoError: RedactedError.logged })),
       )
+      .handle("addFillup", ({ path: { vehicleId }, payload }) =>
+        gen(function* () {
+          yield* autos.addFillupAndRecalculate(
+            yield* currentSessionUsername,
+            vehicleId,
+            payload,
+          );
+        }).pipe(catchTags({ MongoError: RedactedError.logged })),
+      )
       .handle("getUserVehicles", () =>
         gen(function* () {
           return (yield* autos.getVehicles(yield* currentSessionUsername))

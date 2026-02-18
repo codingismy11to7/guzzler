@@ -12,6 +12,7 @@ import { RequireFullSession } from "../Authentication.js";
 import { BadGateway, RedactedError, ServerError } from "../Errors.js";
 import {
   EventRecordsByVehicle,
+  FillupRecord,
   FillupRecordsByVehicle,
   UserTypes,
   Vehicle,
@@ -47,6 +48,13 @@ export class AutosApi extends HttpApiGroup.make("autos")
       .setPath(S.Struct({ vehicleId: VehicleId }))
       .addSuccess(NoContent)
       .addError(NotFound)
+      .addError(RedactedError),
+  )
+  .add(
+    HttpApiEndpoint.post("addFillup", "/vehicle/:vehicleId/fillup")
+      .setPath(S.Struct({ vehicleId: VehicleId }))
+      .setPayload(FillupRecord)
+      .addSuccess(NoContent)
       .addError(RedactedError),
   )
   .add(

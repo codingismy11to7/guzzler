@@ -1,4 +1,4 @@
-import { Autos, AutosApiModel } from "@guzzlerapp/domain";
+import { Autos, AutosApiModel, Place as PlaceNs } from "@guzzlerapp/domain";
 import { FuelCategory, FuelTypeId } from "@guzzlerapp/domain/models/Autos";
 import { type Location } from "@guzzlerapp/domain/models/Location";
 import { MoreBigDecimal } from "@guzzlerapp/utils";
@@ -39,23 +39,24 @@ import {
   Array,
   BigDecimal as BD,
   Effect,
-  Option as O,
   Order,
   pipe,
   String,
   Struct,
 } from "effect";
 import { catchTags, gen } from "effect/Effect";
-import { fromNullable, isNone } from "effect/Option";
+import { fromNullable, isNone, isSome, none, some } from "effect/Option";
 import { isNotNull } from "effect/Predicate";
 import React, {
   PropsWithChildren,
   ReactNode,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+import { AutosClient } from "../apiclients/AutosClient.js";
 import { useAppState } from "../AppStore.js";
 import MobileInfoIcon from "../components/MobileInfoIcon.js";
 import {
@@ -71,7 +72,7 @@ import {
   useUserData,
 } from "../hooks/useUserData.js";
 import { useTranslation } from "../i18n.js";
-import { randomId, runSync } from "../internal/runtimes/Main.js";
+import { randomId, runP, runSync } from "../internal/runtimes/Main.js";
 import { NewFillupSection } from "../models/AppState.js";
 import { routes } from "../router.js";
 import GasStationResponsePlace = AutosApiModel.GasStationResponsePlace;
@@ -393,18 +394,121 @@ const AddFillupForm = ({
     }
   };
 
+  const [saving, setSaving] = useState(false);
+
   const saveDisabled = useMemo(
     () =>
+      saving ||
+      !fuelTypeId ||
       [tripDistanceBD, currOdometerBD, ppgBD, volumeBD, totalBD].some(
         bd =>
           isNone(bd) || BD.lessThanOrEqualTo(bd.value, BD.unsafeFromNumber(0)),
       ),
-    [currOdometerBD, ppgBD, totalBD, tripDistanceBD, volumeBD],
+    [
+      currOdometerBD,
+      fuelTypeId,
+      ppgBD,
+      saving,
+      totalBD,
+      tripDistanceBD,
+      volumeBD,
+    ],
   );
 
+  const onSave = useCallback(() => {
+    const vehicleId = route.params.vehicleId;
+    if (
+      !vehicleId ||
+      isNone(currOdometerBD) ||
+      isNone(ppgBD) ||
+      isNone(volumeBD) ||
+      isNone(totalBD) ||
+      !fuelTypeId
+    )
+      return;
+
+    const hasPlace = [pName, pStreet, pCity, pState, pZip, pCountry].some(
+      s => s.trim().length > 0,
+    );
+
+    const fillup = new Autos.FillupRecord({
+      id: Autos.FillupRecordId.make(randomId()),
+      date: fillupTime,
+      fuelEfficiency: none(),
+      fuelTypeId,
+      notes: notes || undefined,
+      odometerReading: currOdometerBD.value,
+      paymentType: undefined,
+      pricePerVolumeUnit: ppgBD.value,
+      tags: undefined,
+      totalCost: totalBD.value,
+      volume: volumeBD.value,
+      partial,
+      previousMissedFillups: missedFillups,
+      hasFuelAdditive: false,
+      fuelAdditiveName: undefined,
+      drivingMode: undefined,
+      cityDrivingPercentage: Number(cityDriving) || 50,
+      highwayDrivingPercentage: Number(freewayDriving) || 50,
+      averageSpeed: none(),
+      deviceLocation: fromNullable(deviceLoc),
+      place: !hasPlace
+        ? none()
+        : some(
+            new PlaceNs.Place({
+              name: pName || undefined,
+              street: pStreet || undefined,
+              city: pCity || undefined,
+              state: pState || undefined,
+              country: pCountry || undefined,
+              postalCode: pZip || undefined,
+              fullAddress: undefined,
+              googlePlacesId: place?.googlePlacesId,
+              googleMapsUri: place ? some(place.googleMapsUri) : none(),
+              location: place ? some(place.location) : fromNullable(deviceLoc),
+            }),
+          ),
+    });
+
+    setSaving(true);
+    void runP(
+      AutosClient.addFillup(vehicleId, fillup).pipe(
+        catchTags({ RedactedError: e => Effect.die(e) }),
+      ),
+    ).then(
+      () => routes.VehicleFillups({ vehicleId }).push(),
+      () => setSaving(false),
+    );
+  }, [
+    route.params.vehicleId,
+    currOdometerBD,
+    ppgBD,
+    volumeBD,
+    totalBD,
+    fuelTypeId,
+    pName,
+    pStreet,
+    pCity,
+    pState,
+    pZip,
+    pCountry,
+    fillupTime,
+    notes,
+    partial,
+    missedFillups,
+    cityDriving,
+    freewayDriving,
+    deviceLoc,
+    place,
+  ]);
+
   const action = useMemo(
-    () => <Button disabled={saveDisabled}>{t("common.save")}</Button>,
-    [saveDisabled, t],
+    () => (
+      <Button disabled={saveDisabled} onClick={onSave}>
+        {t("common.save")}
+      </Button>
+    ),
+    [onSave, saveDisabled, t],
   );
   useEffect(() => {
     setPageAction(action);
@@ -434,10 +538,10 @@ const AddFillupForm = ({
 
   const onDistanceBlur = () => {
     if (!fillupInfo.loading) {
-      if (O.isNone(tripDistanceBD)) setTripDistance("");
+      if (isNone(tripDistanceBD)) setTripDistance("");
       else {
         const lastOdom = fillupInfo.highestOdometer;
-        if (O.isSome(lastOdom))
+        if (isSome(lastOdom))
           setCurrOdometer(
             BD.format(lastOdom.value.pipe(BD.sum(tripDistanceBD.value))),
           );
@@ -446,10 +550,10 @@ const AddFillupForm = ({
   };
   const onCurrOdomBlur = () => {
     if (!fillupInfo.loading) {
-      if (O.isNone(currOdometerBD)) setCurrOdometer("");
+      if (isNone(currOdometerBD)) setCurrOdometer("");
       else {
         const lastOdom = fillupInfo.highestOdometer;
-        if (O.isSome(lastOdom))
+        if (isSome(lastOdom))
           setTripDistance(
             BD.format(currOdometerBD.value.pipe(BD.subtract(lastOdom.value))),
           );
@@ -477,7 +581,7 @@ const AddFillupForm = ({
 
         const vol = tot.pipe(BD.divide(price));
 
-        if (O.isSome(vol)) setVolume(BD.format(vol.value.pipe(BD.scale(4))));
+        if (isSome(vol)) setVolume(BD.format(vol.value.pipe(BD.scale(4))));
       }).pipe(catchTags(ignoreNone)),
     );
 
@@ -724,7 +828,7 @@ const AddFillup = ({ route }: Props) => {
       }
 
       const vehicleIdOpt = Array.head(Struct.keys(vehicles));
-      if (O.isSome(vehicleIdOpt)) {
+      if (isSome(vehicleIdOpt)) {
         const vehicleId = vehicleIdOpt.value;
         setDefaultVehicle(vehicleId);
         routes.AddFillup({ vehicleId }).replace();

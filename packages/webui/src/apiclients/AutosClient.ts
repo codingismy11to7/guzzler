@@ -67,6 +67,14 @@ export class AutosClient extends Effect.Service<AutosClient>()("AutosClient", {
     const deleteUserVehicle = (vehicleId: Autos.VehicleId) =>
       client.autos.deleteUserVehicle({ path: { vehicleId } });
 
+    const addFillup = (
+      vehicleId: Autos.VehicleId,
+      fillup: Autos.FillupRecord,
+    ) =>
+      client.autos
+        .addFillup({ path: { vehicleId }, payload: fillup })
+        .pipe(catchTags(dieFromFatal));
+
     // boy oh boy this is gross, but i fought with websockets enough
     // revisit later
     const makeImperativeSocketHandler = gen(function* () {
@@ -89,6 +97,7 @@ export class AutosClient extends Effect.Service<AutosClient>()("AutosClient", {
       getEvents,
       getGasStations,
       deleteUserVehicle,
+      addFillup,
       makeImperativeSocketHandler,
     };
   }),

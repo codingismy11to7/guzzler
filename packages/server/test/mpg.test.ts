@@ -64,4 +64,33 @@ describe("mpg", () => {
       }
     });
   });
+
+  it("should preserve trailing partial fillups", () => {
+    const arb = Arbitrary.make(FillupRecord);
+    const sampleRec = FastCheck.sample(arb, 1)[0];
+
+    const records: FillupRecord[] = [
+      S.decodeSync(FillupRecord)({
+        ...S.encodeSync(FillupRecord)(sampleRec),
+        odometerReading: "49700",
+        volume: "10",
+        partial: false,
+        previousMissedFillups: false,
+        fuelEfficiency: undefined,
+      }),
+      S.decodeSync(FillupRecord)({
+        ...S.encodeSync(FillupRecord)(sampleRec),
+        id: "trailing-partial",
+        odometerReading: "50000",
+        volume: "12",
+        partial: true,
+        previousMissedFillups: false,
+        fuelEfficiency: undefined,
+      }),
+    ];
+
+    const result = calculateMpg(records);
+    expect(result).toHaveLength(2);
+    expect(isNone(result[1].fuelEfficiency)).toBe(true);
+  });
 });

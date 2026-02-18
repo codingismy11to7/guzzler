@@ -32,7 +32,7 @@ export const calculateMpg = (
     currentPartials = empty<FillupRecord>(),
     acc = empty<FillupRecord>(),
   ): Chunk.Chunk<FillupRecord> => {
-    if (!isNonEmpty(remaining)) return acc;
+    if (!isNonEmpty(remaining)) return appendAll(acc, currentPartials);
 
     const curr = headNonEmpty(remaining);
     const rest = tailNonEmpty(remaining);
